@@ -109,6 +109,9 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 .tl-content{padding-top:3px}.tl-date{font-size:.68rem;color:var(--dim);margin-bottom:1px}.tl-ev{font-size:.85rem}.tl-ev.done{text-decoration:line-through;color:var(--dim)}.tl-desc{font-size:.73rem;color:var(--dim);margin-top:1px}
 @media(max-width:480px){.char-grid{grid-template-columns:repeat(2,1fr)}.ach-grid{grid-template-columns:1fr}}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,107,157,.25);border-radius:4px}
+.arc-events{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);}
+.world-note{color:var(--dim);font-size:.83rem;font-style:italic;line-height:1.85;margin-bottom:4px;}
+.club-badge{display:inline-block;font-size:.62rem;background:rgba(91,200,255,.1);border:1px solid rgba(91,200,255,.25);border-radius:20px;color:var(--sky);padding:2px 8px;margin-left:5px;vertical-align:middle;}
 </style>
 </head>
 <body>
@@ -158,9 +161,14 @@ function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;retur
 function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
 
 // ── STATE ──
+function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[]};}
+function addMem(key,val,label){G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});G.world.memory.push({key:key,day:G.day,value:val,label:label});G.log.push('[Day '+G.day+'] '+label);}
+function getMem(key){var m=G.world.memory.filter(function(m){return m.key===key;})[0];return m?m.value:0;}
+function npcBond(a,b){var k=[a,b].sort().join('_');return G.world.npcRel[k]||0;}
+function setNpcBond(a,b,d){var k=[a,b].sort().join('_');G.world.npcRel[k]=Math.min(10,Math.max(0,(G.world.npcRel[k]||0)+d));}
 var G={day:1,scene:'intro',block:0,choiceMade:false,
 stats:{knowledge:{rank:1,xp:0,icon:'📚',color:'#5BC8FF'},guts:{rank:1,xp:0,icon:'⚡',color:'#FFD166'},proficiency:{rank:1,xp:0,icon:'🎯',color:'#06D6A0'},kindness:{rank:1,xp:0,icon:'💖',color:'#FF6B9D'},charm:{rank:1,xp:0,icon:'✨',color:'#A855F7'}},
-relations:{Carmen:8},chars:['jorge','carmen','tanaka'],ach:[],log:[],flags:{},usedScenes:{}};
+relations:{Carmen:8},chars:['jorge','carmen','tanaka'],ach:[],log:[],flags:{},usedScenes:{},world:null};
 
 // ── CHARACTERS ──
 var CHARS={
@@ -175,7 +183,15 @@ komori:{name:'Komori Yuki',role:'Class Rep',trope:'The Diligent One',av:'📋',g
 mori:{name:'Mori Takeshi',role:'Classmate',trope:'Headphones',av:'🎧',grad:'linear-gradient(90deg,#555,#888)',bond:'Mori',desc:'Third row. Headphones always on. Communicates in grunts.',locked:true},
 fujiwara:{name:'Fujiwara-sensei',role:'Japanese Teacher',trope:'Young Teacher',av:'👩‍🏫',grad:'linear-gradient(90deg,#FF6B9D,#FFD166)',bond:'Fujiwara',desc:'Young, round glasses. Teaches Japanese. Notices effort.',locked:true},
 nishikawa:{name:'Nishikawa Aoi',role:'Classmate',trope:'The Direct One',av:'💬',grad:'linear-gradient(90deg,#FF6B9D,#06D6A0)',bond:'Nishikawa',desc:'Direct, slightly loud, treats everyone like old friends.',locked:true},
-takagi:{name:'Takagi Mei',role:'Classmate',trope:'The Efficient',av:'🧹',grad:'linear-gradient(90deg,#5BC8FF,#FFD166)',bond:'Takagi',desc:'Has a system for everything. Including cleaning.',locked:true}
+takagi:{name:'Takagi Mei',role:'Classmate',trope:'The Efficient',av:'🧹',grad:'linear-gradient(90deg,#5BC8FF,#FFD166)',bond:'Takagi',desc:'Has a system for everything. Including cleaning.',locked:true},
+ryusei:{name:'Kaito Ryusei',role:'Track Club',trope:'The Sports Ace',av:'🏃',grad:'linear-gradient(90deg,#FFD166,#FF6B9D)',bond:'Ryusei',desc:'Fastest in the year. Respects effort over talent. Competitive but not cruel.',locked:true},
+ashida:{name:'Ashida Mika',role:'Classmate',trope:'The Social Hub',av:'💬',grad:'linear-gradient(90deg,#FF6B9D,#FFD166)',bond:'Ashida',desc:"Knows everyone's business before it happens. Surprisingly loyal to people who treat her well.",locked:true},
+izumi:{name:'Izumi Sota',role:'Classmate',trope:'The Self-Exile',av:'🎧',grad:'linear-gradient(90deg,#3A8EC2,#A855F7)',bond:'Izumi',desc:'Sits two rows back and avoids eye contact. Has opinions — just never shares them. Yet.',locked:true},
+kuroda:{name:'Kuroda Nana',role:'Class Rep (2nd)',trope:'The Overachiever',av:'📐',grad:'linear-gradient(90deg,#06D6A0,#5BC8FF)',bond:'Kuroda',desc:'Top of the grade. Every score a target. Has a warmth she rarely lets anyone see.',locked:true},
+abe:{name:'Abe Yuto',role:'Classmate',trope:'The Funny One',av:'😂',grad:'linear-gradient(90deg,#FFD166,#06D6A0)',bond:'Abe',desc:'Class clown with depth. His jokes land because he actually observes people.',locked:true},
+shirogane:{name:'Shirogane Haru',role:'Art Club',trope:'The Creator',av:'🎨',grad:'linear-gradient(90deg,#A855F7,#FF6B9D)',bond:'Shirogane',desc:'Street art, photography, found objects. Intense creative energy. Looks through you sometimes.',locked:true},
+okada:{name:'Okada Sena',role:'Welfare Committee',trope:'The Empath',av:'🌿',grad:'linear-gradient(90deg,#06D6A0,#FFD166)',bond:'Okada',desc:'Student welfare committee. Notices when people are struggling before they do.',locked:true},
+yamamoto:{name:'Yamamoto-sensei',role:'History Teacher',trope:'Dry Wit',av:'📰',grad:'linear-gradient(90deg,#5BC8FF,#A855F7)',bond:'Yamamoto',desc:'History and Social Studies. Supervises the school newspaper. Dry humor, surprisingly progressive.',locked:true}
 };
 
 // ── ACHIEVEMENTS ──
@@ -199,7 +215,19 @@ var ACHS=[
 {id:'golden_week',icon:'🎌',name:'Golden Week',desc:'Survived Golden Week.'},
 {id:'festival',icon:'🏮',name:'Festival Time',desc:'Attended a school festival.'},
 {id:'summer_start',icon:'☀️',name:'Summer',desc:'Summer break began.'},
-{id:'bond5',icon:'💕',name:'Close Bond',desc:'Bond level 5 with someone.'}
+{id:'bond5',icon:'💕',name:'Close Bond',desc:'Bond level 5 with someone.'},
+{id:'bond8',icon:'💞',name:'Deep Bond',desc:'Bond level 8 — something real.'},
+{id:'joined_film',icon:'🎬',name:'Film Club',desc:'Joined the Film Club.'},
+{id:'joined_art',icon:'🖌️',name:'Art Club',desc:'Joined the Art Club.'},
+{id:'joined_track',icon:'🏃',name:'Track Club',desc:'Joined Track Club.'},
+{id:'joined_newspaper',icon:'📰',name:'Byline',desc:'Joined the School Newspaper.'},
+{id:'joined_music',icon:'🎵',name:'Music Club',desc:'Joined the Music Club.'},
+{id:'club_fair',icon:'🎪',name:'Club Fair',desc:'Attended the Club Fair.'},
+{id:'sports_podium',icon:'🥈',name:'On the Podium',desc:'Placed in a school competition.'},
+{id:'quiz_top',icon:'🧠',name:'Quiz Top 5',desc:'Ranked in the academic quiz.'},
+{id:'paper_published',icon:'✒️',name:'Published',desc:'Your article ran in the paper.'},
+{id:'track_pb',icon:'⏱️',name:'Personal Best',desc:'Broke your own track record.'},
+{id:'art_exhibited',icon:'🖼️',name:'Gallery',desc:'Work shown at the art exhibition.'}
 ];
 
 // ── CALENDAR ──
@@ -225,6 +253,11 @@ var CAL_EVENTS={
   200:{type:'exam',title:'November Exams',desc:'Late fall exams.'},
   240:{type:'special',title:'Christmas Eve',desc:'Christmas Eve in Tokyo.'},
   260:{type:'holiday',title:'New Year',desc:'New Year celebrations.'},
+  60:{type:'competition',title:'Inter-class Quiz',desc:'Academic quiz. Knowledge tested publicly.'},
+  95:{type:'competition',title:'Art Exhibition',desc:'School art showcase. Open display.'},
+  108:{type:'competition',title:'Track Meet',desc:'First official track competition.'},
+  115:{type:'competition',title:'Newspaper Deadline',desc:'Submit your article by tonight.'},
+  148:{type:'competition',title:'Literary Debate',desc:'Club debate tournament. Judges attending.'},
   300:{type:'exam',title:'Final Exams',desc:'End of year exams.'},
   350:{type:'special',title:'Cherry Blossom Return',desc:'One year. Petals fall again.'},
   365:{type:'special',title:'Year End',desc:'One full year at Kōsei.'}
@@ -508,16 +541,41 @@ function buildCtx(day,blk){
     hasMori:has('mori'),hasHina:has('notebook_girl'),
     hasWindowGirl:has('window_girl'),hasFujiwara:has('fujiwara'),
     hasNishikawa:has('nishikawa'),
+    hasRyusei:has('ryusei'),hasAshida:has('ashida'),
+    hasIzumi:has('izumi'),hasKuroda:has('kuroda'),
+    hasAbe:has('abe'),hasShirogane:has('shirogane'),
+    hasOkada:has('okada'),hasYamamoto:has('yamamoto'),
     // Bond levels
     bondSato:bond('Sato'),bondHayashi:bond('Hayashi'),
     bondCarmen:bond('Carmen'),bondKomori:bond('Komori'),
     bondWindowGirl:bond('WindowGirl'),
+    bondRyusei:bond('Ryusei'),bondAshida:bond('Ashida'),
+    bondIzumi:bond('Izumi'),bondKuroda:bond('Kuroda'),
+    bondHina:bond('Hina'),bondShirogane:bond('Shirogane'),
+    bondOkada:bond('Okada'),bondAbe:bond('Abe'),
     // Stat ranks
     knowledge:rank('knowledge'),guts:rank('guts'),
     proficiency:rank('proficiency'),kindness:rank('kindness'),charm:rank('charm'),
-    // Flags
+    // Club flags
     litClub:!!G.flags.joined_lit,
-    groupChat:!!G.flags.joined_groupchat
+    filmClub:!!G.flags.joined_film,
+    artClub:!!G.flags.joined_art,
+    trackClub:!!G.flags.joined_track,
+    newspaperClub:!!G.flags.joined_newspaper,
+    musicClub:!!G.flags.joined_music,
+    activeClub:G.flags.active_club||null,
+    groupChat:!!G.flags.joined_groupchat,
+    // Memory helpers
+    helpedSato:getMem('helped_sato')>0,
+    helpedKomori:getMem('helped_komori')>0,
+    metIzumi:getMem('met_izumi')>0,
+    satWithKuroda:getMem('sat_with_kuroda')>0,
+    talkedRyusei:getMem('talked_ryusei')>0,
+    festivalDiplomat:getMem('festival_diplomat')>0,
+    // NPC dynamics
+    satoHayashiBond:npcBond('Sato','Hayashi'),
+    // Season tone
+    season:day<=80?'spring':day<=129?'summer':day<=200?'autumn':'winter'
   };
 }
 
@@ -529,10 +587,13 @@ var PL_CTX={
     if(ctx.hasSato&&ctx.hasHayashi){
       opts.push("Sato's table. Hayashi already mid-monologue. The chair is waiting.");
       if(ctx.bondSato>=4)opts.push('Sato saved a seat. Not mentioned. Just done.');
+      if(ctx.helpedSato&&ctx.bondSato>=6)opts.push('Sato made room before Jorge even looked over. Easy.');
     }else if(ctx.hasSato){
       opts.push("Sato's table. Quieter today.");
     }
     if(ctx.hasNishikawa)opts.push('Nishikawa waved him over before he even looked around.');
+    if(ctx.hasAbe&&ctx.hasHayashi)opts.push('Abe and Hayashi have commandeered a table and are clearly in the middle of something entertaining and chaotic.');
+    if(ctx.hasKuroda&&ctx.satWithKuroda&&ctx.bondKuroda>=4)opts.push("Kuroda's table. She doesn't look up when he sits. She doesn't need to.");
     if(!opts.length)opts.push('A table by the window. He picks it.');
     return pick(opts,rng);
   },
@@ -545,6 +606,13 @@ var PL_CTX={
       if(ctx.examSoon)opts.push('<div class="dialogue">Sato: "Is anyone actually ready for the exam?" Nobody answers convincingly.</div>');
     }
     if(ctx.hasSato)opts.push('<div class="dialogue">"Weekend plans?" Sato asks. The table goes quiet. Nobody has any. That\'s completely fine.</div>');
+    if(ctx.hasAbe)opts.push('<div class="dialogue">Abe is doing an impression of Yamamoto-sensei that is uncomfortable in its accuracy. Three people are trying not to laugh. One is failing.</div>');
+    if(ctx.hasAshida)opts.push('<div class="dialogue">Ashida updates the table on something she overheard. Her information network is either impressive or terrifying. Probably both.</div>');
+    if(ctx.hasNishikawa&&ctx.hasHayashi)opts.push('<div class="dialogue">Nishikawa and Hayashi are technically debating. It\'s unclear what the topic is anymore. It started about ramen.</div>');
+    if(ctx.hasRyusei&&ctx.talkedRyusei)opts.push('<div class="dialogue">Ryusei mentions the track times from practice. Matter-of-fact. Then: "You should come sometime." Also matter-of-fact. Somehow different.</div>');
+    if(ctx.hasKuroda&&ctx.bondKuroda>=5)opts.push('<div class="dialogue">Kuroda says something precise about the upcoming exam that everyone else missed. She says it quietly, aimed at Jorge specifically.</div>');
+    if(ctx.bondSato>=7&&ctx.hasSato)opts.push('<div class="dialogue">Sato says something, low enough for only Jorge to hear. It\'s not important. But he made sure only Jorge heard it. That\'s not nothing.</div>');
+    if(ctx.bondHina>=7&&ctx.hasHina)opts.push('<div class="dialogue">Hina slides her sketchbook slightly toward Jorge without a word. There\'s something new on the page. He looks. She\'s watching for his reaction.</div>');
     if(!opts.length)opts.push('<div class="dialogue">Lunch hour passes with the usual background hum of the cafeteria.</div>');
     return pick(opts,rng);
   },
@@ -568,18 +636,51 @@ var PL_CTX={
     if(ctx.hasTakagi)opts.push('Takagi, who has optimized cleaning to a twenty-two-minute process.');
     if(ctx.hasHayashi)opts.push('Hayashi, who cleans like he talks — chaotically, enthusiastically, everywhere at once.');
     if(ctx.hasMori)opts.push('Mori, headphones on. He cleans with surprising efficiency. No conversation needed.');
+    if(ctx.hasAbe)opts.push('Abe, who makes the whole process thirty percent funnier and forty percent longer.');
+    if(ctx.hasIzumi)opts.push('Izumi. He works in parallel silence that somehow feels companionable.');
+    if(ctx.hasOkada)opts.push('Okada, who checks in at the halfway point to make sure nobody\'s struggling with the heavy furniture.');
     return pick(opts,rng);
   },
-  // Club scene: gated by litClub flag, scales with window girl bond
+  // Club scene: expands based on active club
   CS:function(ctx,rng){
+    var club=ctx.activeClub;
+    if(club==='film'){
+      var opts=['Film Club. The projector hums. This week: something in French with subtitles that nobody admits to needing.','Discussion after the screening gets away from the film quickly. Into something more personal. That happens here.','The club is picking next month\'s film. Three very different opinions. Jorge has one. He hasn\'t said it yet.'];
+      if(ctx.hasAbe&&ctx.bondAbe>=3)opts.push('Abe has a theory about why the ending is secretly perfect. He\'s probably wrong. His argument is compelling anyway.');
+      return pick(opts,rng);
+    }
+    if(club==='art'){
+      var opts=['Art Club. Shirogane has the supply cabinet open and something already started. The work is always a little ahead of everyone else.','Today: free form. No instructions. The room fills with the smell of acrylic and quiet concentration.','Someone brings in a photo for reference. The discussion about what makes an image honest goes for an hour.'];
+      if(ctx.hasShirogane&&ctx.bondShirogane>=3)opts.push('Shirogane shows Jorge something on her phone — a location, something she photographed last week. "You would notice it," she says. Just that.');
+      if(ctx.hasShirogane&&ctx.bondShirogane>=7)opts.push('Shirogane asks Jorge what he thinks while the work is still in progress. Not when it\'s done — while it\'s happening. That\'s different. That\'s trust.');
+      return pick(opts,rng);
+    }
+    if(club==='track'){
+      var opts=['Track practice. Ryusei sets the pace and everyone else decides how much they care. Jorge cares more than expected.','Drills, intervals, the satisfying geometry of running. Progress measured in fractions of seconds.','A lighter day — technique focus. Ryusei watches form without being critical. He points things out like they\'re obvious. They become obvious.'];
+      if(ctx.hasRyusei&&ctx.bondRyusei>=3)opts.push('After practice Ryusei says Jorge\'s form is improving. He doesn\'t add anything. He doesn\'t need to.');
+      if(ctx.hasRyusei&&ctx.bondRyusei>=7)opts.push('Ryusei runs the last interval with Jorge instead of ahead of him. That\'s new. They don\'t talk about it. They run at the same pace and that\'s the conversation.');
+      return pick(opts,rng);
+    }
+    if(club==='newspaper'){
+      var opts=['School Newspaper. Yamamoto-sensei reviews the drafts with the energy of someone who used to love this. Might still.','The deadline is closer than anyone prepared for. The room is tense in a productive way.','Jorge has a piece in progress. The right first sentence keeps not arriving.'];
+      if(ctx.hasAshida)opts.push('Ashida has a source for the piece she\'s working on. She\'s being careful about it. That\'s new for her.');
+      if(ctx.hasYamamoto&&ctx.bondYamamoto>=3)opts.push('Yamamoto-sensei marks up Jorge\'s draft and hands it back. Most of the marks are cuts. "Less is more accurate," he says. He\'s right.');
+      return pick(opts,rng);
+    }
+    if(club==='music'){
+      var opts=['Music Club. The rehearsal room smells like rosin and effort. Kanzaki-sensei starts everything with a tuning ritual that takes longer than it should.','A difficult passage, repeated. It sounds worse before it sounds better. That\'s usually how it works.','Today\'s session ends early — everyone sounded good by accident, collectively. Kanzaki-sensei says nothing. Closes the folder. That\'s his version of applause.'];
+      return pick(opts,rng);
+    }
+    // Default: Literary Club (original)
     if(!ctx.litClub)return '<p>The after-school clubs are in session somewhere beyond these walls. Jorge passes the doors without stopping.</p>';
     var opts=[
-      'Literary Club. Room 204. The door is open. The usual members are here'+(ctx.hasWindowGirl?', and the girl at the window sits in her usual place, long sleeves past her wrists, book open on her lap.':'.'),
+      'Literary Club. Room 204. The door is open. The usual members are here'+(ctx.hasWindowGirl?', and she sits in her usual corner, book open, long sleeves past her wrists.':'.'),
       'The club room is quieter today — only three people came. The discussion is more intimate, more honest.',
       'Free reading session. No discussion, no debate — just shared silence and the sound of pages turning.',
       'A debate breaks out about whether manga counts as literature. It gets unexpectedly philosophical.'
     ];
     if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=3)opts.push('She said something today that Jorge has been turning over since. Not provocative — just precise. The kind of sentence that rearranges things.');
+    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=7)opts.push('She walks out at the same time as Jorge today. They get to the gate before anyone says anything. Then she does. It\'s just two sentences. He replays them on the way home.');
     return pick(opts,rng);
   },
   // Evening phone/group chat: gated by groupChat flag
@@ -589,9 +690,235 @@ var PL_CTX={
     if(ctx.hasHayashi)opts.push('The group chat exploded — 87 messages. Hayashi started a debate about the best ramen place and it devolved into sticker warfare.');
     if(ctx.hasSato)opts.push('A DM from Sato: just a link to a video. No context. No explanation. Classic Sato.');
     if(ctx.hasNishikawa)opts.push('Nishikawa created a new group chat: "weekend plans maybe?" — five people added.');
+    if(ctx.hasAshida)opts.push('Ashida forwarded something that somehow turned into a twenty-message chain about a minor thing that happened in gym.');
+    if(ctx.hasRyusei&&ctx.talkedRyusei)opts.push('Ryusei sent practice times for the week. No extra words. Just the information.');
     return pick(opts,rng);
+  },
+  // NPC ambient — references specific character moments at high bond
+  NPC_AMBIENT:function(ctx,rng){
+    var opts=[''];
+    if(ctx.hasSato&&ctx.bondSato>=7&&ctx.helpedSato)opts.push('<p style="color:var(--dim);font-size:.84rem">Sato has been different since whatever happened between him and Hayashi. Easier, maybe. More present. It\'s subtle but it\'s there.</p>');
+    if(ctx.hasKomori&&ctx.bondKomori>=6&&ctx.helpedKomori)opts.push('<p style="color:var(--dim);font-size:.84rem">Komori asked how Jorge was doing today. No clipboard. Just asked. Coming from her, that\'s significant.</p>');
+    if(ctx.hasRyusei&&ctx.bondRyusei>=5)opts.push('<p style="color:var(--dim);font-size:.84rem">Ryusei mentioned something about a competition coming up. Mentioned. Not announced — mentioned, like Jorge was already supposed to know about it.</p>');
+    if(ctx.hasIzumi&&ctx.metIzumi&&ctx.bondIzumi>=4)opts.push('<p style="color:var(--dim);font-size:.84rem">Izumi nodded at Jorge in the hallway. One nod. But it was a real nod — recognition, not reflex.</p>');
+    if(ctx.hasKuroda&&ctx.satWithKuroda&&ctx.bondKuroda>=6)opts.push('<p style="color:var(--dim);font-size:.84rem">Kuroda said two extra words to Jorge today versus her baseline. That\'s how you know with her.</p>');
+    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=8)opts.push('<p style="color:var(--dim);font-size:.84rem">She glanced toward the door when Jorge came in. Just for a second. Old habit, or new one — hard to say.</p>');
+    if(ctx.bondHina>=8&&ctx.hasHina)opts.push('<p style="color:var(--dim);font-size:.84rem">There\'s a drawing in Hina\'s notebook today that has Jorge\'s posture. He recognized it. She noticed he noticed.</p>');
+    return pick(opts,rng);
+  },
+  // Seasonal mood — ambient world atmosphere by day
+  SEASON_MOOD:function(ctx,rng){
+    var pools={
+      spring:['The cherry blossoms are still on the trees. Another two weeks, maybe. Then they\'re gone and everyone forgets to say goodbye.','Spring light does something to the hallways — they look more temporary, somehow. More real because of it.','The air is the specific temperature where it could be summer or still spring and the difference doesn\'t matter yet.'],
+      summer:['The heat is a physical thing today. It has mass.','Cicadas. The whole ambient sound of summer has arrived without announcement.','Summer made the city louder and slower at the same time.'],
+      autumn:['Something shifted overnight. The air knows it\'s autumn before the trees do.','There are leaves starting to go yellow in the park near school. Just starting.','The quality of light is different now — more considered. Everything casts longer shadows.'],
+      winter:['Cold properly now. The kind that asks you to make decisions about how much you care about warmth.','Winter in Tokyo is a different quiet than winter anywhere else. Compact. Specific.','The sky was white today in a way that felt intentional.']
+    };
+    return pick(pools[ctx.season]||pools.spring,rng);
+  },
+  // Inner memory — references a recent moment from G.world.memory
+  INNER_MEMORY:function(ctx,rng){
+    if(!G.world||!G.world.memory||!G.world.memory.length)return'';
+    var recent=G.world.memory.filter(function(m){return ctx.day-m.day<=20;});
+    if(!recent.length)return'';
+    var m=pick(recent,rng);
+    var d=ctx.day-m.day;
+    return'<div class="inner-voice">'+pick([d+' days ago: '+m.label+'. He hasn\'t stopped thinking about it.','Still replaying: '+m.label+'.','Something from '+d+' days ago that keeps surfacing.'],rng)+'</div>';
   }
 };
+
+// ═══ BACKGROUND EVENTS — ambient world texture, day-specific ═══
+var BG_EVENTS=[
+  {id:'cat_cafe_debate',days:[18,19],blks:['lunch','afterSchool'],text:'The table behind Jorge debates which cat café is definitively better. The argument is passionate and entirely without facts.'},
+  {id:'komori_clipboards',days:[36,37],blks:['afterSchool'],guard:function(c){return c.hasKomori;},text:'Komori is in the hallway holding two clipboards. The expression on her face suggests the clipboards are losing.'},
+  {id:'wg_first_miss',days:[42,43],blks:['class'],guard:function(c){return c.hasWindowGirl;},text:function(c){return c.litClub?'The seat by the window is empty. Jorge notices it before anyone else. That says something he\'s not ready to say.':'The seat by the window is empty today. The room feels different without her there.';}},
+  {id:'hayashi_film_drama',days:[52,53],blks:['lunch'],guard:function(c){return c.hasHayashi;},text:'Hayashi is narrating a conflict between the Film Club and Photography Club. The details escalate with each retelling.'},
+  {id:'nishikawa_plan',days:[68,69],blks:['lunch','afterSchool'],guard:function(c){return c.hasNishikawa;},text:'Nishikawa is recruiting people for something involving a portable takoyaki grill and zero contingency planning. The energy is high. The plan is not.'},
+  {id:'mori_notice',days:[78,79],blks:['afterSchool'],guard:function(c){return c.hasMori;},text:'Mori is in the corner of the hallway, headphones around his neck instead of on his ears. He\'s looking at the bulletin board. Not reading anything. Just looking.'},
+  {id:'class_cheat_rumor',days:[63,64,65],blks:['morning','lunch'],text:'Someone says someone copied on the last quiz. The rumor doesn\'t have a name yet, but the atmosphere in class carries that specific weight.'},
+  {id:'festival_chaos',days:[162,163,164],blks:['lunch','afterSchool'],text:'Two weeks until the culture festival. Every group has an idea. No group has a plan. The collective volume of the school has increased.'},
+  {id:'kuroda_library',days:[28,29],blks:['afterSchool'],guard:function(c){return c.hasKuroda;},text:'Kuroda is in the library again. She\'s been there every day this week. Her notes fill an entire notebook. She doesn\'t look stressed — she looks like she\'s building something.'},
+  {id:'ryusei_warmup',days:[15,16],blks:['morning'],guard:function(c){return c.hasRyusei;},text:'Ryusei is stretching in the hallway before school. Not showing off — he just started early and the gym wasn\'t open yet. He nods at whoever walks by.'},
+  {id:'abe_prank',days:[30,31],blks:['class'],guard:function(c){return c.hasAbe;},text:'Abe did something in homeroom that made three people laugh and one person deeply confused. Details unclear. Execution apparently flawless.'},
+  {id:'shirogane_chalk',days:[85,86],blks:['morning'],guard:function(c){return c.hasShirogane;},text:'There\'s a chalk drawing on the art room door — something geometric and temporary. Nobody\'s saying who did it. But the style is unmistakable to anyone paying attention.'},
+  {id:'okada_check',days:[40,41],blks:['lunch'],guard:function(c){return c.hasOkada;},text:'Okada pauses at each table during lunch. Not intrusively — just a glance, a small check. She doesn\'t say anything. She doesn\'t need to.'}
+];
+
+// ═══ NARRATIVE ARCS — autonomous story threads ═══
+var ARCS=[
+  {id:'sato_hayashi_tension',name:'Static',
+   triggerCond:function(c){return c.hasSato&&c.hasHayashi;},
+   triggerWindow:[25,55],seedOffset:17,
+   beats:[
+    {duration:3,blks:['lunch'],
+     text:function(){return'<p class="world-note">Sato and Hayashi sat at the same table but with a gap between them that wasn\'t there before. Something shifted.</p>';},
+     refl:['Sato and Hayashi were off today. Not a fight — just a space that didn\'t exist last week.\n\nI didn\'t ask. Probably shouldn\'t have.']},
+    {duration:4,blks:['morning','lunch'],
+     text:function(){return'<p class="world-note">Hayashi\'s still talking. But Sato\'s answers are short. One word. Sometimes just a nod. Something is still unresolved.</p>';},
+     refl:['Whatever\'s between Sato and Hayashi — it\'s still there. You can feel it in the geometry of the lunch table.\n\nThese things take time. Or they explode. One of those.'],
+     choice:{desc:'Ask Sato quietly if everything\'s okay',stats:{kindness:12},rel:{Sato:1},flag:'helped_sato',outcome:'<p>Sato looks at you for a moment before answering. "Yeah." Then: "Thanks for asking." Two words. With Sato, that\'s everything.</p>'}},
+    {duration:2,blks:['lunch'],resolve:true,
+     text:function(){return'<p class="world-note">Hayashi said something in homeroom and Sato laughed — properly, not politely. Whatever it was between them, it\'s over.</p>';},
+     refl:['Sato and Hayashi are fine. They worked it out without any help from anyone.\n\nThat\'s how most things get resolved, actually.']}
+   ]},
+  {id:'komori_burnout',name:'The Weight of the Clipboard',
+   triggerCond:function(c){return c.hasKomori;},
+   triggerWindow:[35,65],seedOffset:29,
+   beats:[
+    {duration:4,blks:['morning','class'],
+     text:function(){return'<p class="world-note">Komori was here before the first bell. She\'s been here before the first bell every day this week. The clipboard is getting larger.</p>';},
+     refl:['Komori looked tired today. Not the regular kind — the kind where something has been asking too much for too long.\n\nShe didn\'t ask for help. She never does.']},
+    {duration:3,blks:['afterSchool'],
+     text:function(){return'<p class="world-note">Komori snapped at someone in the hallway. Quietly, but still. She looked surprised at herself afterward.</p>';},
+     refl:['Even Komori has limits. She hit one today. She recovered fast but she hit it.'],
+     choice:{desc:'Offer Komori some genuine help',stats:{kindness:15},rel:{Komori:2},flag:'helped_komori',outcome:'<p>She pauses mid-clipboard. Looks at you. "You don\'t have to." "I know," you say. She hands you half the stack. That\'s Komori for thank you.</p>'}},
+    {duration:2,blks:['class','afterSchool'],resolve:true,
+     text:function(){return'<p class="world-note">Komori delegated something today — visibly, officially, to Takagi. First time anyone\'s seen that. She looked lighter afterward.</p>';},
+     refl:['Komori figured it out. Whether with help or without. She looks less like she\'s carrying something impossible.\n\nGood.']}
+   ]},
+  {id:'window_girl_absence',name:'The Empty Seat',
+   triggerCond:function(c){return c.hasWindowGirl;},
+   triggerWindow:[40,100],seedOffset:53,
+   beats:[
+    {duration:3,blks:['class'],
+     text:function(){return'<p class="world-note">The seat by the window is empty. She\'s been there every day until now.</p>';},
+     refl:['She wasn\'t in class today.\n\nI didn\'t realize how much I\'d started using her presence as a reference point for the room.']},
+    {duration:3,blks:['class'],
+     text:function(){return'<p class="world-note">Still empty. Five days now. Nobody mentions it. Somehow that\'s weirder than if they had.</p>';},
+     refl:['Still not back. Komori confirmed it\'s not a medical thing, just quietly. I didn\'t ask.\n\nI noticed she didn\'t give me the whole story either.']},
+    {duration:1,blks:['class'],resolve:true,
+     text:function(){return'<p class="world-note">She came back. Same seat. No explanation given, none expected. Everything resumed like a paused track.</p>';},
+     refl:['She came back today. Sat in the same seat. The room settled back into itself.\n\nShe didn\'t explain. I didn\'t expect her to.']}
+   ]},
+  {id:'culture_festival_factions',name:'Haunted House vs. Café',
+   triggerCond:function(c){return(c.hasSato||c.hasHayashi)&&c.day>=160;},
+   triggerWindow:[160,170],seedOffset:41,
+   beats:[
+    {duration:5,blks:['lunch'],
+     text:function(){return'<p class="world-note">The class festival debate has officially split into two camps: haunted house (Hayashi, loud) vs. café (Komori, organized). The table politics are clarifying fast.</p>';},
+     refl:['The festival argument is consuming the class. Haunted house vs café.\n\nI have opinions. I haven\'t shared them yet.']},
+    {duration:5,blks:['lunch','afterSchool'],
+     text:function(){return'<p class="world-note">A third option was raised today. Nobody remembers who said it first. Now two people are claiming credit.</p>';},
+     choice:{desc:'Propose a compromise solution',stats:{charm:12,kindness:8},rel:{Hayashi:1,Komori:1},flag:'festival_diplomat',outcome:'<p>Both sides hear you out. Hayashi: "That could work." Komori, after a pause: "It could." The table dynamics shift slightly. You feel it.</p>'}},
+    {duration:2,blks:['lunch'],resolve:true,
+     text:function(){return'<p class="world-note">The class voted. Decision made. Execution begins Monday.</p>';},
+     refl:['The class picked something. It worked out. That rarely happens this cleanly.\n\nMaybe they\'re better at this than they look.']}
+   ]},
+  {id:'izumi_opening',name:'The Antenna',
+   triggerCond:function(c){return c.hasIzumi;},
+   triggerWindow:[50,90],seedOffset:61,
+   beats:[
+    {duration:4,blks:['class'],
+     text:function(){return'<p class="world-note">Izumi made a small edit to a comment someone made in class — not out loud, just passed a note forward. Whoever read it looked thoughtful.</p>';},
+     refl:['Izumi said something today. Indirectly, but still. He has opinions. He just routes them through other people.\n\nInteresting.']},
+    {duration:4,blks:['afterSchool'],
+     text:function(){return'<p class="world-note">Izumi walked in the same direction as Jorge but half a block behind. Not following — just going the same way. When their paths diverged, he gave a short nod.</p>';},
+     refl:['I think Izumi acknowledged me today. Or it might have been coincidence.\n\nWith him it\'s hard to tell on purpose.'],
+     choice:{desc:'Slow down, let the paths converge',stats:{kindness:10,charm:8},rel:{Izumi:2},flag:'met_izumi',outcome:'<p>He doesn\'t say much. You don\'t either. You walk together for about two minutes in perfect silence that doesn\'t feel awkward. That\'s rare. That\'s actually rare.</p>'}},
+    {duration:2,blks:['morning'],resolve:true,
+     text:function(){return'<p class="world-note">Izumi said hello to Jorge first today. Just two words. Didn\'t look surprised that he did it.</p>';},
+     refl:['Izumi said hi first. In his way.\n\nSomething opened. Small but open.']}
+   ]},
+  {id:'kuroda_crack',name:'Perfect Until',
+   triggerCond:function(c){return c.hasKuroda&&c.day>=55;},
+   triggerWindow:[55,85],seedOffset:47,
+   beats:[
+    {duration:3,blks:['class'],
+     text:function(){return'<p class="world-note">Kuroda got a question wrong in class. She corrected herself before the teacher did. Her expression for the rest of the period was unreadable.</p>';},
+     refl:['Kuroda missed one today. She knew before anyone else did.\n\nI don\'t think she\'s the kind of person who lets herself forget things like that.']},
+    {duration:3,blks:['lunch'],
+     text:function(){return'<p class="world-note">Kuroda ate alone today — not by accident. She had her notes out but wasn\'t reading them. Just sitting.</p>';},
+     choice:{desc:'Sit nearby, don\'t force conversation',stats:{kindness:10},rel:{Kuroda:2},flag:'sat_with_kuroda',outcome:'<p>You don\'t say anything. She doesn\'t either. After about five minutes she says, "You\'re not going to ask what\'s wrong?" "No." She exhales something small. "Good," she says, and goes back to her notes.</p>'}},
+    {duration:2,blks:['morning'],resolve:true,
+     text:function(){return'<p class="world-note">Kuroda\'s back to normal — or her version of it. Maybe she worked something out. Maybe she decided not to.</p>';},
+     refl:['Kuroda reset. Whatever it was — she decided to keep it private.\n\nRespect for that, actually.']}
+   ]},
+  {id:'ryusei_invitation',name:'Threshold',
+   triggerCond:function(c){return c.hasRyusei&&c.day>=35;},
+   triggerWindow:[35,65],seedOffset:23,
+   beats:[
+    {duration:3,blks:['afterSchool'],
+     text:function(){return'<p class="world-note">Ryusei paused at the track gate, looked at the field, then back at whoever was nearby. The kind of pause that\'s actually a question.</p>';},
+     refl:['Ryusei was at the track again after school. He runs until the field empties.\n\nThere\'s something easy about him. He doesn\'t make a performance of effort.']},
+    {duration:3,blks:['afterSchool'],
+     text:function(){return'<p class="world-note">Ryusei ran the 200m alone twice. His form is genuinely good. He didn\'t check if anyone was watching.</p>';},
+     choice:{desc:'Linger — watch, maybe say something',stats:{guts:10,charm:8},rel:{Ryusei:2},flag:'talked_ryusei',outcome:'<p>"You any good?" he asks, not unkindly. "At running? Not really." He grins: "Neither was I in year one." He doesn\'t elaborate. It doesn\'t feel like a dismissal.</p>'}},
+    {duration:2,blks:['morning'],resolve:true,
+     text:function(){return'<p class="world-note">Ryusei spotted Jorge in the hallway and said something about practice timing. Not an invitation exactly — just information, offered like it might be relevant.</p>';},
+     refl:['Ryusei mentioned practice hours unprompted. Either I\'m becoming part of the landscape or he\'s extending something.\n\nMaybe both.']}
+   ]}
+];
+
+// ═══ WORLD TICK — runs end of each day ═══
+function worldTick(day){
+  if(!G.world)G.world=defaultWorld();
+  var ctx=buildCtx(day,'morning');
+  // Activate new arcs
+  ARCS.forEach(function(arc){
+    if(G.world.arcs[arc.id])return;
+    if(!arc.triggerCond(ctx))return;
+    var w=arc.triggerWindow;
+    if(day<w[0]||day>w[1])return;
+    var r=mkRng(day*37+(arc.seedOffset||0));
+    // Higher chance as window approaches end
+    var pct=(day-w[0])/(w[1]-w[0]);
+    if(r()<0.15+pct*0.45)G.world.arcs[arc.id]={beat:0,startDay:day,done:false,playerInvolved:false};
+  });
+  // Advance arc beats
+  ARCS.forEach(function(arc){
+    var s=G.world.arcs[arc.id];if(!s||s.done)return;
+    var elapsed=day-s.startDay;
+    var phaseDur=0;for(var i=0;i<=s.beat;i++)phaseDur+=arc.beats[i]?arc.beats[i].duration:0;
+    if(elapsed>=phaseDur){
+      s.beat++;
+      if(s.beat>=arc.beats.length){s.done=true;}
+      else if(arc.beats[s.beat-1]&&arc.beats[s.beat-1].resolve)s.done=true;
+    }
+  });
+  // Bond8 achievement check
+  Object.keys(G.relations).forEach(function(k){if(G.relations[k]>=8&&G.ach.indexOf('bond8')<0)unlock('bond8');});
+  save();
+}
+
+// Inject arc/bg event ambient text into scene HTML
+function getWorldInjection(day,blk,ctx,rng){
+  if(!G.world)return'';
+  var notes=[];
+  // BG events
+  BG_EVENTS.forEach(function(ev){
+    if(ev.blks.indexOf(blk)===-1)return;
+    if(ev.days.indexOf(day)===-1)return;
+    if(G.world.bgFired[ev.id])return;
+    if(ev.guard&&!ev.guard(ctx))return;
+    G.world.bgFired[ev.id]=day;
+    var t=typeof ev.text==='function'?ev.text(ctx):ev.text;
+    notes.push('<p class="world-note">'+t+'</p>');
+  });
+  // Active arc beats
+  ARCS.forEach(function(arc){
+    var s=G.world.arcs[arc.id];if(!s||s.done)return;
+    var beat=arc.beats[s.beat];if(!beat||!beat.text)return;
+    if(beat.blks.indexOf(blk)===-1)return;
+    var t=typeof beat.text==='function'?beat.text(ctx):beat.text;
+    if(t)notes.push(t);
+  });
+  if(!notes.length)return'';
+  return'<div class="arc-events">'+notes.join('')+'</div>';
+}
+
+// Get optional arc intervention choice (appended to choice list)
+function getArcChoice(day,blk){
+  if(!G.world)return null;
+  var found=null;
+  ARCS.forEach(function(arc){
+    var s=G.world.arcs[arc.id];if(!s||s.done||found)return;
+    var beat=arc.beats[s.beat];if(!beat||!beat.choice)return;
+    if(beat.blks.indexOf(blk)===-1)return;
+    found={id:'W',lbl:'W) '+beat.choice.desc,type:'World',desc:beat.choice.desc,time:'30 min',risk:'low',
+           stats:beat.choice.stats||{},_arcId:arc.id,_arcChoice:beat.choice};
+  });
+  return found;
+}
 
 // Enhanced rv() that uses PL_CTX when a context object is available
 function rvCtx(t,rng,ctx){
@@ -604,6 +931,8 @@ function rvCtx(t,rng,ctx){
 
 // Build context-aware choices: stat rewards scale with actual ranks, risks reflect guts
 function buildChoices(tpl,blk,ctx,rng){
+  // Club fair: return pre-defined choices directly
+  if(tpl._clubfair)return tpl.choices||[];
   var base=(tpl.c||[]).slice(0,4);
   var labels=['A','B','C','D'];
   var types=['Standard','Social','Bold','Reflective'];
@@ -615,6 +944,8 @@ function buildChoices(tpl,blk,ctx,rng){
     var d=desc;
     // Exam pressure: replace evening standard choice with study option
     if(ctx.examSoon&&blk==='evening'&&i===0){d='Study for the upcoming exam — focus, no distractions';statProfiles[0]={knowledge:15};}
+    // Competition day: replace morning standard choice with competition prep
+    if(ctx.calEv&&ctx.calEv.type==='competition'&&blk==='morning'&&i===0){d='Focus on the competition — mental preparation';statProfiles[0]={knowledge:12,guts:8};}
     return{id:labels[i],lbl:labels[i]+') '+d,type:types[i],desc:d,time:'30 min',risk:risks[i],stats:statProfiles[i]};
   }).filter(Boolean);
 }
@@ -628,10 +959,20 @@ function makeProcOutcome(ch,ctx,rng){
       '<p>He moves through it with growing familiarity. Less foreign each time.</p>',
       '<p>Jorge manages it quietly, which is enough. Not everything needs to be remarkable to matter.</p>'
     ],
-    Social:[
-      ctx.hasSato&&ctx.bondSato>=2?'<p>Sato gives a brief nod — approval in its smallest form. He\'s learning what that means here.</p>':'<p>A small social exchange. It accumulates, invisibly.</p>',
-      ctx.charm>=3?'<p>It comes easier now — reading the room, finding the right timing. Charm is a skill. He\'s getting good at it.</p>':'<p>Not his strongest mode, but he tries. That counts for something.</p>'
-    ],
+    Social:(function(){
+      var pool=[
+        ctx.charm>=3?'<p>It comes easier now — reading the room, finding the right timing. Charm is a skill. He\'s getting good at it.</p>':'<p>Not his strongest mode, but he tries. That counts for something.</p>',
+        '<p>A small social exchange. It accumulates, invisibly.</p>'
+      ];
+      if(ctx.hasSato&&ctx.bondSato>=2)pool.push('<p>Sato gives a brief nod — approval in its smallest form. He\'s learning what that means here.</p>');
+      if(ctx.hasSato&&ctx.bondSato>=7)pool.push('<p>Sato says something that isn\'t about anything specific and is somehow about everything. Jorge files it. That\'s how things are with Sato now — layers.</p>');
+      if(ctx.hasRyusei&&ctx.bondRyusei>=5)pool.push('<p>Ryusei doesn\'t say much but he said it like Jorge was already part of something. That\'s new. Or maybe Jorge only just noticed.</p>');
+      if(ctx.hasKuroda&&ctx.bondKuroda>=5)pool.push('<p>Kuroda answered a question he didn\'t ask. She anticipated it. He\'s not sure if that\'s unsettling or exactly right.</p>');
+      if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=6)pool.push('<p>She looked up when he came in. Just for a moment. But she looked up.</p>');
+      if(ctx.hasHina&&ctx.bondHina>=6)pool.push('<p>Hina showed him something in her sketchbook — a small thing, a margin drawing — without explanation. He understood it anyway.</p>');
+      if(ctx.hasIzumi&&ctx.bondIzumi>=5)pool.push('<p>Izumi said something unprompted. Short, exact, useful. From him that\'s the social equivalent of a long conversation.</p>');
+      return pool;
+    })(),
     Bold:[
       ctx.guts>=3?'<p>He committed, and it landed. Confidence is a skill. He\'s actively building it, one moment at a time.</p>':'<p>Harder than expected. But done. The discomfort is information: next time will be easier.</p>',
       '<p>Not everyone would have tried that. Jorge did. That matters more than the outcome.</p>'
@@ -657,11 +998,64 @@ function makeProcOutcome(ch,ctx,rng){
 }
 
 var REFLS={
-early:['Another day. The school is becoming familiar — not the dramatic kind of familiar, just the kind where you stop thinking about which hallway leads where.\n\nI wonder if this is what settling in feels like. Not a moment. Just gradually less foreign.','I talked to more people today than my entire first week. Some conversations stuck. Most evaporated. That\'s probably normal.\n\nCarmen asked if I was happy. I said yes. I think I meant it.','Math is getting harder. Japanese is getting easier. Or maybe I\'m just getting used to not understanding everything.\n\nThe window girl said something in class that made the teacher pause. Nobody else seemed to catch it.','Weekend. Apartment quiet. Carmen out. Two hours studying. Then konbini for melon bread.\n\nBalance.','Sato remembered something I said last week. People don\'t remember things about background characters.\n\nMaybe I\'m not a background character.'],
-mid:['Exams coming. The school shifts — quieter, tenser. Even Hayashi is studying (badly).\n\nThe cherry blossoms are gone. The trees are just green now. When did that happen?','I dreamed about Mexico. Not the big things — just the sound of the street vendor, Carmen\'s old kitchen, the light at 6 PM.\n\nTokyo has its own light. I\'m learning it.','The Literary Club is becoming a real thing — not just a room, a place where my opinion matters. Takeda argued with me for twenty minutes. That felt like respect.\n\nThe window girl listened to everything. Then said: "You were both wrong." She was right.','Dad called. Twelve minutes. He asked about school. I gave him the version without follow-up questions.\n\nCarmen was listening from the kitchen. She made hot chocolate after. Didn\'t say why.','I have a routine. Walk, school, lunch table, club, Carmen, sleep. Not exciting. Stable.\n\nStable is underrated.'],
-late:['Six months. Half a year. I can navigate without Google Maps. I have a favorite konbini. Inside jokes.\n\nI don\'t think about Mexico every day anymore. I\'m not sure how to feel about that.','The seasons changed. Cold now. Carmen bought me a scarf — too colorful, obviously. I wear it.\n\nThe window girl was wearing one too. Neutral, as always. She glanced at mine. Said nothing. But she looked.','Culture festival planning consuming everyone. Hayashi: haunted house. Komori: cafe. Sato: doesn\'t care. I suggested food stall.\n\nPeople listened. That still surprises me.','Almost a year. Cherry trees budding again. Carmen measured me against the wall.\n\n"Mijo," she said. "You grew." She meant more than height.']
+early:[
+  'Another day. The school is becoming familiar — not the dramatic kind of familiar, just the kind where you stop thinking about which hallway leads where.\n\nI wonder if this is what settling in feels like. Not a moment. Just gradually less foreign.',
+  'I talked to more people today than my entire first week. Some conversations stuck. Most evaporated. That\'s probably normal.\n\nCarmen asked if I was happy. I said yes. I think I meant it.',
+  'Math is getting harder. Japanese is getting easier. Or maybe I\'m just getting used to not understanding everything.\n\nThe window girl said something in class that made the teacher pause. Nobody else seemed to catch it.',
+  'Weekend. Apartment quiet. Carmen out. Two hours studying. Then konbini for melon bread.\n\nBalance.',
+  'Sato remembered something I said last week. People don\'t remember things about background characters.\n\nMaybe I\'m not a background character.',
+  'There\'s a group of people I recognize now. Not friends, exactly — not yet. But familiar. That\'s different from last week.\n\nFamiliar is the door that opens into everything else.',
+  'Ashida said something today that suggested she knows more about what\'s happening in this school than the teachers do.\n\nThis might be useful. It might also be complicated. Probably both.',
+  'The Club Fair is coming. Every club wants something. I\'m not sure what I want yet.\n\nBut wanting something feels like progress.'
+],
+mid:[
+  'Exams coming. The school shifts — quieter, tenser. Even Hayashi is studying (badly).\n\nThe cherry blossoms are gone. The trees are just green now. When did that happen?',
+  'I dreamed about Mexico. Not the big things — just the sound of the street vendor, Carmen\'s old kitchen, the light at 6 PM.\n\nTokyo has its own light. I\'m learning it.',
+  'The club is becoming a real thing — not just a room, a place where my opinion matters. That felt like respect.\n\nI didn\'t expect to care this much about being good at it.',
+  'Dad called. Twelve minutes. He asked about school. I gave him the version without follow-up questions.\n\nCarmen was listening from the kitchen. She made hot chocolate after. Didn\'t say why.',
+  'I have a routine. Walk, school, lunch table, club, Carmen, sleep. Not exciting. Stable.\n\nStable is underrated.',
+  'Ryusei runs like he\'s doing arithmetic. Everything measured. Every motion accounted for.\n\nI\'m not like that. I wonder if that\'s a problem or just a difference.',
+  'Kuroda got a perfect score on the quiz. She didn\'t celebrate. She checked twice.\n\nI don\'t know if I find that admirable or exhausting. Maybe it\'s the same thing.',
+  'Izumi said three words to me today. That\'s the most he\'s ever said.\n\nFor some reason I remember all three.',
+  'Abe made the whole class laugh during homeroom. Real laughter — not polite laughter.\n\nAfterward he looked briefly surprised. Like it still catches him off guard when it works.',
+  'The world keeps happening around me. Sato and Hayashi have their thing. Komori has her weight. Nishikawa has her plans.\n\nI\'m part of the world now. That happened slowly, then all at once.'
+],
+late:[
+  'Six months. Half a year. I can navigate without Google Maps. I have a favorite konbini. Inside jokes.\n\nI don\'t think about Mexico every day anymore. I\'m not sure how to feel about that.',
+  'The seasons changed. Cold now. Carmen bought me a scarf — too colorful, obviously. I wear it.\n\nSomeone at school noticed it. Said nothing. But they looked.',
+  'Culture festival planning consuming everyone. Multiple opinions. No consensus.\n\nI suggested something. People listened. That still surprises me.',
+  'Almost a year. Cherry trees budding again. Carmen measured me against the wall.\n\n"Mijo," she said. "You grew." She meant more than height.',
+  'I know who I eat lunch with. I know who I walk home near. I know whose absence I\'d notice.\n\nThat\'s not nothing. That\'s almost everything.',
+  'There\'s someone in this school — I\'m not sure what to call what we are.\n\nNot friends. Not strangers. Something with its own specific weight. I don\'t name it yet.',
+  'Competition results posted today. Mine included.\n\nI didn\'t place first. That\'s fine. I placed. That\'s the actual thing.',
+  'Tokyo in winter is a specific kind of cold. It requires decisions.\n\nI\'ve been making decisions here for almost a year. I\'m getting better at it.'
+]
 };
-function getRefl(d,rng){var p=d<=30?REFLS.early:d<=100?REFLS.mid:REFLS.late;return pick(p,rng);}
+function getRefl(d,rng){
+  // Arc-aware: if an active arc has a refl field, use it occasionally
+  if(G.world&&G.world.arcs){
+    var arcKeys=Object.keys(G.world.arcs);
+    for(var i=0;i<arcKeys.length;i++){
+      var s=G.world.arcs[arcKeys[i]];if(!s||s.done)continue;
+      var arc=ARCS.filter(function(a){return a.id===arcKeys[i];})[0];if(!arc)continue;
+      var beat=arc.beats[s.beat];if(!beat||!beat.refl)continue;
+      if(rng()<0.55)return pick(beat.refl,rng);
+    }
+  }
+  var p=d<=30?REFLS.early:d<=100?REFLS.mid:REFLS.late;
+  return pick(p,rng);
+}
+
+// Club Fair template — day 22 afterSchool if no club joined yet
+var TPL_CLUBFAIR={_clubfair:true,html:'<p>Club Fair. The courtyard has been colonized by banners, clipboards, and competitive enthusiasm. Every club has a table. Every table has someone who would very much like Jorge to sign something.</p><p>He walks the row slowly. The Literary Club (Room 204, Tuesdays/Thursdays). The Film Club (Mondays). The Art Club (Wednesdays/Fridays). Track Club (Mon/Wed/Fri). School Newspaper (Tues/Thu). Music Club (Tues/Fri).</p><div class="inner-voice">One table. Pick one. Or walk past all of them — that\'s also a choice.</div>',
+choices:[
+  {id:'A',lbl:'A) Literary Club',type:'Social',desc:'Books, debates, Room 204. Tuesdays and Thursdays.',time:'30 min',risk:'low',stats:{knowledge:8,charm:5},_club:'lit',_clubach:'first_club'},
+  {id:'B',lbl:'B) Film Club',type:'Reflective',desc:'Weekly screenings and discussion. Mondays.',time:'30 min',risk:'low',stats:{knowledge:8,charm:5},_club:'film',_clubach:'joined_film'},
+  {id:'C',lbl:'C) Art Club',type:'Bold',desc:'Creative expression, Shirogane\'s world. Wed/Fri.',time:'30 min',risk:'low',stats:{guts:8,charm:5},_club:'art',_clubach:'joined_art'},
+  {id:'D',lbl:'D) Track Club',type:'Standard',desc:'Run, compete, improve. Mon/Wed/Fri.',time:'30 min',risk:'low',stats:{guts:10,proficiency:5},_club:'track',_clubach:'joined_track'},
+  {id:'E',lbl:'E) School Newspaper',type:'Social',desc:'Writing, deadlines, Yamamoto-sensei. Tues/Thu.',time:'30 min',risk:'low',stats:{knowledge:8,kindness:5},_club:'newspaper',_clubach:'joined_newspaper'},
+  {id:'F',lbl:'F) Music Club',type:'Reflective',desc:'Small ensemble, Tues/Fri.',time:'30 min',risk:'low',stats:{knowledge:5,kindness:8},_club:'music',_clubach:'joined_music'}
+]};
 
 var SCH_BLK=['morning','class','lunch','afterSchool','evening','sleep'];
 var FREE_BLK=['morning','afterSchool','evening','sleep'];
@@ -686,7 +1080,14 @@ function genScene(day,blk){
     pool=free?TPL_WA:TPL_A;
     loc=free?'Tokyo':'Kōsei';time=free?'14:00':'15:30';label='After School';
     if(!free&&day%5===0)pool=[TPL_A[2]];
-    if(!free&&(getDow(day)===2||getDow(day)===4)&&ctx.litClub)pool=[TPL_A[0]];
+    // Club Fair — day 22, no club yet
+    if(!free&&day===22&&!ctx.activeClub){pool=[TPL_CLUBFAIR];loc='Kōsei Courtyard';}
+    // Multi-club scheduling
+    else if(!free&&ctx.activeClub){
+      var CLUB_DAYS={lit:[2,4],film:[1],art:[3,5],track:[1,3,5],newspaper:[2,4],music:[2,5]};
+      var cd2=CLUB_DAYS[ctx.activeClub];
+      if(cd2&&cd2.indexOf(getDow(day))>-1)pool=[TPL_A[0]];
+    }
   }else if(blk==='evening'){
     // Group chat template only if joined; Carmen-away template 30% chance
     var ePool=[TPL_E[0]];
@@ -698,16 +1099,24 @@ function genScene(day,blk){
   var tpl=pick(pool,rng);
   // Use context-aware template resolution instead of plain rv()
   var html=rvCtx(tpl.html,rng,ctx);
+  // Inject world/arc ambient events
+  html+=getWorldInjection(day,blk,ctx,rng);
   // Append exam pressure note to morning scenes when exam is close
   if(blk==='morning'&&ctx.examSoon){
     var dl=ctx.examDay-day;
     html+='<div class="inner-voice">'+(dl===1?'Tomorrow.':dl+' days.')+' The exam sits at the edge of everything today.</div>';
+  }
+  // Competition day banner
+  if(ctx.calEv&&ctx.calEv.type==='competition'&&blk==='morning'){
+    html+='<div class="inner-voice">'+ctx.calEv.title+' today. He\'s been thinking about it all morning.</div>';
   }
   var calEv=ctx.calEv;
   var calHtml=(calEv&&blk==='morning')?'<div class="trans-card"><strong>'+calEv.title+'</strong> — '+calEv.desc+'</div>':'';
   var trans=(blk==='class'||blk==='lunch')?'<div class="trans-card">'+pick(['The blocks between classes passed in their usual rhythm — hallway traffic, bathroom breaks, the distant sound of a ball bouncing from the gym wing.','A short break. The hallway smelled like floor cleaner and cologne that was trying too hard.','Ten minutes between classes. Jorge reorganized his notes and watched people pass.','Brief pause. Checked phone — no new messages worth replying to.','The hallway current carried him between rooms like a leaf in a stream.'],rng)+'</div>':'';
   // Context-aware choices: rewards scale with stats, risks reflect guts level
   var choices=buildChoices(tpl,blk,ctx,rng);
+  // Optional arc intervention choice
+  var arcCh=getArcChoice(day,blk);if(arcCh)choices.push(arcCh);
   // Dynamic arch tag based on narrative phase
   var archPhase=ctx.phase==='early'?'Finding Footing':ctx.phase==='mid'?'Belonging':'Becoming';
   // Academic status: reflects upcoming exam pressure
@@ -718,7 +1127,7 @@ function genScene(day,blk){
 
 // ═══ CORE FUNCTIONS ═══
 function save(){try{localStorage.setItem('td4',JSON.stringify(G));toast('💾 Progress Saved','Day '+G.day+' saved.',2500);}catch(e){}}
-function load(){try{var s=localStorage.getItem('td4');if(s){var d=JSON.parse(s);Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});}}catch(e){G.scene='intro';}}
+function load(){try{var s=localStorage.getItem('td4');if(s){var d=JSON.parse(s);Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});}}catch(e){G.scene='intro';}if(!G.world)G.world=defaultWorld();}
 function el(id){return document.getElementById(id);}
 function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
 function gainStat(k,v){if(!G.stats[k])return;G.stats[k].xp+=v;var thr=G.stats[k].rank*30;if(G.stats[k].xp>=thr&&G.stats[k].rank<5){G.stats[k].rank++;G.stats[k].xp=0;toast(k.toUpperCase()+' UP!','Rank '+G.stats[k].rank+'!',3500);}}
@@ -766,7 +1175,7 @@ function renderSceneUI(sc,nxt){
     var rc=c.risk==='low'?'c-low':c.risk==='med'?'c-med':'c-high';
     out+='<button class="choice" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')"><span class="c-label">'+c.lbl+' — '+c.type+'</span>'+c.desc+'<div class="c-meta"><span class="'+rc+'">⏱ '+c.time+' | ⚠ '+c.risk+'</span></div></button>';
   });
-  out+='<div class="choice" style="cursor:default"><span class="c-label">E) FREE — Write your own action</span><div class="open-row"><input class="open-in" id="open-in" type="text" placeholder="What does Jorge do?" maxlength="200"><button class="go-btn" id="open-go" onclick="doOpen(\''+(nxt||'')+'\')">→</button></div><div class="c-meta">⏱ Custom | ⚠ varies</div></div>';
+  if(!sc._clubfair){out+='<div class="choice" style="cursor:default"><span class="c-label">✏) FREE — Write your own action</span><div class="open-row"><input class="open-in" id="open-in" type="text" placeholder="What does Jorge do?" maxlength="200"><button class="go-btn" id="open-go" onclick="doOpen(\''+(nxt||'')+'\')">→</button></div><div class="c-meta">⏱ Custom | ⚠ varies</div></div>';}
   out+='</div>';
   el('scene-area').innerHTML=out;
   el('scene-area').scrollIntoView({behavior:'smooth',block:'start'});
@@ -781,14 +1190,30 @@ function doChoice(cid,nxt){
   // Hand-authored scene: use scripted outcome
   if(sc.out&&sc.out[cid]){var o=sc.out[cid];applyOut(o);showOut(o.html||'<p>Your choice plays out.</p>',o.next||nxt,sc.arch);return;}
   // Procedural scene: use NCE to generate context-aware outcome
-  var ch=sc.choices.filter(function(c){return c.id===cid;})[0];
-  if(ch){
-    applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});
-    var rng=mkRng(G.day*50+cid.charCodeAt(0));
-    var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
-    var outcomeHtml=makeProcOutcome(ch,ctx,rng);
-    showOut(outcomeHtml,nxt,sc.arch);
+  var ch=sc.choices?sc.choices.filter(function(c){return c.id===cid;})[0]:null;
+  if(!ch)return;
+  // Club Fair: join a club
+  if(ch._club){
+    G.flags['joined_'+ch._club]=true;G.flags.active_club=ch._club;
+    applyOut({stats:ch.stats||{},ach:ch._clubach,log:'Joined '+ch._club+' club at the Club Fair.'});
+    unlock('club_fair');
+    showOut('<p>Jorge signs the sheet. The club member smiles.</p><p>Tuesdays and Thursdays — or whatever the schedule is. It\'s in the calendar now. That makes it real.</p>',nxt,'Club Member');
+    return;
   }
+  // Arc intervention choice
+  if(ch._arcChoice){
+    var ac=ch._arcChoice;
+    applyOut({stats:ac.stats||{},rel:ac.rel||{},log:ac.desc||'Intervened in a situation.'});
+    if(ac.flag)addMem(ac.flag,1,ac.desc);
+    if(G.world&&G.world.arcs[ch._arcId])G.world.arcs[ch._arcId].playerInvolved=true;
+    showOut(ac.outcome||'<p>Jorge does something. The situation shifts slightly.</p>',nxt,'World');
+    return;
+  }
+  applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});
+  var rng=mkRng(G.day*50+cid.charCodeAt(0));
+  var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
+  var outcomeHtml=makeProcOutcome(ch,ctx,rng);
+  showOut(outcomeHtml,nxt,sc.arch);
 }
 
 function doOpen(nxt){
@@ -819,11 +1244,24 @@ function renderRefl(sc){
 
 function renderProcRefl(){
   el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day settles. Jorge is in bed. The apartment is quiet except for the neighbor\'s TV — a late drama tonight, muffled emotional music through the wall.</p></div></div>';
+  worldTick(G.day);
   var rng=mkRng(G.day*31);var text=getRefl(G.day,rng);
   G.log.push('[Day '+G.day+'] Day completed.');
   if(G.day===5)unlock('day5_unlock');if(G.day===7)unlock('weekend_free');
   if(CAL_EVENTS[G.day])G.log.push('[Day '+G.day+'] '+CAL_EVENTS[G.day].title);
-  Object.keys(G.relations).forEach(function(k){if(G.relations[k]>=5&&G.ach.indexOf('bond5')<0)unlock('bond5');});
+  // Competition day auto-achievements based on stats
+  if(CAL_EVENTS[G.day]&&CAL_EVENTS[G.day].type==='competition'){
+    var ev=CAL_EVENTS[G.day];
+    if(ev.title==='Inter-class Quiz'&&G.stats.knowledge.rank>=3)unlock('quiz_top');
+    if(ev.title==='Track Meet'&&G.flags.active_club==='track'&&G.stats.proficiency.rank>=3)unlock('track_pb');
+    if(ev.title==='Art Exhibition'&&G.flags.active_club==='art')unlock('art_exhibited');
+    if(ev.title==='Newspaper Deadline'&&G.flags.active_club==='newspaper')unlock('paper_published');
+    if(ev.title==='Literary Debate'&&G.flags.active_club==='lit'&&G.stats.knowledge.rank>=3)unlock('sports_podium');
+  }
+  Object.keys(G.relations).forEach(function(k){
+    if(G.relations[k]>=5&&G.ach.indexOf('bond5')<0)unlock('bond5');
+    if(G.relations[k]>=8&&G.ach.indexOf('bond8')<0)unlock('bond8');
+  });
   var ref=el('reflection');ref.innerHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+text.replace(/\n/g,'</p><p>')+'</p></div>';
   var btn=document.createElement('button');btn.className='go-next';
   btn.textContent=G.day>=365?'🌸 The End':'Day '+(G.day+1)+' →';
