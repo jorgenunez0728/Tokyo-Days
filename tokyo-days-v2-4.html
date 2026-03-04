@@ -167,7 +167,9 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 <div class="tab-title" style="color:var(--gold)">📸 MOMENTS</div><div class="tab-sub">Memories collected over the year. The story you built, fragment by fragment.</div>
 <div class="gallery-grid" id="gallery-grid"></div></div></div>
 <div class="notif" id="notif"><div class="notif-t" id="notif-t"></div><div class="notif-b" id="notif-b"></div></div>
-<div style="position:fixed;bottom:14px;left:14px;z-index:300;">
+<div style="position:fixed;bottom:14px;left:14px;z-index:300;display:flex;gap:6px;align-items:center;">
+<button onclick="exportSave()" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);border-radius:8px;color:var(--mint);font-size:.64rem;padding:4px 9px;cursor:pointer;">💾 Guardar</button>
+<button onclick="importSave()" style="background:rgba(91,200,255,.1);border:1px solid rgba(91,200,255,.25);border-radius:8px;color:var(--sky);font-size:.64rem;padding:4px 9px;cursor:pointer;">📂 Cargar</button>
 <button onclick="resetGame()" style="background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.22);border-radius:8px;color:var(--red);font-size:.64rem;padding:4px 9px;cursor:pointer;">↺ Reset</button>
 </div>
 <script>
@@ -1573,6 +1575,41 @@ document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.toggle('ac
 document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='tab-'+t);});
 if(t==='characters')renderChars();if(t==='stats')refreshStats();if(t==='calendar')renderCal();if(t==='moments')renderGallery();});
 
+function exportSave(){
+  var data=JSON.stringify(G,null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='tokyo-days-dia-'+G.day+'.json';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('💾 Partida exportada','Archivo: tokyo-days-dia-'+G.day+'.json',3000);
+}
+function importSave(){
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var d=JSON.parse(ev.target.result);
+        Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});
+        if(!G.world)G.world=defaultWorld();
+        if(!G.world.gallery)G.world.gallery=[];
+        if(G.world.carmenPhase===undefined)G.world.carmenPhase=0;
+        if(G.world.carmenMood===undefined)G.world.carmenMood=7;
+        if(!G.world.missedWindows)G.world.missedWindows=[];
+        if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};
+        save();updateProg();refreshStats();
+        renderScene(G.scene==='__proc__'||!SC[G.scene]?'__proc__':G.scene);
+        toast('📂 Partida cargada','Día '+G.day+' restaurado correctamente.',4000);
+      }catch(err){toast('❌ Error','Archivo no válido o corrupto.',4000);}
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
 function resetGame(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('td4');location.reload();}
 
 // ═══ INIT ═══
