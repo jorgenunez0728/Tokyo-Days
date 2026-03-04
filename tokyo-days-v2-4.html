@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tokyo Days — Makoto Jorge</title>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@300;400;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{--sakura:#FF6B9D;--pink-soft:#FFB3CC;--sky:#5BC8FF;--gold:#FFD166;--mint:#06D6A0;--navy:#0A1628;--panel:#0F1E3A;--panel2:#162340;--ink:#E8EEF8;--dim:#7A8EAA;--border:rgba(91,200,255,0.15);--red:#FF4D6D;--purple:#A855F7}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--ink);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 70% 50% at 85% 5%,rgba(255,107,157,.1) 0%,transparent 55%),radial-gradient(ellipse 50% 60% at 5% 90%,rgba(91,200,255,.08) 0%,transparent 55%);pointer-events:none}
+.petal{position:fixed;top:-12px;width:9px;height:9px;border-radius:50% 0 50% 0;background:var(--pink-soft);opacity:.3;pointer-events:none;z-index:1;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(105vh) rotate(400deg) translateX(40px);opacity:0}}
+header{position:sticky;top:0;z-index:200;background:rgba(10,22,40,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:12px}
+.logo{font-family:'Dela Gothic One',sans-serif;font-size:1.05rem;color:var(--sakura);letter-spacing:1px;white-space:nowrap}.logo span{color:var(--sky)}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.tab-btn{background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--dim);font-family:'Noto Sans JP',sans-serif;font-size:.76rem;padding:5px 13px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{border-color:var(--sky);color:var(--sky)}
+.tab-btn.active{background:linear-gradient(135deg,var(--sakura),var(--purple));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 2px 14px rgba(255,107,157,.4)}
+.tab-panel{display:none;position:relative;z-index:2}.tab-panel.active{display:block}
+.story-bar{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 15px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.sb-label{font-size:.7rem;color:var(--dim);white-space:nowrap}.sb-track{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+.sb-fill{height:100%;background:linear-gradient(90deg,var(--sakura),var(--gold));border-radius:5px;transition:width 1s}
+.sb-val{font-size:.7rem;color:var(--gold);white-space:nowrap}
+.hud{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px}
+.badge{font-size:.68rem;padding:4px 10px;border-radius:20px;font-weight:700;letter-spacing:.4px}
+.b-date{background:rgba(255,209,102,.12);color:var(--gold);border:1px solid rgba(255,209,102,.25)}
+.b-time{background:rgba(91,200,255,.1);color:var(--sky);border:1px solid rgba(91,200,255,.22)}
+.b-wx{background:rgba(6,214,160,.1);color:var(--mint);border:1px solid rgba(6,214,160,.22)}
+.b-loc{background:rgba(255,107,157,.1);color:var(--sakura);border:1px solid rgba(255,107,157,.22)}
+.b-acad{background:rgba(6,214,160,.1);color:var(--mint);border:1px solid rgba(6,214,160,.22)}.b-acad.warn{background:rgba(255,77,109,.1);color:var(--red);border:1px solid rgba(255,77,109,.22)}
+.scene-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 6px 28px rgba(0,0,0,.4)}
+.scene-header{padding:8px 16px;background:linear-gradient(90deg,rgba(255,107,157,.07),transparent);border-bottom:1px solid var(--border);font-size:.68rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;font-family:'Dela Gothic One',sans-serif}
+.scene-body{padding:18px 20px;line-height:1.95;font-size:.9rem}.scene-body p{margin-bottom:12px}.scene-body p:last-child{margin-bottom:0}
+.dialogue{border-left:3px solid var(--sakura);padding:8px 13px;margin:10px 0;background:rgba(255,107,157,.05);border-radius:0 8px 8px 0;color:#fff;font-style:italic}
+.inner-voice{border-left:3px solid var(--purple);padding:8px 13px;margin:10px 0;background:rgba(168,85,247,.06);border-radius:0 8px 8px 0;font-family:'Caveat',cursive;font-size:1.05rem;color:#C4A8FF}
+.trans-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:.84rem;color:var(--dim);line-height:1.8;font-style:italic;border-left:3px solid rgba(91,200,255,.2)}
+.arch-note{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:.75rem;color:var(--dim);font-style:italic}
+.dec-card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+.dec-title{font-family:'Dela Gothic One',sans-serif;font-size:.8rem;color:var(--gold);letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:7px}.dec-title::before{content:'⬡';color:var(--sakura)}
+.choice{display:block;width:100%;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:11px;color:var(--ink);text-align:left;padding:12px 15px;margin-bottom:9px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:.86rem;line-height:1.65;transition:all .22s}
+.choice:hover:not(:disabled){border-color:var(--sakura);transform:translateX(3px);background:rgba(255,107,157,.07)}
+.choice:disabled{opacity:.45;cursor:not-allowed;transform:none}.choice.selected{border-color:var(--sakura);background:rgba(255,107,157,.1)}
+.c-label{font-family:'Dela Gothic One',sans-serif;font-size:.76rem;color:var(--sakura);display:block;margin-bottom:3px}
+.c-meta{font-size:.7rem;color:var(--dim);margin-top:5px}.c-low{color:var(--mint)}.c-med{color:var(--gold)}.c-high{color:var(--red)}
+.open-row{display:flex;gap:7px;margin-top:3px}
+.open-in{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;color:var(--ink);padding:9px 12px;font-family:'Noto Sans JP',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s}
+.open-in:focus{border-color:var(--sky)}.open-in::placeholder{color:var(--dim)}
+.go-btn{background:linear-gradient(135deg,var(--sakura),var(--purple));border:none;border-radius:9px;color:#fff;padding:9px 16px;cursor:pointer;font-weight:700;font-size:.82rem;transition:opacity .2s;white-space:nowrap}
+.go-btn:hover{opacity:.85}.go-btn:disabled{opacity:.4;cursor:not-allowed}
+.outcome{background:linear-gradient(135deg,rgba(255,107,157,.06),rgba(91,200,255,.04));border:1px solid rgba(255,107,157,.22);border-radius:13px;padding:16px 18px;margin-bottom:16px;display:none}
+.outcome.show{display:block;animation:fadeUp .35s ease}.outcome h3{font-family:'Dela Gothic One',sans-serif;font-size:.76rem;color:var(--gold);letter-spacing:2px;margin-bottom:10px}.outcome p{font-size:.88rem;line-height:1.85;margin-bottom:10px}
+.reflection{background:linear-gradient(135deg,rgba(10,22,40,.95),rgba(22,35,64,.95));border:1px solid rgba(168,85,247,.28);border-radius:16px;padding:22px;margin-bottom:16px;display:none}
+.reflection.show{display:block;animation:fadeUp .4s ease}.reflection h3{font-family:'Dela Gothic One',sans-serif;color:var(--purple);font-size:.76rem;letter-spacing:2px;margin-bottom:10px}
+.reflection p{font-family:'Caveat',cursive;font-size:1.12rem;line-height:1.95;color:#D0B8FF}
+.go-next{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--sakura),var(--purple));border:none;border-radius:28px;color:#fff;font-family:'Dela Gothic One',sans-serif;font-size:.82rem;letter-spacing:1px;padding:11px 26px;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(255,107,157,.3);transition:all .2s}
+.go-next:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(255,107,157,.45)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.notif{position:fixed;bottom:22px;right:20px;z-index:500;background:var(--panel2);border:1px solid var(--sakura);border-radius:13px;padding:12px 16px;max-width:270px;box-shadow:0 8px 22px rgba(0,0,0,.5);display:none;animation:slideIn .28s ease}.notif.show{display:block}
+.notif-t{font-family:'Dela Gothic One',sans-serif;font-size:.76rem;color:var(--gold);margin-bottom:5px}.notif-b{font-size:.8rem;color:var(--ink);line-height:1.55}
+@keyframes slideIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+#tab-characters{padding:22px 14px 70px;max-width:880px;margin:0 auto}
+.tab-title{font-family:'Dela Gothic One',sans-serif;font-size:1.5rem;color:var(--sakura);margin-bottom:5px}.tab-sub{color:var(--dim);font-size:.83rem;margin-bottom:22px}
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.char-card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:18px 14px;text-align:center;transition:all .22s;position:relative;overflow:hidden}
+.char-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cgrad,linear-gradient(90deg,var(--sakura),var(--purple)))}
+.char-card:not(.locked):hover{transform:translateY(-3px);border-color:var(--sakura);box-shadow:0 7px 22px rgba(255,107,157,.18)}
+.char-card.locked{opacity:.38;filter:grayscale(.8)}
+.char-av{width:58px;height:58px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;border:2px solid var(--border)}
+.char-name{font-family:'Dela Gothic One',sans-serif;font-size:.9rem;margin-bottom:2px}
+.char-role{font-size:.68rem;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase}
+.char-trope{display:inline-block;background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.22);border-radius:20px;font-size:.65rem;color:var(--sakura);padding:2px 9px;margin-bottom:8px}
+.char-desc{font-size:.75rem;color:var(--dim);line-height:1.6;text-align:left;margin-top:6px}
+.bond-wrap{margin-top:10px}.bond-lbl{font-size:.65rem;color:var(--dim);margin-bottom:3px}
+.bond-bar{height:4px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.bond-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sakura),var(--purple));transition:width .6s}
+.bond-v{font-size:.68rem;color:var(--pink-soft);margin-top:3px}.unlk-badge{position:absolute;top:9px;right:9px;background:var(--gold);color:var(--navy);font-size:.58rem;font-weight:700;border-radius:20px;padding:2px 7px;letter-spacing:.4px}
+#tab-stats{padding:22px 14px 70px;max-width:680px;margin:0 auto}
+.player-hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.player-av{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--sakura),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.85rem;flex-shrink:0;box-shadow:0 4px 16px rgba(255,107,157,.4)}
+.player-info h2{font-family:'Dela Gothic One',sans-serif;font-size:1.22rem}.player-info p{font-size:.8rem;color:var(--dim);margin-top:3px}
+.stat-sec{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px}
+.sec-title{font-family:'Dela Gothic One',sans-serif;font-size:.76rem;color:var(--gold);letter-spacing:2px;margin-bottom:14px;text-transform:uppercase}
+.stat-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}.s-icon{font-size:1rem;width:22px;text-align:center}.s-name{font-size:.8rem;width:95px}
+.s-track{flex:1}.s-bar{height:7px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden}
+.s-fill{height:100%;border-radius:7px;transition:width .9s cubic-bezier(.34,1.56,.64,1)}
+.s-stars{font-size:.65rem;color:var(--gold);margin-top:2px}.s-rank{font-family:'Dela Gothic One',sans-serif;font-size:.72rem;color:var(--gold);width:38px;text-align:right}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ach-item{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:9px}
+.ach-item.locked{opacity:.28}.ach-icon{font-size:1.1rem}.ach-name{font-size:.76rem}.ach-desc{font-size:.66rem;color:var(--dim)}
+.log-entry{font-size:.8rem;color:var(--dim);line-height:1.85}.log-entry p{margin-bottom:4px}
+#tab-calendar{padding:22px 14px 70px;max-width:780px;margin:0 auto}
+.month-lbl{font-family:'Dela Gothic One',sans-serif;font-size:.95rem;letter-spacing:1px;margin-bottom:10px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:24px}
+.cal-dn{text-align:center;font-size:.64rem;color:var(--dim);padding:3px 0;letter-spacing:.8px}
+.cal-d{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.78rem;background:rgba(255,255,255,.025);border:1px solid transparent}
+.cal-d.empty{background:transparent;border-color:transparent}.cal-d.past{color:var(--dim)}
+.cal-d.cur{background:rgba(255,107,157,.14);border-color:var(--sakura);color:var(--sakura);font-weight:700;box-shadow:0 0 10px rgba(255,107,157,.18)}
+.cal-d.ev{border-color:rgba(91,200,255,.35);background:rgba(91,200,255,.05)}
+.cal-d.hol{border-color:rgba(255,209,102,.35);background:rgba(255,209,102,.05);color:var(--gold)}
+.cal-d .dot{width:3px;height:3px;border-radius:50%;background:var(--sky);margin-top:1px}
+.tl{display:flex;flex-direction:column}.tl-item{display:flex;gap:14px;position:relative;padding-bottom:18px}
+.tl-item::before{content:'';position:absolute;left:13px;top:26px;bottom:0;width:1px;background:var(--border)}
+.tl-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;position:relative;z-index:1}
+.td-done{background:rgba(6,214,160,.18);border:2px solid var(--mint)}.td-cur{background:rgba(255,107,157,.18);border:2px solid var(--sakura);animation:pulse 2s infinite}
+.td-fut{background:rgba(255,255,255,.04);border:2px solid var(--border)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,157,.3)}50%{box-shadow:0 0 0 7px rgba(255,107,157,0)}}
+.tl-content{padding-top:3px}.tl-date{font-size:.68rem;color:var(--dim);margin-bottom:1px}.tl-ev{font-size:.85rem}.tl-ev.done{text-decoration:line-through;color:var(--dim)}.tl-desc{font-size:.73rem;color:var(--dim);margin-top:1px}
+@media(max-width:480px){.char-grid{grid-template-columns:repeat(2,1fr)}.ach-grid{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,107,157,.25);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="petal" style="left:4%;animation-duration:7s;animation-delay:0s"></div>
+<div class="petal" style="left:14%;animation-duration:9.5s;animation-delay:1.2s;width:7px;height:7px"></div>
+<div class="petal" style="left:28%;animation-duration:6.5s;animation-delay:2.4s"></div>
+<div class="petal" style="left:47%;animation-duration:11s;animation-delay:.6s;width:8px;height:8px"></div>
+<div class="petal" style="left:63%;animation-duration:8s;animation-delay:3.1s"></div>
+<div class="petal" style="left:79%;animation-duration:10s;animation-delay:1.8s;width:6px;height:6px"></div>
+<div class="petal" style="left:91%;animation-duration:7.5s;animation-delay:4.5s"></div>
+<header><div class="logo">TOKYO <span>DAYS</span></div>
+<nav id="nav">
+<button class="tab-btn active" data-tab="game">🎮 Story</button>
+<button class="tab-btn" data-tab="characters">👥 Characters</button>
+<button class="tab-btn" data-tab="stats">📊 Stats</button>
+<button class="tab-btn" data-tab="calendar">📅 Calendar</button>
+</nav></header>
+<div id="tab-game" class="tab-panel active"><div style="max-width:780px;margin:0 auto;padding:20px 14px 70px;">
+<div class="story-bar"><span class="sb-label">STORY PROGRESS</span><div class="sb-track"><div class="sb-fill" id="sb-fill" style="width:1%"></div></div><span class="sb-val" id="sb-val">Day 1 / 365</span></div>
+<div id="scene-area"></div>
+<div class="outcome" id="outcome"><h3>— OUTCOME —</h3><div id="outcome-body"></div></div>
+<div class="reflection" id="reflection"><h3>💭 NIGHT THOUGHTS</h3><div id="refl-body"></div></div>
+</div></div>
+<div id="tab-characters" class="tab-panel"><div style="max-width:880px;margin:0 auto;padding:22px 14px 70px;">
+<div class="tab-title">CHARACTER CODEX</div><div class="tab-sub">Everyone you've encountered. More unlock as your story unfolds.</div>
+<div class="char-grid" id="char-grid"></div></div></div>
+<div id="tab-stats" class="tab-panel"><div style="max-width:680px;margin:0 auto;padding:22px 14px 70px;">
+<div class="player-hdr"><div class="player-av">🧑</div><div class="player-info"><h2>Makoto Jorge</h2><p>Transfer Student · Kōsei Junior High</p></div></div>
+<div class="stat-sec"><div class="sec-title">⚔ Social Stats</div><div id="stat-rows"></div></div>
+<div class="stat-sec"><div class="sec-title">🏆 Achievements</div><div class="ach-grid" id="ach-grid"></div></div>
+<div class="stat-sec"><div class="sec-title">📝 Story Log</div><div class="log-entry" id="story-log"></div></div>
+</div></div>
+<div id="tab-calendar" class="tab-panel"><div style="max-width:780px;margin:0 auto;padding:22px 14px 70px;">
+<div class="tab-title" style="color:var(--sky)">📅 SCHOOL CALENDAR</div><div class="tab-sub">April 2024 — Kōsei Junior High</div>
+<div class="month-lbl" id="month-label">April 2024</div><div class="cal-grid" id="cal-grid"></div>
+<div class="month-lbl">UPCOMING EVENTS</div><div class="tl" id="timeline"></div>
+</div></div>
+<div class="notif" id="notif"><div class="notif-t" id="notif-t"></div><div class="notif-b" id="notif-b"></div></div>
+<div style="position:fixed;bottom:14px;left:14px;z-index:300;">
+<button onclick="resetGame()" style="background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.22);border-radius:8px;color:var(--red);font-size:.64rem;padding:4px 9px;cursor:pointer;">↺ Reset</button>
+</div>
+<script>
+/* ═══ TOKYO DAYS v2.1 — Full Rebuild ═══ */
+
+// ── Seeded RNG ──
+function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646;};}
+function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
+
+// ── STATE ──
+var G={day:1,scene:'intro',block:0,choiceMade:false,
+stats:{knowledge:{rank:1,xp:0,icon:'📚',color:'#5BC8FF'},guts:{rank:1,xp:0,icon:'⚡',color:'#FFD166'},proficiency:{rank:1,xp:0,icon:'🎯',color:'#06D6A0'},kindness:{rank:1,xp:0,icon:'💖',color:'#FF6B9D'},charm:{rank:1,xp:0,icon:'✨',color:'#A855F7'}},
+relations:{Carmen:8},chars:['jorge','carmen','tanaka'],ach:[],log:[],flags:{},usedScenes:{}};
+
+// ── CHARACTERS ──
+var CHARS={
+jorge:{name:'Makoto Jorge',role:'Protagonist',trope:'The Outsider',av:'🧑',grad:'linear-gradient(90deg,#FF6B9D,#A855F7)',bond:null,desc:'Half-Japanese, half-Mexican transfer student. Two cultures, one stiff blazer.',locked:false},
+carmen:{name:'Makoto Carmen',role:'Mother',trope:'The Anchor',av:'👩',grad:'linear-gradient(90deg,#FFD166,#FF6B9D)',bond:'Carmen',desc:"Jorge's mother. Works hard, cooks harder. Constant warmth.",locked:false},
+tanaka:{name:'Tanaka-sensei',role:'Homeroom Teacher',trope:'The Tired Adult',av:'👨‍🏫',grad:'linear-gradient(90deg,#5BC8FF,#06D6A0)',bond:'Tanaka',desc:"Mid-40s. Seen too many transfer students. Not unkind.",locked:false},
+sato:{name:'Sato Kenji',role:'Classmate',trope:'Easy-Going',av:'🙂',grad:'linear-gradient(90deg,#06D6A0,#5BC8FF)',bond:'Sato',desc:'The nod guy. Casual, low-drama. First foothold in the social landscape.',locked:true},
+hayashi:{name:'Hayashi Ren',role:'Classmate',trope:'The Talker',av:'😄',grad:'linear-gradient(90deg,#FFD166,#FF6B9D)',bond:'Hayashi',desc:"Sato's louder friend. Talks about everything. Accidentally informative.",locked:true},
+notebook_girl:{name:'Aoyama Hina',role:'Classmate',trope:'The Artist',av:'🎨',grad:'linear-gradient(90deg,#A855F7,#5BC8FF)',bond:'Hina',desc:'Quiet. Draws intricate geometric patterns in notebook margins.',locked:true},
+window_girl:{name:'???',role:'Literary Club',trope:'???',av:'📖',grad:'linear-gradient(90deg,#7C6FAF,#3A8EC2)',bond:'WindowGirl',desc:'Long sleeves on warm days. Her presence feels older than fifteen.',locked:true},
+komori:{name:'Komori Yuki',role:'Class Rep',trope:'The Diligent One',av:'📋',grad:'linear-gradient(90deg,#06D6A0,#FFD166)',bond:'Komori',desc:'Class rep. Takes everything seriously. Has a clipboard. Always.',locked:true},
+mori:{name:'Mori Takeshi',role:'Classmate',trope:'Headphones',av:'🎧',grad:'linear-gradient(90deg,#555,#888)',bond:'Mori',desc:'Third row. Headphones always on. Communicates in grunts.',locked:true},
+fujiwara:{name:'Fujiwara-sensei',role:'Japanese Teacher',trope:'Young Teacher',av:'👩‍🏫',grad:'linear-gradient(90deg,#FF6B9D,#FFD166)',bond:'Fujiwara',desc:'Young, round glasses. Teaches Japanese. Notices effort.',locked:true},
+nishikawa:{name:'Nishikawa Aoi',role:'Classmate',trope:'The Direct One',av:'💬',grad:'linear-gradient(90deg,#FF6B9D,#06D6A0)',bond:'Nishikawa',desc:'Direct, slightly loud, treats everyone like old friends.',locked:true},
+takagi:{name:'Takagi Mei',role:'Classmate',trope:'The Efficient',av:'🧹',grad:'linear-gradient(90deg,#5BC8FF,#FFD166)',bond:'Takagi',desc:'Has a system for everything. Including cleaning.',locked:true}
+};
+
+// ── ACHIEVEMENTS ──
+var ACHS=[
+{id:'first_step',icon:'🌸',name:'First Petal',desc:'Arrived at Kōsei.'},
+{id:'bold_intro',icon:'⚡',name:'Bold Entrance',desc:'Confident intro.'},
+{id:'quiet_start',icon:'🌿',name:'Quiet Observer',desc:'Kept your head down.'},
+{id:'solo_lunch',icon:'🍱',name:'Solo Lunch',desc:'Ate alone Day 1.'},
+{id:'new_convo',icon:'💬',name:'Ice Breaker',desc:'First real conversation.'},
+{id:'day2_unlock',icon:'📅',name:'Day Two',desc:'Came back.'},
+{id:'lit_hint',icon:'🌙',name:'Something Odd',desc:"A detail that didn't add up."},
+{id:'study_hard',icon:'📚',name:'Studious',desc:'Dedicated study time.'},
+{id:'day5_unlock',icon:'🌟',name:'Full Week',desc:'First school week done.'},
+{id:'social_climb',icon:'🤝',name:'Lunch Group',desc:'You have a table.'},
+{id:'first_club',icon:'🏫',name:'Club Member',desc:'Attended a club.'},
+{id:'conbini_run',icon:'🏪',name:'Konbini Regular',desc:'Local convenience store.'},
+{id:'phone_group',icon:'📱',name:'Group Chat',desc:'1-B Survivors.'},
+{id:'cleaning_bond',icon:'🧹',name:'Duty Calls',desc:'Survived cleaning duty.'},
+{id:'weekend_free',icon:'🎮',name:'Weekend Warrior',desc:'Free day in Tokyo.'},
+{id:'quiz_ace',icon:'💯',name:'Aced It',desc:'Math quiz went well.'},
+{id:'golden_week',icon:'🎌',name:'Golden Week',desc:'Survived Golden Week.'},
+{id:'festival',icon:'🏮',name:'Festival Time',desc:'Attended a school festival.'},
+{id:'summer_start',icon:'☀️',name:'Summer',desc:'Summer break began.'},
+{id:'bond5',icon:'💕',name:'Close Bond',desc:'Bond level 5 with someone.'}
+];
+
+// ── CALENDAR ──
+var CAL_EVENTS={
+  15:{type:'announce',title:'Exam Announcement',desc:'First evaluation coming.'},
+  20:{type:'exam',title:'Math Quiz',desc:'First math quiz.'},
+  22:{type:'special',title:'Club Fair',desc:'All clubs recruit.'},
+  29:{type:'holiday',title:'Shōwa Day',desc:'National holiday.'},
+  33:{type:'holiday',title:'Constitution Day',desc:'Golden Week begins.'},
+  34:{type:'holiday',title:'Greenery Day',desc:'Golden Week continues.'},
+  35:{type:'holiday',title:'Children\'s Day',desc:'Golden Week ends.'},
+  36:{type:'holiday',title:'GW Bonus',desc:'Substitute holiday.'},
+  43:{type:'exam',title:'Mid-term Exams',desc:'Major academic test.'},
+  50:{type:'special',title:'Sports Day Practice',desc:'Class relay practice.'},
+  55:{type:'special',title:'Sports Day',desc:'Full school Sports Day.'},
+  75:{type:'exam',title:'End of Term Exams',desc:'Finals before summer.'},
+  80:{type:'special',title:'Term Closing',desc:'Closing ceremony.'},
+  81:{type:'holiday',title:'Summer Break',desc:'Summer vacation!'},
+  125:{type:'special',title:'Summer Festival',desc:'Local festival. Fireworks.'},
+  130:{type:'holiday',title:'Summer Ends',desc:'Back to school.'},
+  155:{type:'exam',title:'Fall Exams',desc:'Fall term exams.'},
+  180:{type:'special',title:'Culture Festival',desc:'School culture festival!'},
+  200:{type:'exam',title:'November Exams',desc:'Late fall exams.'},
+  240:{type:'special',title:'Christmas Eve',desc:'Christmas Eve in Tokyo.'},
+  260:{type:'holiday',title:'New Year',desc:'New Year celebrations.'},
+  300:{type:'exam',title:'Final Exams',desc:'End of year exams.'},
+  350:{type:'special',title:'Cherry Blossom Return',desc:'One year. Petals fall again.'},
+  365:{type:'special',title:'Year End',desc:'One full year at Kōsei.'}
+};
+
+// ── WEATHER & DATE ──
+var WX_POOLS={
+  spring:['☀ Clear, mild','🌤 Partly cloudy, breezy','☁ Overcast, still','🌧 Light rain','🌸 Warm, last petals','🌤 Fresh, blue sky'],
+  early_summer:['☀ Hot and sunny','🌤 Warm, scattered clouds','⛅ Muggy','🌧 Rainy season drizzle','🌧 Heavy rain','☁ Grey, humid'],
+  summer:['☀ Blazing hot','☀ Hot, cicadas','⛅ Hot, partly cloudy','🌩 Afternoon thunder','🌤 Warm breeze','☀ Relentless sun'],
+  fall:['🍂 Cool, crisp','☀ Clear autumn sky','🌤 Mild, golden light','☁ Overcast, cool','🌧 Autumn rain','🍁 Leaves turning'],
+  winter:['❄ Cold, clear','☁ Grey, biting wind','🌤 Crisp, sunny','☁ Overcast, cold','🌧 Cold rain','❄ Light snow']
+};
+function getSeason(d){if(d<=60)return'spring';if(d<=90)return'early_summer';if(d<=150)return'summer';if(d<=250)return'fall';return'winter';}
+function getWeather(d){return pick(WX_POOLS[getSeason(d)],mkRng(d*7+13));}
+function getDateStr(d){var dt=new Date(2024,3,7+d);var dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' ('+dn[dt.getDay()]+')';}
+function getDow(d){return new Date(2024,3,7+d).getDay();}
+function isWeekend(d){var w=getDow(d);return w===0||w===6;}
+function isHoliday(d){return CAL_EVENTS[d]&&CAL_EVENTS[d].type==='holiday';}
+function isFreeDay(d){return isWeekend(d)||isHoliday(d);}
+
+// ═══════════════════════════════════════
+// HAND-WRITTEN SCENES — Days 1-2
+// Rich narrative, 150-300 words per scene
+// ═══════════════════════════════════════
+var SC={
+intro:{hud:{date:'2024-04-08 (Monday)',time:'07:45',block:'Morning',wx:'☁ Overcast, cherry blossoms falling',loc:'Outside Kōsei — Main Gate',acad:'Safe'},
+html:'<p>The gate of <strong>Kōsei Junior High</strong> stands ahead, flanked by two cherry trees that seem determined to shed every last petal before the morning is over. Pink confetti drifts onto blazers, onto the stone path, onto the shoulders of students who don\'t notice anymore because this is just April to them.</p><p>Students flow past in clusters — two girls sharing earbuds, a boy sprinting with toast literally in his mouth (Jorge thought that was only in anime), a group of third-years who walk like they own the air around them. Everyone already knows each other. Everyone has a place.</p><p>Makoto Jorge stands just outside the gate with his school bag, his slightly-too-stiff new blazer, and the distinct awareness that he is the only person here who does not know where anything is.</p><div class="inner-voice">Okay. Just walk in. It\'s a school. You\'ve been to schools before. ...Different country, different language, different everything, but the fundamental concept of \"building with classrooms\" is the same. Just walk in.</div><p>A petal lands on his shoulder. He doesn\'t brush it off immediately. It feels like it\'s supposed to mean something — first day, cherry blossoms, the whole aesthetic — but mostly it\'s just a wet petal on polyester.</p>',
+choices:[
+{id:'A',lbl:'A) Walk in at a steady pace',type:'Standard',desc:'Enter with the crowd. Don\'t stand out. Blend.',time:'5 min',risk:'low'},
+{id:'B',lbl:'B) Stop and observe the crowd first',type:'Observant',desc:'Map the social landscape before committing to it.',time:'10 min',risk:'low'},
+{id:'C',lbl:'C) Walk in with deliberate confidence',type:'Bold',desc:'Straighten up, shoulders back, move like you chose to be here.',time:'5 min',risk:'med'},
+{id:'D',lbl:'D) Take a photo of the gate for Carmen',type:'Reflective',desc:'She\'d want to see this. Document the moment, then go.',time:'5 min',risk:'low'}],
+out:{
+A:{html:'<p>Jorge steps through the gate at a steady pace, letting the crowd absorb him. Nobody stops him. Nobody stares. He finds the shoe lockers by following the flow of feet, swaps into indoor shoes that are still too clean, and follows the signs toward Class 1-B.</p><p>The hallway smells like floor cleaner and the faintest trace of someone\'s breakfast. Fluorescent lights. Bulletin boards. A water fountain with a handwritten sign: <em>"Please do not fill water bottles during class hours."</em></p><div class="inner-voice">Made it inside. Step one complete. Only about three hundred more steps today.</div>',stats:{knowledge:5},next:'homeroom',log:'Entered school quietly with the crowd.'},
+B:{html:'<p>He leans against the inside of the gate wall, watching. Two minutes. That\'s all he needs.</p><p>Pattern one: the sports-club students move fastest — gym bags, specific sneakers, heading for the gym wing like they have a personal appointment with the floor. Pattern two: the quiet ones drift, gravitating toward the main building without urgency. Pattern three: everyone with a phone is checking it. Pattern four: there are about six or seven people standing alone, but they all seem to be alone <em>comfortably</em>.</p><p>By the time he peels off the wall, Jorge has a working map of social territory inside his head. He doesn\'t know anyone\'s name. But he knows where everyone goes.</p>',stats:{knowledge:12},next:'homeroom',log:'Observed the gate crowd — built a mental social map.'},
+C:{html:'<p>He straightens up. Shoulders back. Walks through like he\'s done this a hundred times, like his blazer isn\'t brand new and his shoes aren\'t still squeaking.</p><p>Three people glance over — which is three more than would have if he\'d shuffled in. Two of them look away immediately. One boy holds the look for a beat, expression completely neutral, like he\'s filing information. Then he disappears into the crowd.</p><div class="inner-voice">Three out of... probably a hundred. That\'s either terrible or excellent depending on how you measure it.</div><p>The shoe lockers are to the left. Jorge finds his (second row, third from the left) and swaps shoes with the deliberate calm of someone performing normalcy.</p>',stats:{guts:8,charm:6},ach:'bold_intro',next:'homeroom',log:'Walked in with deliberate confidence. Three people noticed.'},
+D:{html:'<p>He brushes the petal off his shoulder, pulls out his phone, and takes a photo of the gate — cherry trees, pink haze, the school name in kanji against gray stone. Sends it to Carmen with no caption. She\'ll understand.</p><p>Three dots appear immediately. Then a heart emoji. Then: <em>"Mi niño."</em> Then another heart. Then: <em>"Don\'t be late."</em></p><p>He pockets the phone and walks in. The shoe lockers are where they said they\'d be. Everything is exactly as described in the welcome packet except for the smell, which is floor cleaner and rain and something vaguely metallic that all Japanese schools seem to share.</p>',stats:{kindness:5,knowledge:5},next:'homeroom',log:'Took a photo for Carmen, then entered.'},
+E:{stats:{},next:'homeroom',log:'Entered school.'}},arch:'The New Kid'},
+
+homeroom:{hud:{date:'2024-04-08 (Monday)',time:'08:10',block:'School Day',wx:'☁ Overcast',loc:'Class 1-B — Homeroom',acad:'Safe'},
+trans:'The hallway to 1-B was long, fluorescent, and smelled faintly of floor cleaner. A girl with a clipboard walked past at speed, checking something. A boy nearly collided with Jorge at the turn — muttered "sorry" without looking up. Normal chaos.',
+html:'<p>Classroom 1-B. Thirty desks arranged in rows with the precision of someone who owns a ruler and opinions about desk spacing. Students have already claimed territories — three girls near the window, two boys at the back comparing phones, one student already asleep at a forty-five-degree angle that defies structural engineering.</p><p>A teacher enters. Mid-forties. Slightly rumpled jacket, coffee stain on the sleeve that he hasn\'t noticed or has chosen to accept. He sets a folder on the desk with the energy of a man who has done this exact motion approximately four thousand times.</p><div class="dialogue">"Good morning. Before we start — we have a transfer student joining us. Makoto." He glances at a card, pausing on the name. "Makoto... Jorge." Another beat. "Please come up and introduce yourself."</div><p>Thirty pairs of eyes. Some curious, some bored, some still waking up. The sleeping student hasn\'t moved. Tanaka-sensei gestures at the front of the room with the patient resignation of a man who has managed hundreds of these moments.</p><div class="inner-voice">Thirty people. Just thirty. That\'s fewer than a bus. You\'ve been on buses. ...Why is my mouth dry. It\'s an introduction, not a sentencing.</div>',
+choices:[
+{id:'A',lbl:'A) Short and correct',type:'Standard',desc:'"Makoto Jorge. Nice to meet you." Proper bow. Sit down. Done.',time:'2 min',risk:'low'},
+{id:'B',lbl:'B) Mention your background',type:'Cultural',desc:'Half-Japanese, half-Mexican. Some will be curious. Some won\'t care.',time:'3 min',risk:'med'},
+{id:'C',lbl:'C) Add a small joke',type:'Bold',desc:'"I know my name is confusing." High reward if it lands. Real risk if it doesn\'t.',time:'3 min',risk:'med'},
+{id:'D',lbl:'D) Deep bow, name only',type:'Formal',desc:'Maximum Japanese formality. Minimal personal exposure.',time:'1 min',risk:'low'}],
+out:{
+A:{html:'<p>"Makoto Jorge. Hajimemashite. Yoroshiku onegaishimasu."</p><p>A correct bow — not too deep, not too shallow. The kind they teach in language textbooks. He holds it for exactly the right amount of time, which is something he practiced in the mirror this morning and will never admit.</p><p>Three people are actively watching. Two of them look away when he straightens up. One — a boy in the second row with messy hair and an expression of mild, permanent amusement — doesn\'t look away immediately. He nods, almost imperceptibly, then turns to his phone.</p><p>Tanaka-sensei gestures toward an empty desk. Third row, near the window side. Jorge sits down, puts his bag on the hook, and exhales.</p><div class="inner-voice">That was... fine. Fine is good. Fine is the goal.</div>',stats:{knowledge:5},next:'day1_lunch',log:'Clean, correct homeroom introduction.'},
+B:{html:'<p>"Makoto Jorge. My father is Japanese, my mother is from Mexico — so the name works correctly in both directions, depending on which country you\'re standing in."</p><p>A ripple through the room. Not dramatic — just the subtle shift of attention that happens when someone says something unexpected. A girl in the middle row tilts her head. The boy near the back whispers something to his neighbor — not unkindly, just processing. Someone mouths the word "Mexico" like they\'re trying to place it on a map.</p><p>Tanaka-sensei nods. "Thank you. Your seat is—" He points. Third row, window side. Jorge walks to it, sits, and becomes aware that at least four people are still looking at him.</p><div class="inner-voice">Well. Now they have something to talk about. Whether that\'s good or bad is tomorrow\'s problem.</div>',stats:{charm:10,kindness:5},next:'day1_lunch',log:'Introduced with cultural context. Curiosity from several classmates.'},
+C:{html:'<p>"Makoto Jorge. I know — \'Makoto\' sounds like a first name. It\'s fine to be confused. I\'ve been confused about it since I was about seven."</p><p>One second of silence. Then one person laughs — short, surprised, <em>real</em>. A girl near the middle of the room, hand halfway to her mouth. Two more people smile. The sleeping student doesn\'t react. Tanaka-sensei\'s mouth twitches in something that wants to be a smile but his professional dignity won\'t quite allow.</p><div class="dialogue">"Very good. Your seat is over there." Tanaka points. Is that almost-warmth in his voice? Maybe.</div><p>Third row, window side. Jorge sits down. The girl who laughed is two rows ahead and one to the left. She doesn\'t look back. But she laughed, and that\'s one more genuine human reaction than he expected today.</p>',stats:{guts:10,charm:15},ach:'bold_intro',next:'day1_lunch',log:'Opened with humor. Got one real laugh and two smiles.'},
+D:{html:'<p>"Makoto Jorge. Yoroshiku onegaishimasu."</p><p>The deepest, most formal bow anyone in this room has probably performed since elementary school graduation. Spine perfectly straight going down. Held for a full three seconds. The kind of bow that says <em>I have studied the manual and I will not be faulted on protocol.</em></p><p>When he straightens up, Tanaka-sensei nods with what might be approval or might just be relief that it\'s over. Nobody has a strong reaction. Nobody has any reaction. It is, perhaps, the most unremarkable introduction in 1-B\'s short history.</p><p>He sits. Third row, window side. The desk is exactly like every other desk.</p><div class="inner-voice">Invisible. Perfect.</div>',stats:{knowledge:8},next:'day1_lunch',log:'Gave the most formal introduction possible. Unremarkable.'},
+E:{stats:{charm:5},next:'day1_lunch',log:'Introduced yourself.'}},arch:'The Newcomer'},
+
+day1_lunch:{hud:{date:'2024-04-08 (Monday)',time:'12:15',block:'Lunch',wx:'🌤 Clearing, mild',loc:'Kōsei Cafeteria',acad:'Safe'},
+trans:'Morning classes passed in a blur of orientation handouts, textbook distribution, and Tanaka-sensei reading the year\'s schedule with the energy of a man reciting his own will. Japanese Language was fast — Jorge caught about ninety percent. The other ten percent was idioms that probably come with time. Math was fine. Numbers don\'t care what language you speak.',
+html:'<p>The lunch bell rings and Class 1-B fragments like a dropped glass — everyone to their designated social corner. Jorge has a bento from his mother: slightly too large, wrapped in a cloth that is definitely not standard issue, with <em>arroz con leche</em> in the side container because Carmen has decided that rice pudding is universal.</p><p>The cafeteria is loud, bright, and full of the specific energy of people who have been sitting still for four hours and are now free. Tables fill up with existing groups — people who have been friends since elementary school, since summer camp, since whatever mysterious social algorithms decided who sits with whom.</p><p>Nobody has invited Jorge anywhere. Nobody has told him to leave anywhere either. He stands near the entrance with his too-big bento and the acute awareness that this is the part of school that has no teacher directing traffic.</p><div class="inner-voice">Okay. You have food. You need a surface to put it on. This is a solvable problem.</div>',
+choices:[
+{id:'A',lbl:'A) Quiet corner, eat alone',type:'Standard',desc:'Find a wall. Eat. Watch. Gather intelligence without risk.',time:'45 min',risk:'low'},
+{id:'B',lbl:'B) Sit near the 1-B classmates',type:'Social',desc:'Not with them — near them. Available without being presumptuous.',time:'45 min',risk:'med'},
+{id:'C',lbl:'C) Try the rooftop door',type:'Exploratory',desc:'Anime logic says rooftops are empty. Worth checking.',time:'45 min',risk:'med'},
+{id:'D',lbl:'D) Eat in the classroom',type:'Quiet',desc:'Back to 1-B. Fewer people, less noise, less performance.',time:'45 min',risk:'low'}],
+out:{
+A:{html:'<p>Corner table. Back to the wall. The bento is good — Carmen\'s rice is always perfect, and the <em>arroz con leche</em> gets a confused sideways glance from a passing first-year who clearly has never encountered cinnamon-scented rice pudding in a school cafeteria before.</p><p>From this angle, Jorge can see the whole room. He maps it like a city planner: loud table near the windows (sports kids), quiet cluster by the far wall (studious types, shared notebooks), the center tables where the social gravity is strongest. One boy eating alone near the vending machines looks perfectly comfortable about it. A girl with a clipboard eats while reading a printed schedule.</p><div class="inner-voice">Day one intelligence report: the cafeteria has zones. The vending machine area is neutral territory. The center tables require an invitation you don\'t have yet. The corners are free.</div>',stats:{knowledge:8},ach:'solo_lunch',next:'day1_after',log:'Ate lunch alone. Mapped the cafeteria social geography.'},
+B:{html:'<p>He finds the edge of a loose 1-B cluster — three boys at a table with one empty chair and the ambiguous energy of people who wouldn\'t say no but also won\'t say yes. Jorge sits one table over. Close enough to be adjacent. Far enough to have plausible independence.</p><p>Nobody speaks to him. Nobody moves away from him. The boy directly facing him — the one who nodded during the introduction — glances over once, registers Jorge\'s presence with a micro-expression that might be acknowledgment, then goes back to his rice.</p><p>Ambiguously negotiated territory. Not a success, not a failure. Just... proximity.</p><div class="inner-voice">This is the diplomatic equivalent of standing near someone at a bus stop. It means nothing. But it also means I\'m here.</div>',stats:{charm:5,knowledge:5},next:'day1_after',log:'Sat near classmates. Ambient proximity established.'},
+C:{html:'<p>Third floor, end of the hallway, metal door with a sign that says something about authorized access that Jorge decides to interpret loosely. He pushes. It opens.</p><p>The rooftop is empty. No benches, no shelter — just flat concrete, a chain-link fence around the edges, and Tokyo spreading out in every direction, grey-blue and enormous under clearing clouds. Wind up here. The school sounds are muffled. A helicopter passes in the distance.</p><p>He sits against the wall, unwraps Carmen\'s bento, and eats <em>arroz con leche</em> with one of the better views in the entire school. Nobody can see him. Nobody is performing. The sky is very large and his bento is very good.</p><div class="inner-voice">This might be the best lunch spot in the building and nobody is using it. Either it\'s actually forbidden or everyone forgot it exists. Either way, claiming it.</div>',stats:{guts:8,knowledge:8},next:'day1_after',log:'Found the unlocked rooftop. Best view in the building.'},
+D:{html:'<p>Back in 1-B. Three other students had the same idea — eating at their desks with headphones in, books open, the quiet companionship of people who prefer four walls to four hundred voices. The room has that specific after-class emptiness. Dust in the sunlight from the windows.</p><p>Two rows over, a girl draws in her notebook without looking up. Not doodling — <em>drawing</em>. Her pen moves with the kind of focus that suggests she doesn\'t know anyone is watching. The patterns in the margins are intricate, geometric, repeating. Jorge eats his bento and doesn\'t stare, but he notices.</p><div class="inner-voice">Some people recharge by being loud. Some people recharge by being here. The classroom at lunch is where the second kind goes.</div>',stats:{knowledge:5},next:'day1_after',log:'Ate lunch in the empty classroom. Noticed the drawing girl.'},
+E:{stats:{},next:'day1_after',log:'Got through first lunch.'}},arch:'Solo Observer'},
+
+day1_after:{hud:{date:'2024-04-08 (Monday)',time:'15:30',block:'After School',wx:'🌤 Warm, clearing',loc:'School Grounds',acad:'Safe'},
+trans:'Afternoon classes: Science (periodic table — familiar ground, same elements in every language), English (where Jorge had an unfair advantage he decided not to advertise), and the quiet discovery that the boy sitting behind him had built an elaborate three-story pen tower during the Science lecture. Architecturally ambitious. Structurally questionable.',
+html:'<p>Final bell at 15:20. Tanaka-sensei announces cleaning duty assignments — Jorge gets window duty, hallway side. Twenty minutes of rag, glass, and the realization that Japanese schools make students clean the building themselves, which Carmen would approve of philosophically.</p><p>Cleaning done. Hallway quiet. The bulletin boards glow with club recruitment posters: Literary Club ("For those who prefer words to running"), Photography Club (artsy font, sample photos), Soccer (aggressive font, a ball emoji), Basketball, Tea Ceremony, FILM CLUB with a cartoon camera drawn in marker.</p><p>Carmen texted: <em>"hay enchiladas. no llegues tarde mijo 💚"</em></p>',
+choices:[
+{id:'A',lbl:'A) Head straight home',type:'Standard',desc:'Enchiladas await. Carmen cooked. Don\'t be late.',time:'20 min',risk:'low'},
+{id:'B',lbl:'B) Browse the club sign-up boards',type:'Exploratory',desc:'Don\'t commit — just gather intelligence.',time:'30 min',risk:'low'},
+{id:'C',lbl:'C) Walk the entire campus perimeter',type:'Exploratory',desc:'Map everything. Know the building better than anyone.',time:'45 min',risk:'low'},
+{id:'D',lbl:'D) Talk to the pen-tower architect',type:'Social',desc:'He built a three-story structure during Science. That deserves acknowledgment.',time:'10 min',risk:'low'}],
+out:{
+A:{html:'<p>Home by 16:10. The apartment is small and warm and smells like green salsa. Carmen is at the stove singing along to something on her phone. The enchiladas are as advertised — verde, the good kind, with the sour cream she found at a specialty store across town.</p><p>Jorge eats and answers questions in fragments. School was school. The teacher seems fine. Nobody was weird. The blazer is still too stiff. Carmen nods at each answer like she\'s cataloguing data.</p>',stats:{kindness:5},next:'day1_evening',log:'Went straight home. Carmen\'s enchiladas.'},
+B:{html:'<p>He photographs every board with his phone. Literary Club — Tuesdays and Thursdays, Room 204. Someone drew a tiny cat next to the sign-up sheet in ballpoint pen. Photography Club wants members who "see the world differently" (their words). Soccer tryouts Thursday. Basketball already full. Film Club watches movies and writes "reviews" (the quotes are theirs).</p><p>One poster catches his attention longer than the others: Literary Club. <em>"For those who prefer words to running."</em> The tiny drawn cat has surprisingly good proportions. Whoever drew it was not just doodling.</p><div class="inner-voice">Clubs aren\'t mandatory until next week. But knowing the menu helps.</div>',stats:{knowledge:12},next:'day1_evening',log:'Scouted all the club boards. Literary Club caught his eye.'},
+C:{html:'<p>The full perimeter takes twenty-five minutes. Gym wing (sweaty, loud, a basketball bouncing somewhere). Music rooms (someone playing guitar — badly, with conviction). Art building (quiet, smells like turpentine). An unused garden behind the science wing with a broken bench and weeds growing through the concrete. The track, empty. A storage shed that\'s probably locked.</p><p>By the time he\'s done, Jorge knows this school better than most people who\'ve been here three years. He knows where the quiet spots are, where the vending machines live, which doors are propped open, which hallways echo.</p>',stats:{knowledge:15,guts:5},next:'day1_evening',log:'Mapped the entire school. Better informed than anyone on Day 1.'},
+D:{html:'<p>The pen-tower architect is packing up his bag slowly, the tower already dismantled.</p><div class="dialogue">"That was impressive," Jorge says. "During Science."</div><p>The boy turns. Messy hair, sleepy eyes, the permanent half-grin of someone who finds most things mildly entertaining. "The pens?"</p><div class="dialogue">"Three stories. While Ogawa-sensei was explaining electron shells."</div><p>"He didn\'t even <em>notice</em>." The grin widens. "I\'m Hayashi." He doesn\'t extend a hand or bow — just drops the name like it\'s common property. "You\'re the transfer, right? Makoto?"</p><p>Two minutes of conversation. Jorge learns: Hayashi sits with Sato at lunch (Sato is "the quiet one who nods"), the cafeteria curry is "a war crime against rice," and the music room has a broken guitar that no one has claimed. Most natural conversation of the entire day.</p>',stats:{charm:10,kindness:5},charUnlock:'hayashi',rel:{Hayashi:2},ach:'new_convo',next:'day1_evening',log:'Talked to Hayashi about the pen tower. First real conversation.'},
+E:{stats:{knowledge:5},next:'day1_evening',log:'Finished first day.'}},arch:'The Careful One'},
+
+day1_evening:{hud:{date:'2024-04-08 (Monday)',time:'18:05',block:'Evening',wx:'🌆 Dusk, cooling',loc:'Home — Makoto apartment',acad:'Safe'},
+trans:'The walk home: konbini (not ready to go inside yet), park (the taiso radio man was gone), blue vending machine (noted for future reference). The apartment building is five stories of concrete and thin walls. Third floor, unit 302.',
+html:'<p>The apartment is small in the way Tokyo apartments are small — efficiently, apologetically, with clever storage solutions and the understanding that personal space is a luxury measured in centimeters. The kitchen smells like green chili and cumin and the very specific warmth of Carmen\'s cooking, which does not belong in this building but exists here because Carmen has decided it does.</p><p>She\'s at the stove, phone propped against the spice rack playing reggaetón at a volume that is technically considerate to the neighbors but spiritually defiant. Her work blouse is already swapped for the Guadalajara t-shirt.</p><div class="dialogue">"¡Mijo! ¿Cómo te fue?" She turns without stopping stirring. "You look tired. Sit. I made enchiladas verdes, the good ones. With the cream from that store."</div><p>The table is set for two. Ceramic plates Carmen brought from Mexico, slightly chipped from the move. The neighbor\'s TV hums through the thin wall — a game show with enthusiastic audience reactions.</p>',
+choices:[
+{id:'A',lbl:'A) Tell her honestly',type:'Open',desc:'The thirty stares, the awkward intro, the quiet lunch. She\'ll understand.',time:'60 min',risk:'low'},
+{id:'B',lbl:'B) "It was fine"',type:'Reserved',desc:'Vague. She\'ll worry less. Or she\'ll worry differently.',time:'60 min',risk:'low'},
+{id:'C',lbl:'C) Ask about her day too',type:'Empathetic',desc:'She\'s adjusting to Tokyo too. Nobody asks her how it\'s going.',time:'60 min',risk:'low'},
+{id:'D',lbl:'D) Show her the gate photo',type:'Warm',desc:'Let the image speak. Cherry trees and stone and a new beginning.',time:'60 min',risk:'low'}],
+out:{
+A:{html:'<p>He tells her most of it. The gate, the petals, the thirty faces, the introduction that went... fine. The cafeteria where nobody invited him anywhere. The cleaning duty. The club boards.</p><p>Carmen listens while serving enchiladas. She doesn\'t interrupt. She doesn\'t make encouraging noises. She just listens with the specific focus of a mother cataloguing every detail for later analysis.</p><div class="dialogue">"¿Hiciste un amigo?"</div><p>"Not yet."</p><p>She nods like that\'s completely fine. Like "not yet" is a timeline, not a verdict. She refills his plate without asking.</p><div class="dialogue">"Mañana será mejor. Siempre es así."</div><p>The enchiladas are perfect. The neighbor\'s game show provides ambient drama. Carmen starts cleaning up while humming something that sounds like a lullaby she\'s forgotten she knows.</p>',stats:{kindness:10,charm:5},rel:{Carmen:1},next:'day1_sleep',log:'Told Carmen honestly. Bond strengthened.'},
+B:{html:'<p>"Fine. Teacher seems okay. The building is clean." He eats. Carmen does the reading-between-the-lines look — the one where her eyes narrow half a millimeter and she decides whether to push or not.</p><p>She decides not.</p><p>Enchiladas that are clearly an act of love disguised as dinner. They eat to the muffled sound of the neighbor\'s game show. Comfortable silence. Incomplete communication. Both of them pretending that\'s enough for tonight.</p><div class="inner-voice">She knows I\'m editing. She always knows. She\'s choosing not to call it out because sometimes that\'s what love looks like.</div>',stats:{},next:'day1_sleep',log:'Gave Carmen the abbreviated version. She didn\'t push.'},
+C:{html:'<p>"How was <em>your</em> day?"</p><p>Carmen stops mid-stir. Sets the spoon down. <em>"¿Mi día?"</em> She says it like the question is a gift she wasn\'t expecting. "Nobody has asked me that in two weeks."</p><p>She talks. The coworker who still mispronounces "Carmen" as "Kah-men." The train that\'s always exactly on time, which she finds unsettling. The konbini near her office that sells something called "Mexican corn chips" that taste nothing like Mexico. Finding real <em>chocolate de mesa</em> at a Latin grocery twenty minutes away and nearly crying in the aisle.</p><p>She laughs at herself three times. Jorge eats enchiladas and listens. Outside the window, Tokyo transitions from gray to neon. The apartment is small and warm and full of the sound of Carmen\'s voice, which is the most familiar thing in this entire country.</p>',stats:{kindness:15},rel:{Carmen:2},ach:'quiet_start',next:'day1_sleep',log:'Asked Carmen about her day. She opened up. Deep bond.'},
+D:{html:'<p>He pulls up the photo — gate, cherry trees, pink haze, the school name in kanji against gray stone. Carmen takes the phone with both hands. Five seconds of silence.</p><div class="dialogue">"Qué bonito, mijo." Her voice is quiet. She traces the screen with her thumb like she\'s touching the trees. "It looks like a movie."</div><p>"The petals were falling when I walked in."</p><div class="dialogue">"Of course they were." She smiles. Hands the phone back. "Of course they were."</div><p>They eat enchiladas. She asks small questions — is the building big? are the teachers nice? is the uniform comfortable? — and he answers in fragments, and the fragments add up to enough. The gate photo stays open on her phone for the rest of the evening.</p>',stats:{kindness:8,charm:5},rel:{Carmen:1},next:'day1_sleep',log:'Shared the gate photo. Quiet bonding over enchiladas.'},
+E:{stats:{kindness:5},next:'day1_sleep',log:'Had dinner with Carmen.'}},arch:'The Son'},
+
+day1_sleep:{isRefl:true,text:"Day one. Survived. The blazer is on the chair, still too stiff. Carmen turned off her light thirty minutes ago.<br><br>Thirty people looked at me today. By tomorrow most of them will have forgotten they did. That's probably the best possible outcome right now.<br><br>The apartment is dark. Tokyo hums outside the window — a sound that never fully stops, just changes pitch. Somewhere a train passes. Somewhere someone is still awake.<br><br>Tomorrow is day two. I wonder if the cherry trees will still be dropping petals.",next:'day2_morning',log:'Completed Day 1.',ach:'first_step'},
+
+// ═══ DAY 2 ═══
+day2_morning:{hud:{date:'2024-04-09 (Tuesday)',time:'07:50',block:'Morning',wx:'☀ Clear, cool',loc:'Walking to Kōsei',acad:'Safe'},
+trans:'Morning. Carmen left early for work — a note on the counter in her handwriting: <em>"Hay pan en la mesa. No olvides tu bento. Te quiero."</em> The bento is in the fridge, already packed. Tortas today.',
+html:'<p>Day two. The walk is already becoming a route — the konbini with the blue awning (still haven\'t gone inside), the park where the old man does taiso exercises to radio music (different song today, same precise movements), the blue vending machine with six types of coffee and a mysterious "grape energy" option.</p><p>Cherry trees still at it, though the petals are thinning. By next week the ground crew will have swept them all away and the trees will just be green.</p><p>At the gate, the flow of students is the same but different — Tuesday has a subtly different energy than Monday. Less cautious, more routine. Some people from 1-B clock him now. A boy near the shoe lockers — the one who nodded yesterday — gives a brief, almost-imperceptible nod again. It doesn\'t require anything back.</p><p>Jorge finds his locker. Second row, third from left. Next to it, a Post-it note on the wrong locker, slightly crumpled:</p><p><em>"Mori — give back the manga already. — K"</em></p>',
+choices:[
+{id:'A',lbl:'A) Leave it on a windowsill',type:'Standard',desc:'Not your note, not your problem. Someone will find it.',time:'2 min',risk:'low'},
+{id:'B',lbl:'B) Ask around who Mori is',type:'Social',desc:'A low-stakes excuse to talk to someone. Names are currency here.',time:'10 min',risk:'low'},
+{id:'C',lbl:'C) Pocket it — figure it out later',type:'Observant',desc:'"Mori" is a data point. Data points accumulate.',time:'2 min',risk:'low'},
+{id:'D',lbl:'D) Find the right locker and move it there',type:'Helpful',desc:'Third row, the lockers have name tags. Just fix it quietly.',time:'3 min',risk:'low'}],
+out:{
+A:{html:'<p>Windowsill. Visible enough that the right person will see it, neutral enough that it\'s not Jorge\'s concern. He swaps shoes and walks to 1-B with the mild satisfaction of someone who has decided, correctly, that not every small problem requires his intervention.</p>',stats:{},next:'day2_class',log:'Left the Post-it. Not his problem.'},
+B:{html:'<p>He turns to the nearest person — a boy adjusting his shoes one locker over. "Do you know who Mori is?" The boy glances up. "Mori? Third row. The headphones guy." He points vaguely toward the hallway.</p><p>Jorge walks over. A student with oversized headphones covering both ears, staring into his locker like it contains the secrets of the universe. Jorge holds out the note.</p><p>Mori takes it without removing his headphones. Reads it. Makes a sound — somewhere between a grunt and an acknowledgment — that might be "thanks" in a language only Mori speaks. Puts the note in his pocket.</p><p>Two sentences exchanged. Maybe one and a half. But Jorge now knows where Mori sits, what he looks like, and that someone named K wants a manga back.</p>',stats:{kindness:8,charm:5},ach:'new_convo',charUnlock:'mori',next:'day2_class',log:'Returned the note to Mori. Met the headphones guy.'},
+C:{html:'<p>He pockets the note. Mori. Third row, if the locker placement means anything. The note-writer signs with "K," which narrows it down to... still too many people. But it\'s information, and information is the only thing Jorge has more of today than yesterday.</p><div class="inner-voice">One day I\'ll know who everyone in this school is. Today, I know "Mori" and "K." That\'s two more names than zero.</div>',stats:{knowledge:8},next:'day2_class',log:'Pocketed the note. Filed "Mori" and "K" for later.'},
+D:{html:'<p>Third row of lockers. The name tags are small plastic labels — and there it is: <em>Mori Takeshi</em>. He sticks the Post-it on the correct locker, adjusts it so it\'s straight, and walks away. Nobody saw. Nobody needed to.</p><p>Small, invisible, correct. The kind of action that makes no difference to anyone except the person who did it, and maybe the person who will find their note where it belongs.</p>',stats:{kindness:8},charUnlock:'mori',next:'day2_class',log:'Moved the note to Mori\'s locker. Quiet, correct.'},
+E:{stats:{},next:'day2_class',log:'Handled the Post-it situation.'}},arch:'Day Two'},
+
+day2_class:{hud:{date:'2024-04-09 (Tuesday)',time:'08:45',block:'School Day — Morning Classes',wx:'☀ Clear, warming',loc:'Class 1-B',acad:'Safe'},
+trans:'Homeroom was brief — Tanaka-sensei reading announcements like a man contractually obligated to read announcements. Class trip permission form due Friday. Someone asked about the Sports Day schedule. Tanaka sighed. It was a deeply informative sigh.',
+html:'<p>First period: Math. Numbers and symbols on the whiteboard — the universal language that doesn\'t care about your accent or your vocabulary gaps. Ogawa-sensei draws graphs with the aggressive confidence of someone who believes deeply in the x-axis. Jorge follows along, pencil moving, brain engaged. This is familiar ground.</p><p>Second period: Japanese Language. This is where the gap shows. Fujiwara-sensei — young, round glasses, the kind of teacher who still believes every student can be reached — writes the lesson objective on the board in handwriting that belongs in a calligraphy museum. Today\'s focus: reading comprehension and register awareness. She scans the room for someone to read aloud.</p><p>Her gaze lands on Jorge. Not unkindly — more like she\'s curious what he\'ll do with the moment.</p><p>Meanwhile: the student to Jorge\'s left has been drawing something intricate in her notebook margin for the past fifteen minutes. Not doodling — the pen moves with architectural precision, building patterns that seem to follow mathematical rules Jorge can almost identify. And behind him, the boy from yesterday has achieved a forty-five-degree sleeping angle that suggests either complete disregard for gravity or a very strong neck.</p>',
+choices:[
+{id:'A',lbl:'A) Raise your hand and try to answer',type:'Brave',desc:'Your Japanese is good enough. Probably. Risk showing the gaps, but also show you\'re trying.',time:'5 min',risk:'med'},
+{id:'B',lbl:'B) Take careful, detailed notes',type:'Academic',desc:'Head down, pen moving. Every kanji, every grammar point. Build the foundation quietly.',time:'Full class',risk:'low'},
+{id:'C',lbl:'C) Lean slightly — look at the notebook drawings',type:'Curious',desc:'Those patterns aren\'t random. She might notice you looking. She might not.',time:'5 min',risk:'low'},
+{id:'D',lbl:'D) Nudge the sleeping guy before the teacher sees him',type:'Kind',desc:'Save a stranger from public embarrassment. Zero words required.',time:'2 min',risk:'low'}],
+out:{
+A:{html:'<p>He raises his hand. The transfer student, day two, <em>volunteering</em>. Fujiwara-sensei\'s eyebrows lift — not in surprise, exactly, but in that specific teacher expression that means "well, let\'s see what happens."</p><p>He reads the passage. His pronunciation is careful — correct but clunky in places, like a machine that works but hasn\'t been oiled. One word trips him up: a compound kanji he\'s seen but never said aloud. He recovers. Finishes.</p><div class="dialogue">"Good. Work on the rhythm of the longer sentences, but the reading itself is solid." Fujiwara-sensei nods. "Thank you, Makoto-kun."</div><p>Not praise. Acknowledgment. From Fujiwara, that might be the same thing. The girl with the notebook — two seats to the left — paused her drawing for three seconds during his reading. She\'s back to it now. But she paused.</p>',stats:{knowledge:10,guts:8},charUnlock:'fujiwara',charUnlock2:'notebook_girl',next:'day2_lunch',log:'Raised hand in Japanese class. Correct but clunky. Fujiwara noticed. Notebook girl paused.'},
+B:{html:'<p>Three pages of notes by end of class. Every grammar point, every new vocabulary word, the kanji readings written twice — once in the margin for practice. Fujiwara-sensei\'s board examples copied in full. The compound kanji he didn\'t recognize: looked up on his phone during the three-minute break. Now he knows it.</p><p>Nobody saw this happen. Nobody needed to. The knowledge accumulates like sediment — invisible, gradual, structural. By the end of the week these notes will be better organized than most students\' textbooks.</p><div class="inner-voice">When you can\'t be confident, be prepared. Preparation is just confidence in advance.</div>',stats:{knowledge:15},ach:'study_hard',next:'day2_lunch',log:'Three pages of meticulous notes. Nobody noticed. That\'s fine.'},
+C:{html:'<p>He leans — just slightly, just enough to see past his own notebook edge. The drawing in her margin is not decoration. It\'s <em>architecture</em>. Repeating geometric patterns that fold into themselves, symmetrical but not quite, like a mathematical proof drawn in ink. She\'s not looking at the board. She\'s not looking at anything. She\'s in the drawing.</p><p>Her pen pauses. One second. Two. She doesn\'t turn her head, but something in her posture shifts — the micro-awareness of someone who knows they\'re being observed.</p><p>She doesn\'t say anything. Jorge goes back to his notebook. But it sticks — the precision, the focus, the fact that her "doodling" is more complex than most people\'s homework.</p>',stats:{knowledge:5,charm:5},charUnlock:'notebook_girl',next:'day2_lunch',log:'Glimpsed the notebook drawings. Intricate, architectural. She noticed someone looked.'},
+D:{html:'<p>Two taps on the desk. Quiet, rhythmic, the universal signal for <em>"wake up before the teacher sees you."</em> The sleeping boy jolts upright just as Fujiwara-sensei\'s gaze sweeps over the back rows. His eyes go wide for half a second — the specific panic of someone who has just been rescued from public destruction.</p><p>He doesn\'t say thank you. He gives a slow nod. One centimeter of downward head movement that carries the weight of genuine, desperate gratitude. Then he opens his textbook and pretends to have been reading it this entire time. His act is not convincing, but it doesn\'t need to be.</p><div class="inner-voice">You\'re welcome, guy whose name I don\'t know. You owe me one unconscious nod of acknowledgment.</div>',stats:{kindness:10},next:'day2_lunch',log:'Saved the sleeping student. Earned one nod of silent gratitude.'},
+E:{stats:{knowledge:8},next:'day2_lunch',log:'Got through morning classes.'}},arch:'The Student'},
+
+day2_lunch:{hud:{date:'2024-04-09 (Tuesday)',time:'12:20',block:'Lunch',wx:'☀ Warm, bright',loc:'Cafeteria',acad:'Safe'},
+trans:'Between classes — five minutes of hallway traffic. Someone dropped a juice box near the stairs and three people stepped over it before a girl with a clipboard picked it up, sighed audibly, and threw it away. Jorge is beginning to think the clipboard girl runs this school more than the teachers do.',
+html:'<p>Carmen packed <em>tortas</em> today — the bread is going to smell exotic in a room full of rice and miso. She also included a note folded into the napkin: <em>"Come bien. Te extraño. 💚"</em></p><p>Halfway across the cafeteria, the boy from yesterday — the nod-boy from the shoe lockers — makes eye contact. Direct. Holds it for a beat. Then tilts his head, barely perceptible, toward his table. He\'s sitting with two others: a boy who is clearly mid-monologue about something, and an empty chair.</p><p>That head-tilt. It could be an invitation. It could be a neck stretch. It could be a reflex. But he\'s looking <em>at</em> Jorge while doing it, which narrows the interpretation considerably.</p><div class="inner-voice">He might just have a stiff neck. ...He\'s looking directly at me. That\'s not a neck stretch. That\'s an invitation. Probably. Maybe. There\'s an empty chair. That\'s physical evidence.</div>',
+choices:[
+{id:'A',lbl:'A) Take the invitation',type:'Brave',desc:'"Mind if I sit here?" First real social commitment. No going back.',time:'45 min',risk:'med'},
+{id:'B',lbl:'B) Corner table, alone',type:'Standard',desc:'Your usual spot from yesterday. Let the opportunity pass.',time:'45 min',risk:'low'},
+{id:'C',lbl:'C) Adjacent table — close but not committed',type:'Cautious',desc:'Available without presumptuous. Near enough to be approached.',time:'45 min',risk:'low'},
+{id:'D',lbl:'D) Nod back and hold up the torta',type:'Playful',desc:'Universal language: "I have food. You want some?" Let the torta negotiate.',time:'45 min',risk:'med'}],
+out:{
+A:{html:'<p>"Mind if I...?" He gestures at the empty chair.</p><p>The nod-boy — Sato, said fast, like his own name is a formality he barely tolerates — shrugs in the affirmative. The monologue boy (louder, messier hair, clearly unable to sit in one position for more than four seconds) pauses mid-sentence to look at Jorge, then continues talking as if a new person at the table is completely unremarkable.</p><p>Nobody makes a formal introduction. Nobody announces the moment. Jorge sits. Opens his torta. The bread smell reaches the table.</p><div class="dialogue">"You\'re from Mexico?" Sato asks. Not judging. Not fascinated. Just... cataloguing.</div><p>"Half."</p><p>"Okay."</p><p>That\'s it. That\'s the entire social negotiation. Three people at a table now know Jorge\'s name, his approximate cultural background, and what his lunch smells like. He is no longer eating alone.</p>',stats:{guts:12,charm:10},ach:'new_convo',charUnlock:'sato',rel:{Sato:3},next:'day2_after',log:'Sat with Sato. First real social commitment.'},
+B:{html:'<p>Corner table. The vending machine hums its familiar white noise. Carmen\'s tortas are excellent — the bread slightly warm, the avocado perfectly ripe because Carmen has a supernatural sense for avocado readiness.</p><p>From the corner, Jorge watches Sato\'s table. The monologue boy gestures wildly. Sato eats and nods at intervals. The empty chair stays empty. Sato glances toward the corner once, expression unreadable, then goes back to his rice.</p><div class="inner-voice">Tomorrow. Maybe tomorrow. Or the day after. The chair isn\'t going anywhere.</div>',stats:{knowledge:8},next:'day2_after',log:'Ate alone again. Watched Sato\'s empty chair from across the room.'},
+C:{html:'<p>One table away. Not with them. Near them. The torta smell reaches their zone. The monologue boy sniffs. Sato doesn\'t react visibly, but he\'s facing Jorge\'s general direction. Small nods — from both sides. Not conversation. Not friendship. Just the mutual acknowledgment of proximity and the unspoken agreement that this distance is acceptable.</p><div class="inner-voice">Diplomacy. This is cafeteria diplomacy. I\'m negotiating territory with bread and eye contact.</div>',stats:{charm:8,kindness:5},next:'day2_after',log:'Sat near Sato\'s group. Ambient proximity, round two.'},
+D:{html:'<p>Jorge makes eye contact with Sato, nods, then holds up the torta. One eyebrow raised. Universal language: <em>You want some of this?</em></p><p>Sato blinks. A micro-expression that might be surprise or might be hunger. The monologue boy leans forward: "What IS that?"</p><div class="dialogue">"Torta. Mexican sandwich."</div><p>"Bring it over."</p><p>The torta gets shared — broken into sections, distributed with the seriousness of a diplomatic food exchange. Sato takes one bite, chews with consideration, and delivers his verdict:</p><div class="dialogue">"Your mom makes this?"</div><p>"Yeah."</p><p>"...Okay."</p><p>From Sato, "okay" said in that tone, with that nod, is a five-star review. The monologue boy — Hayashi, apparently — is already asking about ingredients. Jorge has a lunch table now. It was negotiated entirely through bread.</p>',stats:{guts:10,charm:12,kindness:5},charUnlock:'sato',rel:{Sato:3},ach:'new_convo',next:'day2_after',log:'Food diplomacy with Sato. Torta-based alliance formed.'},
+E:{stats:{},next:'day2_after',log:'Navigated Day 2 lunch.'}},arch:'The Connector'},
+
+day2_after:{hud:{date:'2024-04-09 (Tuesday)',time:'15:30',block:'After School',wx:'☀ Clear, golden light',loc:'Hallway near Club Wing',acad:'Safe'},
+trans:'Afternoon classes: History — the Heian period. The teacher discussed court life, literary culture, the concept of <em>mono no aware</em>. One student raised her hand without hesitation. Long sleeves, pulled past the wrist despite the warm classroom. She spoke clearly, precisely: <em>"It is the understanding that beauty exists because it ends. Cherry blossoms fall. That is why we watch them."</em> The teacher nodded, impressed. Jorge wrote the phrase down. Social Studies followed. The bell rang.',
+html:'<p>The hallway splits: left leads to the gate, right leads to the club wing. Somewhere down the right corridor, a guitar — someone practicing badly but with commitment. Further: the clatter of table tennis balls. A door propped open with a textbook.</p><p>Room 204. Literary Club. Tuesday is club day. Through the open door: four students. One at a laptop. One reading something thick. One arguing with the reader about something that seems to matter. And at the window, facing the courtyard — <em>her</em>. The girl from History class. Same long sleeves. Same posture, unnaturally straight, like someone who learned to sit still a long time ago. She\'s not reading today. She\'s just... looking out the window with the focus of someone watching something nobody else can see.</p><p>A sign-up sheet on the wall outside: three names. Space for more.</p>',
+choices:[
+{id:'A',lbl:'A) Keep walking',type:'Cautious',desc:'Not today. There\'s no rush. Clubs don\'t close.',time:'5 min',risk:'low'},
+{id:'B',lbl:'B) Read the sign-up sheet closely',type:'Observant',desc:'Information first. Don\'t commit. Just look.',time:'10 min',risk:'low'},
+{id:'C',lbl:'C) Step inside — "Is this Literary Club?"',type:'Bold',desc:'Direct entry. They\'ll either welcome you or they won\'t.',time:'15 min',risk:'med'},
+{id:'D',lbl:'D) Ask what the argument is about',type:'Social',desc:'Enter through the conversation, not the introduction.',time:'30 min',risk:'med'}],
+out:{
+A:{html:'<p>He walks past. The door stays open behind him. Through it, the muffled sound of the argument continuing — something about whether endings should be earned or inevitable. The girl at the window doesn\'t turn.</p><p>Some things can wait. This doesn\'t feel like a door that will close.</p><div class="inner-voice">Tuesday. There\'s always next Tuesday.</div>',stats:{knowledge:5},next:'day2_evening',log:'Walked past Literary Club. Not today.'},
+B:{html:'<p>The sign-up sheet: <em>"Literary Club — Tuesdays and Thursdays, 15:30-17:00. No experience required. Bring something you\'ve read or something you\'re thinking about. Both count."</em></p><p>Three names in different handwriting. Through the open door, he can see the girl at the window. She\'s turned slightly — not toward him, but toward the general direction of the doorway. Long sleeves past her wrists. That unnaturally still posture.</p><p>He photographs the sheet. He doesn\'t add his name. Not yet.</p>',stats:{knowledge:10,charm:5},charUnlock:'window_girl',flags:{noticed_window_girl:true},next:'day2_evening',log:'Read the Literary Club sign-up sheet. Noticed the girl from History.'},
+C:{html:'<p>"Is this the Literary Club?"</p><p>Three faces turn. The laptop student — Takeda, second-year, the designated organizer — gestures at a chair. "Yeah. Come in. We mostly read and argue about what we read."</p><p>The reader doesn\'t look up. The arguing student: "Your opinion on Murakami?" "Which one?" "Good answer."</p><p>Fifteen minutes. The club is informal, meets twice a week, has no mandatory reading list and no rules except "don\'t be boring about being bored." Takeda explains the structure (loose) and the expectations (lower). The girl at the window sat through the entire exchange without speaking. When Jorge stood to leave:</p><div class="dialogue">"You should bring something you\'ve read. Next time."</div><p>Her voice was quiet. Not shy — <em>quiet</em>. The distinction is important. It carried across the room like it was designed to be heard at exactly the right volume and not one decibel more.</p>',stats:{guts:12,charm:10,knowledge:5},charUnlock:'window_girl',rel:{WindowGirl:2},ach:'first_club',flags:{joined_lit:true},next:'day2_evening',log:'Visited Literary Club. The window girl told you to bring a book next time.'},
+D:{html:'<p>"What are you arguing about?"</p><p>Both arguers turn. The reader: "Whether unreliable narrators are lazy writing." The arguer: "They ARE when used as a crutch." "That\'s not what I said—" "It\'s what you meant."</p><div class="dialogue">"Everything is bad when used badly," Jorge says. "That\'s not a critique of the technique."</div><p>Three people look at him. The arguer grins. "New kid has <em>opinions</em>. Come sit down."</p><p>Twenty minutes of a conversation that feels more alive than anything else today. Literature, narrative structure, whether a character who lies to the reader is the same as an author who lies to the reader. The girl at the window listened to the entire thing without contributing. When it was over, she looked at Jorge for exactly one second — not appraising, not judging. Just... noting.</p>',stats:{charm:10,knowledge:8,guts:8},charUnlock:'window_girl',rel:{WindowGirl:1},ach:'first_club',flags:{joined_lit:true},next:'day2_evening',log:'Entered the club through the argument. Had opinions. Was welcomed for them.'},
+E:{stats:{},next:'day2_evening',log:'Headed home.'}},arch:'The Crossroads'},
+
+day2_evening:{hud:{date:'2024-04-09 (Tuesday)',time:'18:30',block:'Evening',wx:'🌆 Dusk, warm',loc:'Home',acad:'Safe'},
+trans:'Walk home: the konbini had a new seasonal poster in the window. The taiso man was packing up his radio. A stray cat sat on a wall, watching traffic with the authority of someone who owns the street.',
+html:'<p>Carmen is home. Guadalajara t-shirt on. <em>Sopa de fideo</em> on the stove — the noodle soup that takes thirty minutes but tastes like she\'s been simmering it since morning. The apartment smells like tomato and cilantro and home.</p><div class="dialogue">"Segundo día. ¿Mejor o peor?" She sets down bowls, studying his face like it\'s a report card she can read.</div><p>His phone buzzes on the table. A notification: <em>Added to "1-B Survivors" — 42 members.</em> Messages already scrolling — someone posted a photo, someone else replied with a sticker of a cat giving a thumbs up. The group chat has been alive for six hours and already has a name, an icon, and drama.</p><p>The neighbor\'s TV tonight: a drama with dramatic pauses. Carmen raises an eyebrow at a particularly loud emotional outburst through the wall. They almost laugh.</p>',
+choices:[
+{id:'A',lbl:'A) Check the group chat first',type:'Social',desc:'42 people talking. What are they saying? Who is funny? Who is loud?',time:'30 min',risk:'low'},
+{id:'B',lbl:'B) Dinner first — phone stays in pocket',type:'Family',desc:'Carmen made soup. The phone can wait. She can\'t.',time:'60 min',risk:'low'},
+{id:'C',lbl:'C) Show Carmen the group chat',type:'Warm',desc:'Share the chaos. Let her see what 42 Japanese teenagers look like when they\'re unsupervised.',time:'45 min',risk:'low'},
+{id:'D',lbl:'D) Study while eating',type:'Academic',desc:'The Japanese Language gap isn\'t going to close itself.',time:'60 min',risk:'low'}],
+out:{
+A:{html:'<p>Forty-two people. Half sending stickers of animals with captions. Someone posted a photo of Tanaka-sensei\'s coffee mug with the caption <em>"evidence."</em> Three people arguing about whether the cafeteria curry is acceptable (it is not, according to Hayashi, who has written a paragraph). Sato\'s contribution: "lol." One word. Maximum Sato.</p><p>Jorge reads everything. Types nothing. The group chat is a window into 1-B\'s personality — who talks, who lurks, who sends stickers, who starts arguments. He files it all.</p><div class="inner-voice">Forty-two people. I\'m one of them now. Technically. Silently. But the number went from zero to forty-two in one notification.</div>',stats:{knowledge:8,charm:5},ach:'phone_group',flags:{joined_groupchat:true},next:'day2_sleep',log:'Joined 1-B group chat. Read everything, typed nothing.'},
+B:{html:'<p>Phone in pocket. Sopa de fideo on the table. Carmen sits across from him and they eat in the specific comfortable rhythm of two people who have shared a thousand meals and don\'t need to fill every silence.</p><p>She talks about her day — Yuki (her coworker) brought her tea again. Someone at the office asked where Mexico is. She found a park with a vending machine that sells "almost acceptable" <em>café con leche</em>. She says "almost acceptable" like it\'s the highest praise Japan has earned so far.</p><p>They eat. The neighbor\'s drama provides background emotion. Carmen translates the plot from context clues and gets most of it wrong.</p>',stats:{kindness:10},rel:{Carmen:1},next:'day2_sleep',log:'Dinner with Carmen. Phone stayed in pocket.'},
+C:{html:'<p>"Mira." He shows her the phone. Carmen leans in, reads over his shoulder, lips moving slightly.</p><div class="dialogue">"Why is this child sending a picture of a coffee mug?"</div><p>"That\'s the teacher\'s. It\'s a joke."</p><div class="dialogue">"And this one — what is \'war crime\'?"</div><p>"Someone doesn\'t like the cafeteria food."</p><div class="dialogue">"Forty-two children. In one chat. This is..." She searches for the word. "Chaos."</div><p>She reads three more messages. Hayashi\'s food rant gets a raised eyebrow. Sato\'s "lol" gets a confused head-tilt. Jorge translates the stickers. Carmen laughs — not at the jokes, but at the absurdity of understanding teenage digital chaos in a second language.</p><p>Jorge laughs too. First real laugh today. It happened because he showed his mother a group chat, and that feels exactly right.</p>',stats:{kindness:8,charm:8},rel:{Carmen:2},ach:'phone_group',flags:{joined_groupchat:true},next:'day2_sleep',log:'Showed Carmen the group chat. They laughed together.'},
+D:{html:'<p>Japanese Language textbook open next to the soup bowl. Fujiwara-sensei\'s lesson on register — formal vs. casual, when to shift, the invisible rules of who speaks how to whom. The kanji compound from today: written twice, then three times, until it stops looking foreign.</p><p>Carmen watches from across the table. The sopa gets cold. She doesn\'t say anything for ten minutes. Then:</p><div class="dialogue">"Come primero." Eat first.</div><p>She says it in the tone that is technically a suggestion and functionally a command. He closes the book. She refills his bowl. Some negotiations Carmen wins by default.</p>',stats:{knowledge:12},next:'day2_sleep',log:'Studied at the dinner table. Carmen made him eat.'},
+E:{stats:{kindness:5},next:'day2_sleep',log:'Evening at home.'}},arch:'The Son'},
+
+day2_sleep:{isRefl:true,text:"Two days. The school is getting less foreign — I know where the bathroom is, which teacher talks too fast, and that the vending machine corner is always free.<br><br>1-B Survivors. Forty-two people. I'm one of them now, technically. My contribution so far: zero messages, full read receipts.<br><br>That girl in History class who talked about cherry blossoms — about beauty existing because it ends. The way she said it. Like she'd been thinking about it for longer than fifteen years. Like it wasn't a school answer but something she actually believes.<br><br>Who reads books with leather covers in junior high?<br><br>Tomorrow is Wednesday. Halfway through the week. The blazer is slightly less stiff.",next:'__proc__',log:'Completed Day 2.',ach:'day2_unlock'}
+};
+
+// ═══ PROCEDURAL ENGINE ═══
+var TPL_M=[
+{html:'<p>The walk to school is becoming routine — konbini, park, blue vending machine. {WD} {ME}</p><p>At the gate, the shoe lockers smell like they always do — slightly damp, slightly chemical.</p>',c:['Walk in with purpose','Stop at the konbini for something','Take a slightly different route today','Check the group chat while walking']},
+{html:'<p>Morning. {WD} The gate is quieter today — or maybe Jorge is just arriving at a different minute and the entire social geography shifts. {ME}</p><p>His locker opens on the first try. Small victories.</p>',c:['Head straight to class','Check the bulletin boards for updates','Say hi to someone at the lockers','Get a canned coffee from the machine']},
+{html:'<p>Jorge overslept. Carmen\'s alarm didn\'t go off — or maybe it did and he slept through it. The streets are emptier at this hour. {ME}</p><div class="inner-voice">This is fine. This is fixable. This is — okay I\'m running now.</div>',c:['Sprint — make it before the bell','Accept it and walk with dignity','Text someone to cover for you','Stop for breakfast anyway — if late, be fed']}
+];
+var TPL_C=[
+{html:'<p>Math. Ogawa-sensei works through {MT} on the board with the confidence of someone who has never doubted a number in their life. Jorge follows along — {MD}. The chalk hits the board with rhythmic certainty.</p><p>{CA}</p>',c:['Focus and take thorough notes','Help the student beside you who looks lost','Raise your hand with a question','Zone out and think about other things']},
+{html:'<p>Japanese Language. Fujiwara-sensei {FA} and opens today\'s lesson: {JT}. Jorge catches about {JP}% — {JG}.</p><p>{CA}</p>',c:['Take careful notes on everything','Try to answer when called on','Read ahead in the textbook','Watch how classmates react to the lesson']},
+{html:'<p>Science lab. Ogawa-sensei\'s diagrams are ambitious today. Lab pairs work on {ST}. Jorge\'s partner holds the equipment like it might be alive.</p><p>{CA}</p>',c:['Take the lead on the experiment','Walk your partner through it patiently','Ask Ogawa-sensei a deeper question','Let your partner try first']},
+{html:'<p>History class. The topic: {HT}. {HD} The teacher\'s voice settles into a rhythm.</p><p>{WGC}</p>',c:['Take detailed notes','Connect it to something from your own background','Ask about the cultural context','Let your mind wander and sketch in the margin']},
+{html:'<p>English class. Jorge has an advantage here and he knows it. The teacher reads a passage — {ED}. Half the class follows. The other half has mentally departed.</p>',c:['Stay quiet — don\'t show off','Help when called on — accurate, brief','Volunteer to read aloud','Write something in English in your notebook']},
+{html:'<p>P.E. today: {PA}. The gym {PB}. Jorge finishes {PR}.</p>',c:['Give it everything','Pace yourself steadily','Help someone who\'s struggling','Talk to someone during the water break']}
+];
+var TPL_L=[
+{html:'<p>{LF} The table: {LTS}</p>{LD}',c:['Share food and catch up','Ask the group about something specific','Invite someone new to the table','Eat quickly then go explore']},
+{html:'<p>Today Jorge eats alone — not from rejection, just need. {SR} {LF} The {SL} is quiet in a way that feels like permission.</p>',c:['Read or study — use the silence','People-watch the cafeteria','Text someone from the group chat','Just sit and rest']},
+{html:'<p>Something different at lunch today. {LE}</p>',c:['Get involved','Watch from a safe distance','Help organize things','Skip the event — find somewhere quiet']}
+];
+var TPL_A=[
+{html:'<p>{CS}</p>',c:['Participate actively','Observe and learn how things work','Talk to someone specific','Leave early — you have other things']},
+{html:'<p>After school. No obligations today. {AFS}</p>',c:['Head home — rest and study','Explore somewhere you haven\'t been','Hang out with friends','Study at the library']},
+{html:'<p>Cleaning duty. {CZ}. Your partner today: {CP}.</p>',c:['Clean efficiently, chat a little','Clean in focused silence','Make it entertaining somehow','Be extra thorough — impress with effort']}
+];
+var TPL_E=[
+{html:'<p>{CES}</p>{CD}',c:['Tell her about your day','Ask about her day','Study after dinner','Quiet evening together']},
+{html:'<p>Carmen is working late. The apartment is quiet. {AD} Leftovers in the fridge.</p>',c:['Study in the silence','Browse the group chat','Call or text someone','Just rest — read, listen to music, exist']},
+{html:'<p>Evening. {PE}</p>',c:['Reply to the conversation','Read but don\'t reply yet','Start a new conversation with someone','Put the phone down for tonight']}
+];
+var TPL_WM=[
+{html:'<p>{WKM} Carmen {CW}. Weekend mornings have a different texture — slower, softer, the pressure valve released.</p>',c:['Study and get ahead','Explore the neighborhood','Meet up with friends','Stay in and just rest']}
+];
+var TPL_WA=[
+{html:'<p>{WKA}</p>',c:['Keep exploring — there\'s more','Head home — good enough for today','Visit a shop or cafe','Text someone about what you found']}
+];
+var PL={
+WD:['The air is crisp from last night\'s rain.','Morning light cuts between buildings at a low angle.','A breeze carries the smell of someone\'s breakfast from an open window.','The humidity is already building.','Grey sky, but warm.','Clear sky — the kind that makes Tokyo look sharp.'],
+ME:['The old taiso man is in the park, same radio, same precise movements.','A cat watches traffic from the konbini wall with absolute authority.','Two elementary kids sprint past, backpacks enormous.','The konbini has a new seasonal display.','Someone left an umbrella by the vending machine. Nobody has claimed it.','A woman on a bench reads a novel thick enough to be structural.'],
+MT:['quadratic equations','geometry proofs','statistics basics','algebra review','graphing functions','probability'],
+MD:['this is familiar ground from Mexico','the notation is slightly different but the logic holds','this is new material that requires actual focus','comfortable — he finishes the problems early'],
+FA:['adjusts her glasses and opens the textbook','writes the objective on the board in museum-quality handwriting','returns graded work with precise red comments','reads a passage aloud, pausing for effect'],
+JT:['honorific language levels','kanji compound readings','essay structure and flow','literary analysis of a short passage','classical Japanese grammar forms','the difference between written and spoken register'],
+JP:['75','80','85','70','90'],
+JG:['the literary vocabulary still trips him up','some kanji compounds are unfamiliar territory','the lecture speed is just slightly too fast to catch everything','the idioms are regional and specific','classical forms are entirely new ground'],
+CA:['The classroom hums with its usual mix of concentration and quiet fidgeting.','Someone\'s stomach growls. The silence after is louder than the growl.','Aoyama is drawing in her notebook margins again — the patterns have gotten more complex.','The boy behind Jorge is awake today. Genuine progress.','A bird lands on the window ledge and stays for the entire lesson.','Outside, the clouds shift and a beam of light crosses the room like a spotlight.'],
+WGC:['The girl with long sleeves takes notes with unusual focus. Her handwriting is small and precise.','She raises her hand once. Her answer is so articulate the teacher pauses before responding.','She stares out the window for most of the period. Her posture doesn\'t shift once.','She is absent from this class today. The seat by the window is empty.'],
+ST:['chemical reactions in solution','plant cell structure under the microscope','basic electrical circuits','weather pattern analysis','the human digestive system','light refraction through prisms'],
+HT:['the Meiji Restoration and modernization','daily life in the Edo period','post-war reconstruction','ancient Silk Road trade routes','the development of Japanese writing systems','feudal social structures'],
+HD:['The teacher uses projected photographs — black and white, powerful.','Two students debate an interpretation. The teacher lets it run.','A documentary clip plays — grainy footage with subtitles.','The teacher asks for personal connections. Nobody volunteers.'],
+ED:['Jorge could read this faster than the teacher.','The vocabulary is intermediate — comfortable for him, hard for most.','A listening exercise plays. American accent. Clear enough.','Writing practice. Jorge finishes in half the time.'],
+PA:['Relay races on the track','Basketball half-court games','Long-distance running and stretching','Badminton — surprisingly competitive','Soccer on the field','Swimming — the pool is finally open'],
+PB:['smells like rubber and determination','echoes with sneaker squeaks and shouted encouragement','is humid and warm today','has a strange calm — half the class is sitting out'],
+PR:['middle of the pack — unremarkable, which is fine','better than expected — something clicked','exhausted but satisfied','near the back, but nobody seemed to notice','first in his group, which surprised him most of all'],
+LF:['Carmen packed onigiri today — she\'s been experimenting with Japanese food.','Tortas again. The reputation precedes them now.','Carmen made tacos — Hayashi is already eyeing the bag.','Bento with last night\'s leftovers, reorganized with precision.','Carmen tried making Japanese curry. The result is Mexican-Japanese fusion. Verdict: unexpectedly good.','Simple rice and egg today. Carmen was tired last night. It\'s still good.'],
+LTS:['Sato\'s table. Hayashi already mid-monologue. The chair is waiting.','The table is fuller today — someone new sat down without asking and nobody objected.','Hayashi is describing something from a show he watched last night with full dramatic gestures.','Sato is unusually quiet. Hayashi fills the silence without noticing, as always.'],
+LD:['<div class="dialogue">"Your mom should open a restaurant," Hayashi says for the fifth time this month.</div>','<div class="dialogue">"Quiz results came back," Sato says. "How\'d everyone do?"</div>','<div class="dialogue">Hayashi: "Film club is watching horror after school." Sato: "It\'s a school night." Hayashi: "Your point?"</div>','<div class="dialogue">"Weekend plans?" Sato asks. The table goes quiet. Nobody has any. That\'s completely fine.</div>'],
+SR:['Sato and Hayashi are in a meeting with Tanaka-sensei.','He just needs the quiet today — social energy is a finite resource.','The cafeteria was too loud, too full, too much.','Sometimes you need to eat without performing for anyone.'],
+SL:['corner table by the vending machine','rooftop (the door is still unlocked)','empty classroom, sunlight on the desks','library reading nook, surrounded by books'],
+LE:['A commotion near the entrance — someone dropped an entire tray. The crash echoes. Everyone looks. The dropper stands frozen for three full seconds before slowly kneeling to pick it up.','Komori has set up a sign-up table near the entrance. Her clipboard game is immaculate. She\'s recruiting for something.','A spontaneous trading card tournament has taken over three pushed-together tables. It\'s surprisingly intense — real stakes, real emotions.','A second-year is recruiting for the basketball team with the energy of someone on commission.'],
+CS:['Literary Club. Room 204. The door is open. The usual members are here, and the girl at the window sits in her usual place, long sleeves past her wrists, book open on her lap.','The club room is quieter today — only three people came. The discussion is more intimate, more honest.','Free reading session. No discussion, no debate — just shared silence and the sound of pages turning.','A debate breaks out about whether manga counts as literature. It gets unexpectedly philosophical.'],
+AFS:['The hallway empties. Club sounds fade behind closing doors.','The school grounds are beautiful in the golden hour light — long shadows, warm stone.','A few students linger near the vending machines outside, talking about nothing.','The bulletin board has new flyers. Someone started a weekend study group.'],
+CZ:['Zone A — hallways. Long corridors, lots of glass.','Zone B — your classroom. The desks are heavier than they look.','Zone C — the science lab. The drain still makes that sound.','Zone D — gym entrance. Smells like everything that happened in the gym today.'],
+CP:['Komori, who cleans like she manages — with a system and a clipboard.','A quiet student from the next desk who works without speaking.','Takagi, who has optimized cleaning to a twenty-two-minute process.','Hayashi, who cleans like he talks — chaotically, enthusiastically, everywhere at once.'],
+CES:['Carmen made pozole. The apartment smells like hominy and chili and the specific warmth of food that took hours.','Carmen is on the phone with Yuki, laughing about something. She waves Jorge in and points at the stove.','Carmen is watching a telenovela and pretending she isn\'t emotionally invested.','The kitchen smells like Carmen experimenting — Japanese ingredients, Mexican technique. The result is on the table.','Carmen made enchiladas. The Tuesday enchilada tradition is now established.','Carmen bought taiyaki from a street vendor. "It\'s like a fish-shaped empanada. I have cultural questions."'],
+CD:['<div class="dialogue">"¿Y cómo te fue hoy, mijo?" She sets down plates, studying him.</div>','<div class="dialogue">"Yuki taught me \'oishii\' today. Oishii! Did I say it right?" She looks proud of one word.</div>','<div class="dialogue">"I found real chiles. Jorge. REAL chiles. In Tokyo." She looks like she discovered gold.</div>','<div class="dialogue">"You\'re taller," she says, looking at him. "When did that happen?"</div>'],
+AD:['The apartment is smaller when it\'s empty. The walls feel closer.','His homework is spread on the table. The lamp makes a warm circle of yellow light.','The neighbor\'s TV provides ambient drama through the wall.','The fridge hums. A clock ticks. Tokyo lives and breathes outside the window.'],
+PE:['The group chat exploded — 87 messages. Hayashi started a debate about the best ramen place in the area and it devolved into sticker warfare.','A DM from Sato: just a link to a video. No context. No explanation. Classic Sato.','Nishikawa created a new group chat called "weekend plans maybe?" with five people added.','A message from an unknown number — someone from class asking about tomorrow\'s homework.'],
+WKM:['Saturday morning. No alarm. Sunlight through thin curtains and the luxury of nowhere to be.','Sunday morning. Rain on the windows — the city sounds different when it\'s resting.','Weekend. Jorge wakes to coffee smell and Carmen\'s humming. The apartment feels bigger on free days.','A slow morning. The kind where you can hear individual birds instead of traffic.'],
+CW:['is already up, making something complicated in the kitchen.','is going to meet Yuki for brunch. She left a note.','is still sleeping — the apartment is perfectly, unusually silent.','left early. Note on the counter: "Gone shopping. There\'s food. Back by lunch."'],
+WKA:['The afternoon stretches out. Tokyo on a weekend has a different rhythm — slower, wider, full of possibility and the specific freedom of having no schedule.','He finds a part of the neighborhood he hasn\'t explored — a used bookstore with narrow aisles, a small shrine with a donation box, a ramen shop with a line outside.','The park near the station. The stray cat Hayashi mentioned is actually there. It considers Jorge for three seconds, decides he\'s not interesting, and leaves.','A shopping street with everything from hardware to taiyaki. Someone plays guitar near the station exit — badly, but with more feeling than skill.']
+};
+function rv(t,rng){return t.replace(/\{(\w+)\}/g,function(m,k){return PL[k]?pick(PL[k],rng):m;});}
+
+var REFLS={
+early:['Another day. The school is becoming familiar — not the dramatic kind of familiar, just the kind where you stop thinking about which hallway leads where.\n\nI wonder if this is what settling in feels like. Not a moment. Just gradually less foreign.','I talked to more people today than my entire first week. Some conversations stuck. Most evaporated. That\'s probably normal.\n\nCarmen asked if I was happy. I said yes. I think I meant it.','Math is getting harder. Japanese is getting easier. Or maybe I\'m just getting used to not understanding everything.\n\nThe window girl said something in class that made the teacher pause. Nobody else seemed to catch it.','Weekend. Apartment quiet. Carmen out. Two hours studying. Then konbini for melon bread.\n\nBalance.','Sato remembered something I said last week. People don\'t remember things about background characters.\n\nMaybe I\'m not a background character.'],
+mid:['Exams coming. The school shifts — quieter, tenser. Even Hayashi is studying (badly).\n\nThe cherry blossoms are gone. The trees are just green now. When did that happen?','I dreamed about Mexico. Not the big things — just the sound of the street vendor, Carmen\'s old kitchen, the light at 6 PM.\n\nTokyo has its own light. I\'m learning it.','The Literary Club is becoming a real thing — not just a room, a place where my opinion matters. Takeda argued with me for twenty minutes. That felt like respect.\n\nThe window girl listened to everything. Then said: "You were both wrong." She was right.','Dad called. Twelve minutes. He asked about school. I gave him the version without follow-up questions.\n\nCarmen was listening from the kitchen. She made hot chocolate after. Didn\'t say why.','I have a routine. Walk, school, lunch table, club, Carmen, sleep. Not exciting. Stable.\n\nStable is underrated.'],
+late:['Six months. Half a year. I can navigate without Google Maps. I have a favorite konbini. Inside jokes.\n\nI don\'t think about Mexico every day anymore. I\'m not sure how to feel about that.','The seasons changed. Cold now. Carmen bought me a scarf — too colorful, obviously. I wear it.\n\nThe window girl was wearing one too. Neutral, as always. She glanced at mine. Said nothing. But she looked.','Culture festival planning consuming everyone. Hayashi: haunted house. Komori: cafe. Sato: doesn\'t care. I suggested food stall.\n\nPeople listened. That still surprises me.','Almost a year. Cherry trees budding again. Carmen measured me against the wall.\n\n"Mijo," she said. "You grew." She meant more than height.']
+};
+function getRefl(d,rng){var p=d<=30?REFLS.early:d<=100?REFLS.mid:REFLS.late;return pick(p,rng);}
+
+var SCH_BLK=['morning','class','lunch','afterSchool','evening','sleep'];
+var FREE_BLK=['morning','afterSchool','evening','sleep'];
+function getSeq(d){if(isFreeDay(d)||(d>=81&&d<=129))return FREE_BLK;return SCH_BLK;}
+
+function genScene(day,blk){
+  var rng=mkRng(day*100+blk.charCodeAt(0)*7);
+  var free=isFreeDay(day)||(day>=81&&day<=129);
+  var pool,loc,time,label;
+  if(blk==='morning'){pool=free?TPL_WM:TPL_M;loc=free?'Home':'Walking to Kōsei';time=free?'09:30':'07:50';label='Morning';}
+  else if(blk==='class'){pool=TPL_C;loc='Class 1-B';time='09:00';label='School Day';}
+  else if(blk==='lunch'){pool=TPL_L;loc='Cafeteria';time='12:20';label='Lunch';if(rng()<0.2)pool=[TPL_L[1]];}
+  else if(blk==='afterSchool'){pool=free?TPL_WA:TPL_A;loc=free?'Tokyo':'Kōsei';time=free?'14:00':'15:30';label='After School';if(!free&&day%5===0)pool=[TPL_A[2]];if(!free&&(getDow(day)===2||getDow(day)===4)&&G.flags.joined_lit)pool=[TPL_A[0]];}
+  else if(blk==='evening'){pool=TPL_E;loc='Home';time='18:30';label='Evening';if(rng()<0.3)pool=[TPL_E[1]];}
+  else return null;
+  var tpl=pick(pool,rng);
+  var html=rv(tpl.html,rng);
+  var calEv=CAL_EVENTS[day];
+  var calHtml=(calEv&&blk==='morning')?'<div class="trans-card"><strong>'+calEv.title+'</strong> — '+calEv.desc+'</div>':'';
+  var trans=(blk==='class'||blk==='lunch')?'<div class="trans-card">'+pick(['The blocks between classes passed in their usual rhythm — hallway traffic, bathroom breaks, the distant sound of a ball bouncing from the gym wing.','A short break. The hallway smelled like floor cleaner and cologne that was trying too hard.','Ten minutes between classes. Jorge reorganized his notes and watched people pass.','Brief pause. Checked phone — no new messages worth replying to.','The hallway current carried him between rooms like a leaf in a stream.'],rng)+'</div>':'';
+  var labels=['A','B','C','D'];
+  var types=['Standard','Social','Bold','Reflective'];
+  var risks=['low','low','med','low'];
+  var stats=[{knowledge:8},{charm:8},{guts:5,charm:5},{knowledge:5}];
+  var choices=tpl.c.map(function(desc,i){
+    return{id:labels[i],lbl:labels[i]+') '+desc,type:types[i],desc:desc,time:['30 min','30 min','30 min','30 min'][i],risk:risks[i],stats:stats[i]};
+  });
+  return{hud:{date:getDateStr(day),time:time,block:label,wx:getWeather(day),loc:loc,acad:'Safe'},trans:trans,calHtml:calHtml,html:html,choices:choices,arch:'Day '+day};
+}
+
+// ═══ CORE FUNCTIONS ═══
+function save(){try{localStorage.setItem('td4',JSON.stringify(G));toast('💾 Progress Saved','Day '+G.day+' saved.',2500);}catch(e){}}
+function load(){try{var s=localStorage.getItem('td4');if(s){var d=JSON.parse(s);Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});}}catch(e){G.scene='intro';}}
+function el(id){return document.getElementById(id);}
+function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
+function gainStat(k,v){if(!G.stats[k])return;G.stats[k].xp+=v;var thr=G.stats[k].rank*30;if(G.stats[k].xp>=thr&&G.stats[k].rank<5){G.stats[k].rank++;G.stats[k].xp=0;toast(k.toUpperCase()+' UP!','Rank '+G.stats[k].rank+'!',3500);}}
+function unlock(id){if(G.ach.indexOf(id)>-1)return;G.ach.push(id);var a=ACHS.filter(function(x){return x.id===id;})[0];if(a)toast('🏆 Achievement!',a.icon+' '+a.name,5000);}
+function applyOut(o){
+  if(o.stats)Object.keys(o.stats).forEach(function(k){gainStat(k,o.stats[k]);});
+  if(o.rel)Object.keys(o.rel).forEach(function(k){G.relations[k]=Math.min(10,Math.max(0,(G.relations[k]||0)+o.rel[k]));});
+  if(o.ach)unlock(o.ach);
+  if(o.charUnlock&&G.chars.indexOf(o.charUnlock)<0)G.chars.push(o.charUnlock);
+  if(o.charUnlock2&&G.chars.indexOf(o.charUnlock2)<0)G.chars.push(o.charUnlock2);
+  if(o.flags)Object.keys(o.flags).forEach(function(k){G.flags[k]=o.flags[k];});
+  if(o.log)G.log.push('[Day '+G.day+'] '+o.log);
+  save();
+}
+function updateProg(){var p=Math.max(Math.round(G.day/365*100),1);el('sb-fill').style.width=p+'%';el('sb-val').textContent='Day '+G.day+' / 365';}
+function hideCards(){el('outcome').classList.remove('show');el('reflection').classList.remove('show');}
+
+// ═══ RENDER ═══
+function renderScene(id){
+  hideCards();
+  if(id==='__proc__'||id==='__proc_next__'){
+    G.scene='__proc__';var seq=getSeq(G.day);
+    if(id==='__proc_next__'){G.block++;if(G.block>=seq.length){renderProcRefl();return;}}else{G.block=0;}
+    var bn=seq[G.block];if(bn==='sleep'){renderProcRefl();return;}
+    var sc=genScene(G.day,bn);G.choiceMade=false;save();renderSceneUI(sc,'__proc_next__');return;
+  }
+  var sc=SC[id];if(!sc){renderScene('__proc__');return;}
+  G.scene=id;G.choiceMade=false;save();
+  if(sc.isRefl){renderRefl(sc);return;}
+  renderSceneUI(sc,null);
+}
+
+function renderSceneUI(sc,nxt){
+  var h=sc.hud;
+  var out='<div class="hud">'
+    +'<span class="badge b-date">📅 '+h.date+'</span>'
+    +'<span class="badge b-time">🕐 '+h.time+' — '+h.block+'</span>'
+    +'<span class="badge b-wx">'+h.wx+'</span>'
+    +'<span class="badge b-loc">📍 '+h.loc+'</span>'
+    +'<span class="badge b-acad">📖 '+h.acad+'</span></div>';
+  out+=(sc.calHtml||'')+(sc.trans||'');
+  out+='<div class="scene-card"><div class="scene-header">◈ NARRATIVE — Day '+G.day+'</div><div class="scene-body">'+sc.html+'</div></div>';
+  out+='<div class="dec-card"><div class="dec-title">DECISION TIME</div>';
+  sc.choices.forEach(function(c){
+    var rc=c.risk==='low'?'c-low':c.risk==='med'?'c-med':'c-high';
+    out+='<button class="choice" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')"><span class="c-label">'+c.lbl+' — '+c.type+'</span>'+c.desc+'<div class="c-meta"><span class="'+rc+'">⏱ '+c.time+' | ⚠ '+c.risk+'</span></div></button>';
+  });
+  out+='<div class="choice" style="cursor:default"><span class="c-label">E) FREE — Write your own action</span><div class="open-row"><input class="open-in" id="open-in" type="text" placeholder="What does Jorge do?" maxlength="200"><button class="go-btn" id="open-go" onclick="doOpen(\''+(nxt||'')+'\')">→</button></div><div class="c-meta">⏱ Custom | ⚠ varies</div></div>';
+  out+='</div>';
+  el('scene-area').innerHTML=out;
+  el('scene-area').scrollIntoView({behavior:'smooth',block:'start'});
+  window._sc=sc;window._nxt=nxt;
+}
+
+function doChoice(cid,nxt){
+  if(G.choiceMade)return;G.choiceMade=true;
+  document.querySelectorAll('.choice').forEach(function(b){b.disabled=true;b.style.opacity='.45';});
+  var s=el('hc-'+cid);if(s){s.classList.add('selected');s.style.opacity='1';}
+  var sc=window._sc;if(!sc)return;
+  if(sc.out&&sc.out[cid]){var o=sc.out[cid];applyOut(o);showOut(o.html||'<p>Your choice plays out.</p>',o.next||nxt,sc.arch);return;}
+  var ch=sc.choices.filter(function(c){return c.id===cid;})[0];
+  if(ch){applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});var rng=mkRng(G.day*50+cid.charCodeAt(0));
+  var texts=['<p>Jorge '+pick(['handles it with quiet competence. Not flashy, but it works.','navigates the moment — reading the room, adjusting. It goes about as well as it could.','takes a breath, commits, follows through. The result is solid.','makes it work. Not every moment needs to be dramatic to matter.','gets through it with the growing confidence of someone who\'s done this enough times to trust himself.'],rng)+'</p>'];
+  showOut(pick(texts,rng),nxt,sc.arch);}
+}
+
+function doOpen(nxt){
+  var inp=el('open-in');var v=(inp&&inp.value||'').trim();
+  if(!v||G.choiceMade)return;G.choiceMade=true;
+  document.querySelectorAll('.choice').forEach(function(b){b.disabled=true;b.style.opacity='.45';});
+  var sc=window._sc;
+  if(sc&&sc.out&&sc.out.E){var o=sc.out.E;applyOut(Object.assign({},o,{log:'Open: '+v}));showOut('<p>Jorge decides: <em>"'+v.replace(/</g,'&lt;')+'"</em></p><p>The moment bends to accommodate the choice — not every path is on the map, but the ones you make yourself are the ones that stick.</p>',o.next||nxt,sc.arch||'Improviser');return;}
+  applyOut({stats:{charm:5},log:'Open: '+v});
+  showOut('<p>Jorge decides: <em>"'+v.replace(/</g,'&lt;')+'"</em></p><p>It plays out in a way that feels right — not scripted, not planned, just honest. The story adjusts.</p>',nxt,'Improviser');
+}
+
+function showOut(html,nxt,arch){
+  var oc=el('outcome');
+  oc.innerHTML='<h3>— OUTCOME —</h3><div>'+html+(arch?'<p class="arch-note">Aligned with: '+arch+'</p>':'')+'</div>';
+  var btn=document.createElement('button');btn.className='go-next';btn.textContent='Continue →';
+  btn.onclick=function(){advance(nxt);};oc.appendChild(btn);oc.classList.add('show');oc.scrollIntoView({behavior:'smooth'});refreshStats();
+}
+
+function renderRefl(sc){
+  el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day winds down. The apartment is dark. Carmen\'s light went off a while ago. Tokyo hums outside — that sound that never fully stops.</p></div></div>';
+  if(sc.ach)unlock(sc.ach);if(sc.log)G.log.push('[Day '+G.day+'] '+sc.log);
+  var ref=el('reflection');ref.innerHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+sc.text+'</p></div>';
+  var btn=document.createElement('button');btn.className='go-next';btn.textContent='Day '+(G.day+1)+' →';
+  btn.onclick=function(){G.day++;G.block=0;updateProg();save();if(sc.next&&SC[sc.next])renderScene(sc.next);else renderScene('__proc__');};
+  ref.appendChild(btn);ref.classList.add('show');ref.scrollIntoView({behavior:'smooth'});save();refreshStats();
+}
+
+function renderProcRefl(){
+  el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day settles. Jorge is in bed. The apartment is quiet except for the neighbor\'s TV — a late drama tonight, muffled emotional music through the wall.</p></div></div>';
+  var rng=mkRng(G.day*31);var text=getRefl(G.day,rng);
+  G.log.push('[Day '+G.day+'] Day completed.');
+  if(G.day===5)unlock('day5_unlock');if(G.day===7)unlock('weekend_free');
+  if(CAL_EVENTS[G.day])G.log.push('[Day '+G.day+'] '+CAL_EVENTS[G.day].title);
+  Object.keys(G.relations).forEach(function(k){if(G.relations[k]>=5&&G.ach.indexOf('bond5')<0)unlock('bond5');});
+  var ref=el('reflection');ref.innerHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+text.replace(/\n/g,'</p><p>')+'</p></div>';
+  var btn=document.createElement('button');btn.className='go-next';
+  btn.textContent=G.day>=365?'🌸 The End':'Day '+(G.day+1)+' →';
+  btn.onclick=function(){if(G.day>=365){showEnding();return;}G.day++;G.block=0;updateProg();save();renderScene('__proc__');};
+  ref.appendChild(btn);ref.classList.add('show');ref.scrollIntoView({behavior:'smooth'});save();refreshStats();
+}
+
+function showEnding(){
+  el('scene-area').innerHTML='<div style="background:linear-gradient(135deg,rgba(255,107,157,.08),rgba(168,85,247,.06));border:2px solid rgba(255,107,157,.3);border-radius:16px;padding:28px;text-align:center;margin:20px 0"><h2 style="font-family:Dela Gothic One,sans-serif;color:var(--sakura);margin-bottom:8px">🌸 One Year at Kosei 🌸</h2><p style="color:var(--dim);font-size:.88rem;line-height:1.8">365 days. The cherry blossoms are falling again. You came here as a stranger. You leave as someone who belongs.</p><p style="color:var(--ink);font-size:.9rem;margin-top:12px">Characters: '+G.chars.length+' | Achievements: '+G.ach.length+'/'+ACHS.length+'</p><button class="go-next" onclick="resetGame()" style="margin-top:16px">Play Again</button></div>';
+  hideCards();
+}
+
+function advance(nxt){
+  if(nxt==='day2_morning')G.day=2;
+  G.block=0;updateProg();renderScene(nxt||'__proc_next__');
+}
+
+// ═══ STATS ═══
+function refreshStats(){
+  var r=el('stat-rows');if(!r)return;
+  r.innerHTML=Object.keys(G.stats).map(function(n){var d=G.stats[n];var p=((d.rank-1)/4)*100;var s='★'.repeat(d.rank)+'☆'.repeat(5-d.rank);
+  return'<div class="stat-row"><div class="s-icon">'+d.icon+'</div><div class="s-name">'+n[0].toUpperCase()+n.slice(1)+'</div><div class="s-track"><div class="s-bar"><div class="s-fill" style="width:'+p+'%;background:'+d.color+'"></div></div><div class="s-stars">'+s+'</div></div><div class="s-rank">Rank '+d.rank+'</div></div>';}).join('');
+  var a=el('ach-grid');if(a)a.innerHTML=ACHS.map(function(x){var u=G.ach.indexOf(x.id)>-1;return'<div class="ach-item '+(u?'':'locked')+'"><div class="ach-icon">'+x.icon+'</div><div><div class="ach-name">'+(u?x.name:'???')+'</div><div class="ach-desc">'+(u?x.desc:'Locked')+'</div></div></div>';}).join('');
+  var l=el('story-log');if(l)l.innerHTML=G.log.length?G.log.slice(-30).map(function(e){return'<p>• '+e+'</p>';}).join(''):'<p>Your story begins...</p>';
+}
+
+// ═══ CHARACTERS ═══
+function renderChars(){
+  el('char-grid').innerHTML=Object.keys(CHARS).map(function(id){var c=CHARS[id];var u=!c.locked||G.chars.indexOf(id)>-1;var bv=c.bond&&G.relations[c.bond]!=null?G.relations[c.bond]:null;var bp=bv!=null?Math.round(bv/10*100):0;
+  return'<div class="char-card '+(u?'':'locked')+'" style="--cgrad:'+c.grad+'">'+(u?'<div class="unlk-badge">KNOWN</div>':'')+'<div class="char-av" style="background:'+(u?c.grad:'#1e2a40')+'">'+( u?c.av:'?')+'</div><div class="char-name">'+(u?c.name:'???')+'</div><div class="char-role">'+(u?c.role:'Unknown')+'</div>'+(u?'<div class="char-trope">'+c.trope+'</div>':'')+(u&&c.desc?'<div class="char-desc">'+c.desc+'</div>':'')+(u&&bv!=null?'<div class="bond-wrap"><div class="bond-lbl">BOND</div><div class="bond-bar"><div class="bond-fill" style="width:'+bp+'%"></div></div><div class="bond-v">'+bv+'/10</div></div>':'')+'</div>';}).join('');
+}
+
+// ═══ CALENDAR ═══
+function renderCal(){
+  var cd=new Date(2024,3,7+G.day);var mo=cd.getMonth();var yr=cd.getFullYear();
+  el('month-label').textContent=['January','February','March','April','May','June','July','August','September','October','November','December'][mo]+' '+yr;
+  var g=el('cal-grid');var dn=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  g.innerHTML=dn.map(function(d){return'<div class="cal-dn">'+d+'</div>';}).join('');
+  var fd=new Date(yr,mo,1).getDay();var dm=new Date(yr,mo+1,0).getDate();
+  for(var i=0;i<fd;i++)g.innerHTML+='<div class="cal-d empty"></div>';
+  for(var d=1;d<=dm;d++){var dt=new Date(yr,mo,d);var dn2=Math.round((dt-new Date(2024,3,8))/(864e5))+1;
+  var c='cal-d';if(dn2<G.day)c+=' past';else if(dn2===G.day)c+=' cur';
+  if(CAL_EVENTS[dn2])c+=' ev';if(CAL_EVENTS[dn2]&&CAL_EVENTS[dn2].type==='holiday')c+=' hol';
+  var dw=dt.getDay();var col=dw===0?'var(--red)':dw===6?'var(--sky)':'inherit';
+  g.innerHTML+='<div class="'+c+'" title="'+(CAL_EVENTS[dn2]?CAL_EVENTS[dn2].title:'')+'"><span style="color:'+col+'">'+d+'</span>'+(CAL_EVENTS[dn2]?'<div class="dot"></div>':'')+'</div>';}
+  var tl=el('timeline');var up=Object.keys(CAL_EVENTS).map(Number).sort(function(a,b){return a-b;}).filter(function(d){return d>=G.day-3;}).slice(0,8);
+  tl.innerHTML=up.map(function(d){var e=CAL_EVENTS[d];var st=d<G.day?'done':d===G.day?'cur':'fut';var dc=st==='done'?'td-done':st==='cur'?'td-cur':'td-fut';var di=st==='done'?'✓':st==='cur'?'●':'○';
+  return'<div class="tl-item"><div class="tl-dot '+dc+'">'+di+'</div><div class="tl-content"><div class="tl-date">Day '+d+'</div><div class="tl-ev '+(st==='done'?'done':'')+'">'+e.title+'</div><div class="tl-desc">'+e.desc+'</div></div></div>';}).join('');
+}
+
+// ═══ TABS ═══
+document.getElementById('nav').addEventListener('click',function(e){var b=e.target.closest('.tab-btn');if(!b)return;var t=b.dataset.tab;
+document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.toggle('active',x===b);});
+document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='tab-'+t);});
+if(t==='characters')renderChars();if(t==='stats')refreshStats();if(t==='calendar')renderCal();});
+
+function resetGame(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('td4');location.reload();}
+
+// ═══ INIT ═══
+window.addEventListener('DOMContentLoaded',function(){
+  load();updateProg();refreshStats();
+  if(G.scene==='__proc__')renderScene('__proc__');
+  else if(SC[G.scene])renderScene(G.scene);
+  else renderScene('intro');
+});
+
+</script>
+</body>
+</html>
