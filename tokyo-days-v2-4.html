@@ -479,6 +479,183 @@ WKA:['The afternoon stretches out. Tokyo on a weekend has a different rhythm —
 };
 function rv(t,rng){return t.replace(/\{(\w+)\}/g,function(m,k){return PL[k]?pick(PL[k],rng):m;});}
 
+// ═══ NARRATIVE CONTEXT ENGINE (NCE) ═══
+// Builds a rich snapshot of current game state for context-aware generation
+function buildCtx(day,blk){
+  function has(id){return G.chars.indexOf(id)>-1;}
+  function bond(k){return G.relations[k]||0;}
+  function rank(s){return G.stats[s]?G.stats[s].rank:1;}
+  // Nearest upcoming exam (within 5 days)
+  var examDay=null;
+  Object.keys(CAL_EVENTS).map(Number).forEach(function(d){if(d>day&&d<=day+5&&CAL_EVENTS[d].type==='exam')examDay=d;});
+  // Highest stat
+  var topStat='knowledge',topRank=0;
+  Object.keys(G.stats).forEach(function(s){if(G.stats[s].rank>topRank){topRank=G.stats[s].rank;topStat=s;}});
+  // Best bonded non-family character
+  var bestFriend=null,bestBond=0;
+  ['Sato','Hayashi','Komori','Nishikawa','Mori'].forEach(function(k){if((G.relations[k]||0)>bestBond){bestBond=G.relations[k];bestFriend=k;}});
+  return{
+    day:day,blk:blk,
+    phase:day<=30?'early':day<=130?'mid':'late',
+    isFree:isFreeDay(day)||(day>=81&&day<=129),
+    isSummer:day>=81&&day<=129,
+    calEv:CAL_EVENTS[day],
+    examDay:examDay,examSoon:examDay!==null,
+    topStat:topStat,topRank:topRank,bestFriend:bestFriend,
+    // Character presence guards
+    hasSato:has('sato'),hasHayashi:has('hayashi'),
+    hasKomori:has('komori'),hasTakagi:has('takagi'),
+    hasMori:has('mori'),hasHina:has('notebook_girl'),
+    hasWindowGirl:has('window_girl'),hasFujiwara:has('fujiwara'),
+    hasNishikawa:has('nishikawa'),
+    // Bond levels
+    bondSato:bond('Sato'),bondHayashi:bond('Hayashi'),
+    bondCarmen:bond('Carmen'),bondKomori:bond('Komori'),
+    bondWindowGirl:bond('WindowGirl'),
+    // Stat ranks
+    knowledge:rank('knowledge'),guts:rank('guts'),
+    proficiency:rank('proficiency'),kindness:rank('kindness'),charm:rank('charm'),
+    // Flags
+    litClub:!!G.flags.joined_lit,
+    groupChat:!!G.flags.joined_groupchat
+  };
+}
+
+// Context-aware placeholder generators — override PL entries when ctx is available
+var PL_CTX={
+  // Lunch table: only reference unlocked characters
+  LTS:function(ctx,rng){
+    var opts=[];
+    if(ctx.hasSato&&ctx.hasHayashi){
+      opts.push("Sato's table. Hayashi already mid-monologue. The chair is waiting.");
+      if(ctx.bondSato>=4)opts.push('Sato saved a seat. Not mentioned. Just done.');
+    }else if(ctx.hasSato){
+      opts.push("Sato's table. Quieter today.");
+    }
+    if(ctx.hasNishikawa)opts.push('Nishikawa waved him over before he even looked around.');
+    if(!opts.length)opts.push('A table by the window. He picks it.');
+    return pick(opts,rng);
+  },
+  // Lunch dialogue: only reference unlocked characters
+  LD:function(ctx,rng){
+    var opts=[];
+    if(ctx.hasSato&&ctx.hasHayashi){
+      opts.push('<div class="dialogue">"Your mom should open a restaurant," Hayashi says for the fifth time this month.</div>');
+      opts.push('<div class="dialogue">Hayashi: "Film club is watching horror after school." Sato: "It\'s a school night." Hayashi: "Your point?"</div>');
+      if(ctx.examSoon)opts.push('<div class="dialogue">Sato: "Is anyone actually ready for the exam?" Nobody answers convincingly.</div>');
+    }
+    if(ctx.hasSato)opts.push('<div class="dialogue">"Weekend plans?" Sato asks. The table goes quiet. Nobody has any. That\'s completely fine.</div>');
+    if(!opts.length)opts.push('<div class="dialogue">Lunch hour passes with the usual background hum of the cafeteria.</div>');
+    return pick(opts,rng);
+  },
+  // Solo lunch reason: only reference unlocked characters
+  SR:function(ctx,rng){
+    var opts=['He just needs the quiet today — social energy is a finite resource.','The cafeteria was too loud, too full, too much.','Sometimes you need to eat without performing for anyone.'];
+    if(ctx.hasSato)opts.push('Sato and Hayashi are in a meeting with Tanaka-sensei.');
+    return pick(opts,rng);
+  },
+  // Window girl cameo: only if unlocked, scales with bond
+  WGC:function(ctx,rng){
+    if(!ctx.hasWindowGirl)return '';
+    var opts=['The girl with long sleeves takes notes with unusual focus. Her handwriting is small and precise.','She raises her hand once. Her answer is so articulate the teacher pauses before responding.','She stares out the window for most of the period. Her posture doesn\'t shift once.','She is absent from this class today. The seat by the window is empty.'];
+    if(ctx.bondWindowGirl>=2)opts.push('She glances over. Just for a second. He may have imagined it.');
+    return pick(opts,rng);
+  },
+  // Cleaning partner: only unlocked characters
+  CP:function(ctx,rng){
+    var opts=['A quiet student from the next desk who works without speaking.'];
+    if(ctx.hasKomori)opts.push('Komori, who cleans like she manages — with a system and a clipboard.');
+    if(ctx.hasTakagi)opts.push('Takagi, who has optimized cleaning to a twenty-two-minute process.');
+    if(ctx.hasHayashi)opts.push('Hayashi, who cleans like he talks — chaotically, enthusiastically, everywhere at once.');
+    if(ctx.hasMori)opts.push('Mori, headphones on. He cleans with surprising efficiency. No conversation needed.');
+    return pick(opts,rng);
+  },
+  // Club scene: gated by litClub flag, scales with window girl bond
+  CS:function(ctx,rng){
+    if(!ctx.litClub)return '<p>The after-school clubs are in session somewhere beyond these walls. Jorge passes the doors without stopping.</p>';
+    var opts=[
+      'Literary Club. Room 204. The door is open. The usual members are here'+(ctx.hasWindowGirl?', and the girl at the window sits in her usual place, long sleeves past her wrists, book open on her lap.':'.'),
+      'The club room is quieter today — only three people came. The discussion is more intimate, more honest.',
+      'Free reading session. No discussion, no debate — just shared silence and the sound of pages turning.',
+      'A debate breaks out about whether manga counts as literature. It gets unexpectedly philosophical.'
+    ];
+    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=3)opts.push('She said something today that Jorge has been turning over since. Not provocative — just precise. The kind of sentence that rearranges things.');
+    return pick(opts,rng);
+  },
+  // Evening phone/group chat: gated by groupChat flag
+  PE:function(ctx,rng){
+    if(!ctx.groupChat)return '<p>The evening is quiet. The phone is there but silent — not yet part of anything.</p>';
+    var opts=['A message from an unknown number — someone from class asking about tomorrow\'s homework.'];
+    if(ctx.hasHayashi)opts.push('The group chat exploded — 87 messages. Hayashi started a debate about the best ramen place and it devolved into sticker warfare.');
+    if(ctx.hasSato)opts.push('A DM from Sato: just a link to a video. No context. No explanation. Classic Sato.');
+    if(ctx.hasNishikawa)opts.push('Nishikawa created a new group chat: "weekend plans maybe?" — five people added.');
+    return pick(opts,rng);
+  }
+};
+
+// Enhanced rv() that uses PL_CTX when a context object is available
+function rvCtx(t,rng,ctx){
+  return t.replace(/\{(\w+)\}/g,function(m,k){
+    if(ctx&&PL_CTX[k])return PL_CTX[k](ctx,rng);
+    if(PL[k])return pick(PL[k],rng);
+    return m;
+  });
+}
+
+// Build context-aware choices: stat rewards scale with actual ranks, risks reflect guts
+function buildChoices(tpl,blk,ctx,rng){
+  var base=(tpl.c||[]).slice(0,4);
+  var labels=['A','B','C','D'];
+  var types=['Standard','Social','Bold','Reflective'];
+  var kS=ctx.knowledge>=3?12:8,cS=ctx.charm>=3?12:8,gS=ctx.guts>=3?12:8,kndS=ctx.kindness>=3?12:8;
+  var statProfiles=[{knowledge:kS},{charm:cS},{guts:gS,charm:5},{kindness:kndS}];
+  var risks=['low','low',ctx.guts>=3?'med':'high','low'];
+  return base.map(function(desc,i){
+    if(i>=4)return null;
+    var d=desc;
+    // Exam pressure: replace evening standard choice with study option
+    if(ctx.examSoon&&blk==='evening'&&i===0){d='Study for the upcoming exam — focus, no distractions';statProfiles[0]={knowledge:15};}
+    return{id:labels[i],lbl:labels[i]+') '+d,type:types[i],desc:d,time:'30 min',risk:risks[i],stats:statProfiles[i]};
+  }).filter(Boolean);
+}
+
+// Generate context-aware outcome text for procedural choices
+function makeProcOutcome(ch,ctx,rng){
+  var type=ch.type||'Standard';
+  var pools={
+    Standard:[
+      '<p>Jorge handles it steadily. The routine holds — and there\'s comfort in that.</p>',
+      '<p>He moves through it with growing familiarity. Less foreign each time.</p>',
+      '<p>Jorge manages it quietly, which is enough. Not everything needs to be remarkable to matter.</p>'
+    ],
+    Social:[
+      ctx.hasSato&&ctx.bondSato>=2?'<p>Sato gives a brief nod — approval in its smallest form. He\'s learning what that means here.</p>':'<p>A small social exchange. It accumulates, invisibly.</p>',
+      ctx.charm>=3?'<p>It comes easier now — reading the room, finding the right timing. Charm is a skill. He\'s getting good at it.</p>':'<p>Not his strongest mode, but he tries. That counts for something.</p>'
+    ],
+    Bold:[
+      ctx.guts>=3?'<p>He committed, and it landed. Confidence is a skill. He\'s actively building it, one moment at a time.</p>':'<p>Harder than expected. But done. The discomfort is information: next time will be easier.</p>',
+      '<p>Not everyone would have tried that. Jorge did. That matters more than the outcome.</p>'
+    ],
+    Reflective:[
+      '<p>Some moments are just for collecting. Filed away into the growing catalog of being here.</p>',
+      '<p>He watches. Notes. Learns the texture of this place with patient attention.</p>',
+      ctx.knowledge>=3?'<p>The observation is careful, analytical — a habit that\'s gotten sharper here. He doesn\'t miss much anymore.</p>':'<p>There\'s more going on than is immediately visible. He\'s learning to see it.</p>'
+    ]
+  };
+  var pool=pools[type]||pools.Standard;
+  var text=pick(pool,rng);
+  // Append exam pressure note if relevant
+  if(ctx.examSoon&&(type==='Standard'||type==='Reflective')){
+    var dl=ctx.examDay-ctx.day;
+    text+='<div class="inner-voice">'+CAL_EVENTS[ctx.examDay].title+' in '+dl+' day'+(dl>1?'s':'')+'. The weight of it sits at the edge of everything.</div>';
+  }
+  // Carmen ambient note in evening if close bond
+  if(ctx.blk==='evening'&&ctx.bondCarmen>=7&&rng()<0.4){
+    text+='<p style="color:var(--dim);font-size:.84rem">From the kitchen, Carmen hums something — an old song. Some things don\'t change, wherever you are.</p>';
+  }
+  return text;
+}
+
 var REFLS={
 early:['Another day. The school is becoming familiar — not the dramatic kind of familiar, just the kind where you stop thinking about which hallway leads where.\n\nI wonder if this is what settling in feels like. Not a moment. Just gradually less foreign.','I talked to more people today than my entire first week. Some conversations stuck. Most evaporated. That\'s probably normal.\n\nCarmen asked if I was happy. I said yes. I think I meant it.','Math is getting harder. Japanese is getting easier. Or maybe I\'m just getting used to not understanding everything.\n\nThe window girl said something in class that made the teacher pause. Nobody else seemed to catch it.','Weekend. Apartment quiet. Carmen out. Two hours studying. Then konbini for melon bread.\n\nBalance.','Sato remembered something I said last week. People don\'t remember things about background characters.\n\nMaybe I\'m not a background character.'],
 mid:['Exams coming. The school shifts — quieter, tenser. Even Hayashi is studying (badly).\n\nThe cherry blossoms are gone. The trees are just green now. When did that happen?','I dreamed about Mexico. Not the big things — just the sound of the street vendor, Carmen\'s old kitchen, the light at 6 PM.\n\nTokyo has its own light. I\'m learning it.','The Literary Club is becoming a real thing — not just a room, a place where my opinion matters. Takeda argued with me for twenty minutes. That felt like respect.\n\nThe window girl listened to everything. Then said: "You were both wrong." She was right.','Dad called. Twelve minutes. He asked about school. I gave him the version without follow-up questions.\n\nCarmen was listening from the kitchen. She made hot chocolate after. Didn\'t say why.','I have a routine. Walk, school, lunch table, club, Carmen, sleep. Not exciting. Stable.\n\nStable is underrated.'],
@@ -492,27 +669,51 @@ function getSeq(d){if(isFreeDay(d)||(d>=81&&d<=129))return FREE_BLK;return SCH_B
 
 function genScene(day,blk){
   var rng=mkRng(day*100+blk.charCodeAt(0)*7);
-  var free=isFreeDay(day)||(day>=81&&day<=129);
+  var ctx=buildCtx(day,blk);
+  var free=ctx.isFree;
   var pool,loc,time,label;
-  if(blk==='morning'){pool=free?TPL_WM:TPL_M;loc=free?'Home':'Walking to Kōsei';time=free?'09:30':'07:50';label='Morning';}
-  else if(blk==='class'){pool=TPL_C;loc='Class 1-B';time='09:00';label='School Day';}
-  else if(blk==='lunch'){pool=TPL_L;loc='Cafeteria';time='12:20';label='Lunch';if(rng()<0.2)pool=[TPL_L[1]];}
-  else if(blk==='afterSchool'){pool=free?TPL_WA:TPL_A;loc=free?'Tokyo':'Kōsei';time=free?'14:00':'15:30';label='After School';if(!free&&day%5===0)pool=[TPL_A[2]];if(!free&&(getDow(day)===2||getDow(day)===4)&&G.flags.joined_lit)pool=[TPL_A[0]];}
-  else if(blk==='evening'){pool=TPL_E;loc='Home';time='18:30';label='Evening';if(rng()<0.3)pool=[TPL_E[1]];}
-  else return null;
+  if(blk==='morning'){
+    pool=free?TPL_WM:TPL_M;
+    loc=free?'Home':'Walking to Kōsei';time=free?'09:30':'07:50';label='Morning';
+  }else if(blk==='class'){
+    pool=TPL_C;loc='Class 1-B';time='09:00';label='School Day';
+  }else if(blk==='lunch'){
+    // If no social characters unlocked yet, force solo lunch template
+    var hasFriends=ctx.hasSato||ctx.hasHayashi||ctx.hasNishikawa;
+    pool=(!hasFriends||rng()<0.2)?[TPL_L[1]]:TPL_L;
+    loc='Cafeteria';time='12:20';label='Lunch';
+  }else if(blk==='afterSchool'){
+    pool=free?TPL_WA:TPL_A;
+    loc=free?'Tokyo':'Kōsei';time=free?'14:00':'15:30';label='After School';
+    if(!free&&day%5===0)pool=[TPL_A[2]];
+    if(!free&&(getDow(day)===2||getDow(day)===4)&&ctx.litClub)pool=[TPL_A[0]];
+  }else if(blk==='evening'){
+    // Group chat template only if joined; Carmen-away template 30% chance
+    var ePool=[TPL_E[0]];
+    if(rng()<0.3)ePool=[TPL_E[1]];
+    else if(ctx.groupChat)ePool=[TPL_E[0],TPL_E[2]];
+    pool=ePool;
+    loc='Home';time='18:30';label='Evening';
+  }else return null;
   var tpl=pick(pool,rng);
-  var html=rv(tpl.html,rng);
-  var calEv=CAL_EVENTS[day];
+  // Use context-aware template resolution instead of plain rv()
+  var html=rvCtx(tpl.html,rng,ctx);
+  // Append exam pressure note to morning scenes when exam is close
+  if(blk==='morning'&&ctx.examSoon){
+    var dl=ctx.examDay-day;
+    html+='<div class="inner-voice">'+(dl===1?'Tomorrow.':dl+' days.')+' The exam sits at the edge of everything today.</div>';
+  }
+  var calEv=ctx.calEv;
   var calHtml=(calEv&&blk==='morning')?'<div class="trans-card"><strong>'+calEv.title+'</strong> — '+calEv.desc+'</div>':'';
   var trans=(blk==='class'||blk==='lunch')?'<div class="trans-card">'+pick(['The blocks between classes passed in their usual rhythm — hallway traffic, bathroom breaks, the distant sound of a ball bouncing from the gym wing.','A short break. The hallway smelled like floor cleaner and cologne that was trying too hard.','Ten minutes between classes. Jorge reorganized his notes and watched people pass.','Brief pause. Checked phone — no new messages worth replying to.','The hallway current carried him between rooms like a leaf in a stream.'],rng)+'</div>':'';
-  var labels=['A','B','C','D'];
-  var types=['Standard','Social','Bold','Reflective'];
-  var risks=['low','low','med','low'];
-  var stats=[{knowledge:8},{charm:8},{guts:5,charm:5},{knowledge:5}];
-  var choices=tpl.c.map(function(desc,i){
-    return{id:labels[i],lbl:labels[i]+') '+desc,type:types[i],desc:desc,time:['30 min','30 min','30 min','30 min'][i],risk:risks[i],stats:stats[i]};
-  });
-  return{hud:{date:getDateStr(day),time:time,block:label,wx:getWeather(day),loc:loc,acad:'Safe'},trans:trans,calHtml:calHtml,html:html,choices:choices,arch:'Day '+day};
+  // Context-aware choices: rewards scale with stats, risks reflect guts level
+  var choices=buildChoices(tpl,blk,ctx,rng);
+  // Dynamic arch tag based on narrative phase
+  var archPhase=ctx.phase==='early'?'Finding Footing':ctx.phase==='mid'?'Belonging':'Becoming';
+  // Academic status: reflects upcoming exam pressure
+  var acadStatus=ctx.examSoon?'⚠ Exam Soon':'Safe';
+  if(ctx.calEv&&ctx.calEv.type==='exam')acadStatus='📝 Exam Day';
+  return{hud:{date:getDateStr(day),time:time,block:label,wx:getWeather(day),loc:loc,acad:acadStatus},trans:trans,calHtml:calHtml,html:html,choices:choices,_ctx:ctx,arch:'Day '+day+' — '+archPhase};
 }
 
 // ═══ CORE FUNCTIONS ═══
@@ -577,11 +778,17 @@ function doChoice(cid,nxt){
   document.querySelectorAll('.choice').forEach(function(b){b.disabled=true;b.style.opacity='.45';});
   var s=el('hc-'+cid);if(s){s.classList.add('selected');s.style.opacity='1';}
   var sc=window._sc;if(!sc)return;
+  // Hand-authored scene: use scripted outcome
   if(sc.out&&sc.out[cid]){var o=sc.out[cid];applyOut(o);showOut(o.html||'<p>Your choice plays out.</p>',o.next||nxt,sc.arch);return;}
+  // Procedural scene: use NCE to generate context-aware outcome
   var ch=sc.choices.filter(function(c){return c.id===cid;})[0];
-  if(ch){applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});var rng=mkRng(G.day*50+cid.charCodeAt(0));
-  var texts=['<p>Jorge '+pick(['handles it with quiet competence. Not flashy, but it works.','navigates the moment — reading the room, adjusting. It goes about as well as it could.','takes a breath, commits, follows through. The result is solid.','makes it work. Not every moment needs to be dramatic to matter.','gets through it with the growing confidence of someone who\'s done this enough times to trust himself.'],rng)+'</p>'];
-  showOut(pick(texts,rng),nxt,sc.arch);}
+  if(ch){
+    applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});
+    var rng=mkRng(G.day*50+cid.charCodeAt(0));
+    var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
+    var outcomeHtml=makeProcOutcome(ch,ctx,rng);
+    showOut(outcomeHtml,nxt,sc.arch);
+  }
 }
 
 function doOpen(nxt){
