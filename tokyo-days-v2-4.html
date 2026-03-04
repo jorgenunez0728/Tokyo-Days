@@ -112,6 +112,19 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 .arc-events{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);}
 .world-note{color:var(--dim);font-size:.83rem;font-style:italic;line-height:1.85;margin-bottom:4px;}
 .club-badge{display:inline-block;font-size:.62rem;background:rgba(91,200,255,.1);border:1px solid rgba(91,200,255,.25);border-radius:20px;color:var(--sky);padding:2px 8px;margin-left:5px;vertical-align:middle;}
+/* ── Memory Gallery ── */
+#tab-moments{padding:22px 14px 70px;max-width:880px;margin:0 auto}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px;margin-top:4px}
+.polaroid{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:12px 12px 18px;text-align:center;transition:transform .22s,box-shadow .22s;cursor:default}
+.polaroid:hover{transform:rotate(0deg) scale(1.04)!important;box-shadow:0 6px 22px rgba(0,0,0,.4);border-color:rgba(255,209,102,.3)}
+.pol-icon{font-size:1.9rem;margin-bottom:7px}.pol-day{font-size:.6rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.pol-label{font-size:.72rem;color:var(--ink);line-height:1.45}.pol-season{font-size:.6rem;color:var(--sakura);margin-top:5px;letter-spacing:.5px}
+/* ── Identity snapshot ── */
+.identity-snap{background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(91,200,255,.06));border:1px solid rgba(168,85,247,.25);border-radius:12px;padding:14px 17px;margin:10px 0;font-family:'Caveat',cursive;font-size:1rem;color:#C4A8FF;line-height:1.85}
+/* ── Time window note ── */
+.win-note{border-left:3px solid var(--gold);padding:8px 13px;margin:10px 0;background:rgba(255,209,102,.05);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--gold);line-height:1.6}
+/* ── Carmen arc note ── */
+.carmen-note{border-left:3px solid var(--pink-soft);padding:8px 13px;margin:10px 0;background:rgba(255,107,157,.04);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--pink-soft);line-height:1.6}
 </style>
 </head>
 <body>
@@ -128,6 +141,7 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 <button class="tab-btn" data-tab="characters">👥 Characters</button>
 <button class="tab-btn" data-tab="stats">📊 Stats</button>
 <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
+<button class="tab-btn" data-tab="moments">📸 Moments</button>
 </nav></header>
 <div id="tab-game" class="tab-panel active"><div style="max-width:780px;margin:0 auto;padding:20px 14px 70px;">
 <div class="story-bar"><span class="sb-label">STORY PROGRESS</span><div class="sb-track"><div class="sb-fill" id="sb-fill" style="width:1%"></div></div><span class="sb-val" id="sb-val">Day 1 / 365</span></div>
@@ -149,6 +163,9 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 <div class="month-lbl" id="month-label">April 2024</div><div class="cal-grid" id="cal-grid"></div>
 <div class="month-lbl">UPCOMING EVENTS</div><div class="tl" id="timeline"></div>
 </div></div>
+<div id="tab-moments" class="tab-panel"><div style="max-width:880px;margin:0 auto;padding:22px 14px 70px;">
+<div class="tab-title" style="color:var(--gold)">📸 MOMENTS</div><div class="tab-sub">Memories collected over the year. The story you built, fragment by fragment.</div>
+<div class="gallery-grid" id="gallery-grid"></div></div></div>
 <div class="notif" id="notif"><div class="notif-t" id="notif-t"></div><div class="notif-b" id="notif-b"></div></div>
 <div style="position:fixed;bottom:14px;left:14px;z-index:300;">
 <button onclick="resetGame()" style="background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.22);border-radius:8px;color:var(--red);font-size:.64rem;padding:4px 9px;cursor:pointer;">↺ Reset</button>
@@ -161,14 +178,24 @@ function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;retur
 function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
 
 // ── STATE ──
-function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[]};}
-function addMem(key,val,label){G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});G.world.memory.push({key:key,day:G.day,value:val,label:label});G.log.push('[Day '+G.day+'] '+label);}
+function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[]};}
+function addMem(key,val,label){
+G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});
+G.world.memory.push({key:key,day:G.day,value:val,label:label});
+G.log.push('[Day '+G.day+'] '+label);
+// Gallery entry — only add once per key
+if(G.world.gallery&&!G.world.gallery.filter(function(g){return g.key===key;}).length){
+  var _s=G.day<=80?'spring':G.day<=129?'summer':G.day<=200?'autumn':'winter';
+  var _ic={spring:'🌸',summer:'☀️',autumn:'🍂',winter:'❄️'};
+  G.world.gallery.push({key:key,day:G.day,label:label,season:_s,icon:_ic[_s]||'📷'});
+}}
 function getMem(key){var m=G.world.memory.filter(function(m){return m.key===key;})[0];return m?m.value:0;}
 function npcBond(a,b){var k=[a,b].sort().join('_');return G.world.npcRel[k]||0;}
 function setNpcBond(a,b,d){var k=[a,b].sort().join('_');G.world.npcRel[k]=Math.min(10,Math.max(0,(G.world.npcRel[k]||0)+d));}
 var G={day:1,scene:'intro',block:0,choiceMade:false,
 stats:{knowledge:{rank:1,xp:0,icon:'📚',color:'#5BC8FF'},guts:{rank:1,xp:0,icon:'⚡',color:'#FFD166'},proficiency:{rank:1,xp:0,icon:'🎯',color:'#06D6A0'},kindness:{rank:1,xp:0,icon:'💖',color:'#FF6B9D'},charm:{rank:1,xp:0,icon:'✨',color:'#A855F7'}},
-relations:{Carmen:8},chars:['jorge','carmen','tanaka'],ach:[],log:[],flags:{},usedScenes:{},world:null};
+relations:{Carmen:8},chars:['jorge','carmen','tanaka'],ach:[],log:[],flags:{},usedScenes:{},world:null,
+identity:{social:0,drive:0,creative:0,rootedness:0}};
 
 // ── CHARACTERS ──
 var CHARS={
@@ -512,6 +539,53 @@ WKA:['The afternoon stretches out. Tokyo on a weekend has a different rhythm —
 };
 function rv(t,rng){return t.replace(/\{(\w+)\}/g,function(m,k){return PL[k]?pick(PL[k],rng):m;});}
 
+// ═══ UTILITY FUNCTIONS ═══
+// Weather classification
+function wxType(day){
+  var wx=getWeather(day);
+  return{wx:wx,isRainy:/rain|drizzle|thunder|storm/i.test(wx),isCold:/cold|grey wind|crisp|snow|overcast.*winter/i.test(wx),isHot:/blazing|muggy|relentless|cicadas/i.test(wx),isSnow:/snow/i.test(wx)};
+}
+// Bridge score: how many distinct social groups Jorge is connected to (bond>=3)
+function getBridgeScore(rel){
+  var rel=rel||G.relations;
+  var groups=[
+    (rel.Sato>=3||rel.Hayashi>=3)?1:0,           // Social core
+    (rel.Komori>=3||rel.Kuroda>=3)?1:0,           // Academic
+    (rel.Ryusei>=3||rel.WindowGirl>=3||rel.Hina>=3||rel.Shirogane>=3)?1:0, // Club world
+    (rel.Izumi>=3||(rel.Mori||0)>=3)?1:0,         // Quiet outliers
+    (rel.Ashida>=3||rel.Nishikawa>=3)?1:0          // Info network
+  ];
+  return groups.reduce(function(a,b){return a+b;},0);
+}
+// Identity snapshot prose for phase milestones
+function getIdentitySnapshot(){
+  var id=G.identity||{};
+  var keys=Object.keys(id).sort(function(a,b){return(id[b]||0)-(id[a]||0);});
+  var dominant=keys[0];
+  var snaps={
+    social:'Jorge is becoming someone people naturally move toward. He didn\'t plan it. It just happened, one small gesture at a time.',
+    drive:'There\'s something building in Jorge — purpose, maybe. The quiet kind that doesn\'t need a name yet.',
+    creative:'He\'s been making things with words, with presence, with choices. Creation is becoming a reflex here.',
+    rootedness:'Tokyo is less foreign than it was. He\'s growing into this place. Slowly, undeniably.'
+  };
+  return snaps[dominant]||'He\'s figuring out who he is. That\'s the work.';
+}
+// Identity-shaped ending text
+function getIdentityEnding(){
+  var id=G.identity||{};
+  var sorted=Object.keys(id).sort(function(a,b){return(id[b]||0)-(id[a]||0);});
+  var top=sorted[0],sec=sorted[1];
+  var endings={
+    social_drive:'He became someone people remember — not the loudest, not the quietest, but the one who kept showing up until showing up was enough.',
+    social_creative:'Jorge leaves this year connected to more than he arrived with — people, ideas, threads that stretch past graduation.',
+    social_rootedness:'He found his people here. That sounds small. It isn\'t.',
+    drive_creative:'He made things and pushed toward things. A year of forward motion, even when it was quiet.',
+    drive_rootedness:'He came looking for a place to be. He found one. Finding it takes more than a year, and that\'s fine.',
+    creative_rootedness:'He made small things. A word, a presence, a way of being in a room. That\'s what the year was.',
+  };
+  return endings[top+'_'+sec]||endings[sec+'_'+top]||'A year in Tokyo. He\'s not the same person who walked through the gate on day one. That\'s the whole point.';
+}
+
 // ═══ NARRATIVE CONTEXT ENGINE (NCE) ═══
 // Builds a rich snapshot of current game state for context-aware generation
 function buildCtx(day,blk){
@@ -575,7 +649,18 @@ function buildCtx(day,blk){
     // NPC dynamics
     satoHayashiBond:npcBond('Sato','Hayashi'),
     // Season tone
-    season:day<=80?'spring':day<=129?'summer':day<=200?'autumn':'winter'
+    season:day<=80?'spring':day<=129?'summer':day<=200?'autumn':'winter',
+    // Weather system
+    isRainy:wxType(day).isRainy,isCold:wxType(day).isCold,isHot:wxType(day).isHot,isSnow:wxType(day).isSnow,
+    // Social bridge score
+    bridgeScore:getBridgeScore(G.relations),
+    // Carmen arc
+    carmenPhase:G.world?G.world.carmenPhase||0:0,
+    carmenMood:G.world?G.world.carmenMood||7:7,
+    // Active time windows
+    activeWindows:TIME_WINDOWS.filter(function(w){return day>=w.days[0]&&day<=w.days[1];}),
+    // Identity vector
+    identity:G.identity||{social:0,drive:0,creative:0,rootedness:0}
   };
 }
 
@@ -849,6 +934,41 @@ var ARCS=[
    ]}
 ];
 
+// ═══ CARMEN ARC — autonomous arc for Carmen's year ═══
+var CARMEN_ARC=[
+  {phase:'settling',label:'Settling In',days:[1,40],
+   evening:['Carmen is mapping the neighborhood — she knows the bakery, the dry cleaner, the shortcut to the station. She\'s building a world here, one block at a time.',
+             'She came home with a Japanese vocabulary list, reading it over dinner, mispronouncing with good humor. "Oishii! Did I say it right?"'],
+   moodTarget:6},
+  {phase:'routine',label:'Finding Rhythm',days:[41,90],
+   evening:['Carmen has a rhythm now. She knows the subway card, the garbage schedule, the difference between two kinds of silence from the upstairs neighbors.',
+             'She mentioned a coworker named Yuki again. Third time this week. She doesn\'t notice she keeps coming back to the name.'],
+   moodTarget:7},
+  {phase:'friendship',label:'First Connection',days:[91,150],
+   evening:['Carmen went out with Yuki after work. She came home lighter than she left. That\'s visible.',
+             '"Yuki is learning Spanish," Carmen says. "I\'m learning Japanese. We teach each other at a café on Thursdays." She looks like she made something good.'],
+   moodTarget:8},
+  {phase:'hardship',label:'A Difficult Season',days:[151,230],
+   evening:['Carmen is quieter tonight. Not the peaceful kind — the kind that\'s working something through.',
+             'She called Abuela today. Long call. Jorge found her by the window when it was done, just looking at the street.'],
+   moodTarget:5},
+  {phase:'resolution',label:'Rooted',days:[231,365],
+   evening:['Carmen seems at ease here now — not resigned, not pretending. Genuinely at ease. It took almost a year.',
+             'She bought a small plant for the kitchen windowsill. "For the apartment," she said. Then, a beat later: "Our apartment."'],
+   moodTarget:8}
+];
+function getCarmenPhaseIdx(day){for(var i=0;i<CARMEN_ARC.length;i++){if(day<=CARMEN_ARC[i].days[1])return i;}return CARMEN_ARC.length-1;}
+
+// ═══ TIME WINDOWS — limited-period opportunities ═══
+var TIME_WINDOWS=[
+  {id:'sakura_peak',    days:[7,18],   blks:['morning'],       icon:'🌸', hint:'The cherry blossoms are at peak. Two weeks, then they\'re gone and everyone forgets to say goodbye.'},
+  {id:'golden_week',   days:[29,36],  blks:['afterSchool'],   icon:'🎌', hint:'Golden Week. The city is different when everyone has nowhere to be.'},
+  {id:'summer_matsuri',days:[95,112], blks:['evening'],       icon:'🏮', hint:'The neighborhood matsuri is running this week. Lights, stalls, the smell of yakitori on warm air.'},
+  {id:'autumn_leaves', days:[168,188],blks:['afterSchool'],   icon:'🍂', hint:'The park near Shinjuku is worth seeing right now. The leaves won\'t last.'},
+  {id:'first_snow',    days:[248,272],blks:['morning'],       icon:'❄️', hint:'Snow in Tokyo. It doesn\'t happen often. This is worth noticing.'},
+  {id:'year_end',      days:[342,362],blks:['evening'],       icon:'📖', hint:'The year is almost over. Some conversations only happen near the end of something.'}
+];
+
 // ═══ WORLD TICK — runs end of each day ═══
 function worldTick(day){
   if(!G.world)G.world=defaultWorld();
@@ -877,6 +997,31 @@ function worldTick(day){
   });
   // Bond8 achievement check
   Object.keys(G.relations).forEach(function(k){if(G.relations[k]>=8&&G.ach.indexOf('bond8')<0)unlock('bond8');});
+  // ── NPC Social Drift ──
+  var dRng=mkRng(day*19+3);
+  Object.keys(G.world.npcRel).forEach(function(k){
+    if(dRng()<0.12){var delta=dRng()<0.5?1:-1;G.world.npcRel[k]=Math.min(10,Math.max(0,G.world.npcRel[k]+delta));}
+  });
+  // ── Carmen Arc Advance ──
+  var newCP=getCarmenPhaseIdx(day);
+  if(newCP>G.world.carmenPhase){G.world.carmenPhase=newCP;}
+  // Carmen mood drifts toward phase target
+  var cPhase=CARMEN_ARC[G.world.carmenPhase]||CARMEN_ARC[0];
+  var cmRng=mkRng(day*23+7);
+  if(G.world.carmenMood<cPhase.moodTarget&&cmRng()<0.3)G.world.carmenMood=Math.min(10,G.world.carmenMood+1);
+  if(G.world.carmenMood>cPhase.moodTarget&&cmRng()<0.2)G.world.carmenMood=Math.max(0,G.world.carmenMood-1);
+  // Player's bond with Carmen boosts her mood
+  if((G.relations.Carmen||0)>=8&&G.world.carmenMood<8)G.world.carmenMood=Math.min(8,G.world.carmenMood+1);
+  // ── Time Window Tracking ──
+  TIME_WINDOWS.forEach(function(w){
+    // Flag missed windows the day after they close
+    if(day===w.days[1]+1&&G.world.missedWindows.indexOf(w.id)<0){
+      G.world.missedWindows.push(w.id);
+      G.log.push('[Day '+day+'] '+w.icon+' Passed: '+w.id.replace(/_/g,' '));
+    }
+  });
+  // First snow detection
+  if(wxType(day).isSnow&&!G.flags.first_snow){G.flags.first_snow=true;addMem('first_snow',1,'First snow fell on Tokyo');}
   save();
 }
 
@@ -902,6 +1047,34 @@ function getWorldInjection(day,blk,ctx,rng){
     var t=typeof beat.text==='function'?beat.text(ctx):beat.text;
     if(t)notes.push(t);
   });
+  // ── Time Window notifications (fire on opening day only) ──
+  TIME_WINDOWS.forEach(function(w){
+    if(day!==w.days[0])return;
+    if(w.blks.indexOf(blk)<0)return;
+    notes.push('<div class="win-note">'+w.icon+' '+w.hint+'</div>');
+  });
+  // ── Special weather moments ──
+  var wx2=wxType(day);
+  if(wx2.isSnow&&!G.flags['snow_scene_'+day]&&blk==='morning'){
+    G.flags['snow_scene_'+day]=true;
+    notes.push('<div class="inner-voice">❄️ Snow. Real snow, settling on the rooftops. Tokyo looks impossible like this.</div>');
+  }
+  if(wx2.isRainy&&blk==='morning'&&!G.flags['rain_note_'+day]){
+    G.flags['rain_note_'+day]=true;
+    notes.push('<p class="world-note">The rain started overnight and hasn\'t stopped. The city smells different when it rains — cleaner, maybe more honest.</p>');
+  }
+  if(day>=7&&day<=14&&blk==='morning'&&!G.flags.sakura_peak){
+    G.flags.sakura_peak=true;
+    notes.push('<div class="inner-voice">🌸 Sakura peak. Every morning it\'s a little less than the day before. Someone should be counting.</div>');
+  }
+  // ── Carmen arc evening injection ──
+  if(blk==='evening'&&G.world){
+    var cp=CARMEN_ARC[G.world.carmenPhase||0];
+    if(cp&&!G.flags['carmen_ev_'+G.world.carmenPhase+'_fired_'+day]&&rng()<0.35){
+      G.flags['carmen_ev_'+G.world.carmenPhase+'_fired_'+day]=true;
+      notes.push('<p class="carmen-note">'+pick(cp.evening,rng)+'</p>');
+    }
+  }
   if(!notes.length)return'';
   return'<div class="arc-events">'+notes.join('')+'</div>';
 }
@@ -917,6 +1090,16 @@ function getArcChoice(day,blk){
     found={id:'W',lbl:'W) '+beat.choice.desc,type:'World',desc:beat.choice.desc,time:'30 min',risk:'low',
            stats:beat.choice.stats||{},_arcId:arc.id,_arcChoice:beat.choice};
   });
+  // Carmen arc evening choice — offered when her mood is low or phase transitions
+  if(!found&&blk==='evening'&&(G.relations.Carmen||0)>=5&&G.world){
+    var cm=G.world.carmenMood||7;
+    var cp=CARMEN_ARC[G.world.carmenPhase||0];
+    if(cm<=5||(G.world.carmenPhase===3&&cm<=7)){ // hardship phase or low mood
+      found={id:'W',lbl:'W) Check in with Carmen — she seems quiet tonight',type:'World',
+             desc:'Put the homework down and talk with her',time:'20 min',risk:'low',
+             stats:{kindness:10},_carmenChoice:true,_carmenPhase:G.world.carmenPhase||0};
+    }
+  }
   return found;
 }
 
@@ -990,9 +1173,22 @@ function makeProcOutcome(ch,ctx,rng){
     var dl=ctx.examDay-ctx.day;
     text+='<div class="inner-voice">'+CAL_EVENTS[ctx.examDay].title+' in '+dl+' day'+(dl>1?'s':'')+'. The weight of it sits at the edge of everything.</div>';
   }
-  // Carmen ambient note in evening if close bond
-  if(ctx.blk==='evening'&&ctx.bondCarmen>=7&&rng()<0.4){
-    text+='<p style="color:var(--dim);font-size:.84rem">From the kitchen, Carmen hums something — an old song. Some things don\'t change, wherever you are.</p>';
+  // Carmen arc-aware evening ambient
+  if(ctx.blk==='evening'&&ctx.bondCarmen>=6&&rng()<0.35){
+    var cEvPhase=CARMEN_ARC[ctx.carmenPhase||0];
+    if(cEvPhase)text+='<p class="carmen-note">'+pick(cEvPhase.evening,rng)+'</p>';
+    else text+='<p style="color:var(--dim);font-size:.84rem">From the kitchen, Carmen hums something — an old song. Some things don\'t change, wherever you are.</p>';
+  }
+  // Bridge score — unlocks specific social outcomes when crossing 3+ groups
+  if(ctx.bridgeScore>=3&&type==='Social'&&rng()<0.4){
+    text+='<div class="inner-voice">He exists in multiple tables now. Someone from track, someone from the lit club, someone from Sato\'s orbit. They don\'t all know each other. He does. That\'s a specific kind of position.</div>';
+  }
+  // Weather effects on outcomes
+  if(ctx.isRainy&&(blk==='afterSchool'||blk==='morning')&&rng()<0.5){
+    text+='<p style="color:var(--dim);font-size:.84rem">The rain changed the texture of the afternoon. Things that would have happened outside moved inside. Different conversations. Sometimes that\'s better.</p>';
+  }
+  if(ctx.isHot&&blk==='class'&&rng()<0.35){
+    text+='<p style="color:var(--dim);font-size:.84rem">The heat in the classroom was a presence of its own. Everything took about ten percent more effort than it should have.</p>';
   }
   return text;
 }
@@ -1127,7 +1323,13 @@ function genScene(day,blk){
 
 // ═══ CORE FUNCTIONS ═══
 function save(){try{localStorage.setItem('td4',JSON.stringify(G));toast('💾 Progress Saved','Day '+G.day+' saved.',2500);}catch(e){}}
-function load(){try{var s=localStorage.getItem('td4');if(s){var d=JSON.parse(s);Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});}}catch(e){G.scene='intro';}if(!G.world)G.world=defaultWorld();}
+function load(){try{var s=localStorage.getItem('td4');if(s){var d=JSON.parse(s);Object.keys(d).forEach(function(k){if(G.hasOwnProperty(k))G[k]=d[k];});}}catch(e){G.scene='intro';}if(!G.world)G.world=defaultWorld();
+// Migrate existing saves to new world fields
+if(!G.world.gallery)G.world.gallery=[];
+if(G.world.carmenPhase===undefined)G.world.carmenPhase=0;
+if(G.world.carmenMood===undefined)G.world.carmenMood=7;
+if(!G.world.missedWindows)G.world.missedWindows=[];
+if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};}
 function el(id){return document.getElementById(id);}
 function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
 function gainStat(k,v){if(!G.stats[k])return;G.stats[k].xp+=v;var thr=G.stats[k].rank*30;if(G.stats[k].xp>=thr&&G.stats[k].rank<5){G.stats[k].rank++;G.stats[k].xp=0;toast(k.toUpperCase()+' UP!','Rank '+G.stats[k].rank+'!',3500);}}
@@ -1140,6 +1342,8 @@ function applyOut(o){
   if(o.charUnlock2&&G.chars.indexOf(o.charUnlock2)<0)G.chars.push(o.charUnlock2);
   if(o.flags)Object.keys(o.flags).forEach(function(k){G.flags[k]=o.flags[k];});
   if(o.log)G.log.push('[Day '+G.day+'] '+o.log);
+  // Apply identity vector
+  if(o.identity){if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};Object.keys(o.identity).forEach(function(k){if(G.identity[k]!==undefined)G.identity[k]+=o.identity[k];});}
   save();
 }
 function updateProg(){var p=Math.max(Math.round(G.day/365*100),1);el('sb-fill').style.width=p+'%';el('sb-val').textContent='Day '+G.day+' / 365';}
@@ -1203,13 +1407,28 @@ function doChoice(cid,nxt){
   // Arc intervention choice
   if(ch._arcChoice){
     var ac=ch._arcChoice;
-    applyOut({stats:ac.stats||{},rel:ac.rel||{},log:ac.desc||'Intervened in a situation.'});
+    applyOut({stats:ac.stats||{},rel:ac.rel||{},log:ac.desc||'Intervened in a situation.',identity:{kindness:1}});
     if(ac.flag)addMem(ac.flag,1,ac.desc);
     if(G.world&&G.world.arcs[ch._arcId])G.world.arcs[ch._arcId].playerInvolved=true;
     showOut(ac.outcome||'<p>Jorge does something. The situation shifts slightly.</p>',nxt,'World');
     return;
   }
-  applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.'});
+  // Carmen arc choice
+  if(ch._carmenChoice){
+    if(G.world){G.world.carmenMood=Math.min(10,(G.world.carmenMood||7)+2);}
+    applyOut({stats:ch.stats||{},rel:{Carmen:1},log:'Talked with Carmen tonight.',identity:{rootedness:1}});
+    var cRng2=mkRng(G.day*77+3);
+    var cPhaseData=CARMEN_ARC[ch._carmenPhase||0];
+    var cEv=cPhaseData?pick(cPhaseData.evening,cRng2):'Carmen looks up and smiles. Small moment.';
+    showOut('<p>'+cEv+'</p><p>They sit together for a while. Easy silence — the kind you have to earn.</p>',nxt,'Home');
+    return;
+  }
+  // Auto-apply identity vector from choice type
+  var idMap={Social:{social:1},Bold:{drive:1},Reflective:{rootedness:1},Standard:{drive:1}};
+  var idGain=idMap[ch.type]||{};
+  // Club-specific identity boosts
+  if(ch._club){if(ch._club==='track')idGain={drive:1};else if(ch._club==='art'||ch._club==='lit'||ch._club==='film'||ch._club==='music')idGain={creative:1};else if(ch._club==='newspaper')idGain={social:1};}
+  applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.',identity:idGain});
   var rng=mkRng(G.day*50+cid.charCodeAt(0));
   var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
   var outcomeHtml=makeProcOutcome(ch,ctx,rng);
@@ -1262,7 +1481,15 @@ function renderProcRefl(){
     if(G.relations[k]>=5&&G.ach.indexOf('bond5')<0)unlock('bond5');
     if(G.relations[k]>=8&&G.ach.indexOf('bond8')<0)unlock('bond8');
   });
-  var ref=el('reflection');ref.innerHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+text.replace(/\n/g,'</p><p>')+'</p></div>';
+  var reflHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+text.replace(/\n/g,'</p><p>')+'</p>';
+  // Identity milestone snapshot on days 30, 100, 200
+  if([30,100,200].indexOf(G.day)>-1){
+    reflHTML+='<div class="identity-snap">'+getIdentitySnapshot()+'</div>';
+  }
+  // Carmen phase transition note
+  if(G.world){var newCPCheck=getCarmenPhaseIdx(G.day);var cPhN=CARMEN_ARC[newCPCheck];if(cPhN&&G.day===cPhN.days[0]+1){reflHTML+='<p style="color:var(--sakura);font-size:.8rem;font-style:italic">Something shifted at home. Carmen is in a new chapter of her own.</p>';}}
+  reflHTML+='</div>';
+  var ref=el('reflection');ref.innerHTML=reflHTML;
   var btn=document.createElement('button');btn.className='go-next';
   btn.textContent=G.day>=365?'🌸 The End':'Day '+(G.day+1)+' →';
   btn.onclick=function(){if(G.day>=365){showEnding();return;}G.day++;G.block=0;updateProg();save();renderScene('__proc__');};
@@ -1270,7 +1497,18 @@ function renderProcRefl(){
 }
 
 function showEnding(){
-  el('scene-area').innerHTML='<div style="background:linear-gradient(135deg,rgba(255,107,157,.08),rgba(168,85,247,.06));border:2px solid rgba(255,107,157,.3);border-radius:16px;padding:28px;text-align:center;margin:20px 0"><h2 style="font-family:Dela Gothic One,sans-serif;color:var(--sakura);margin-bottom:8px">🌸 One Year at Kosei 🌸</h2><p style="color:var(--dim);font-size:.88rem;line-height:1.8">365 days. The cherry blossoms are falling again. You came here as a stranger. You leave as someone who belongs.</p><p style="color:var(--ink);font-size:.9rem;margin-top:12px">Characters: '+G.chars.length+' | Achievements: '+G.ach.length+'/'+ACHS.length+'</p><button class="go-next" onclick="resetGame()" style="margin-top:16px">Play Again</button></div>';
+  var endingText=getIdentityEnding();
+  var bridgeFinal=getBridgeScore(G.relations);
+  var carmenFinal=G.world?CARMEN_ARC[G.world.carmenPhase||0]:null;
+  var carmenLine=carmenFinal?'<p style="color:var(--pink-soft);font-size:.85rem;font-style:italic;margin-top:8px">Carmen: '+carmenFinal.label+'.</p>':'';
+  var bridgeLine=bridgeFinal>=3?'<p style="color:var(--sky);font-size:.8rem;margin-top:6px">Bridge status: '+bridgeFinal+' social groups connected.</p>':'';
+  el('scene-area').innerHTML='<div style="background:linear-gradient(135deg,rgba(255,107,157,.08),rgba(168,85,247,.06));border:2px solid rgba(255,107,157,.3);border-radius:16px;padding:28px;text-align:center;margin:20px 0">'
+    +'<h2 style="font-family:Dela Gothic One,sans-serif;color:var(--sakura);margin-bottom:8px">🌸 One Year at Kōsei 🌸</h2>'
+    +'<p style="color:var(--dim);font-size:.88rem;line-height:1.8">365 days. The cherry blossoms are falling again.</p>'
+    +'<p style="color:var(--ink);font-size:.92rem;line-height:1.85;margin-top:12px;font-style:italic">'+endingText+'</p>'
+    +carmenLine+bridgeLine
+    +'<p style="color:var(--dim);font-size:.8rem;margin-top:12px">Characters: '+G.chars.length+' | Achievements: '+G.ach.length+'/'+ACHS.length+' | Moments: '+(G.world&&G.world.gallery?G.world.gallery.length:0)+'</p>'
+    +'<button class="go-next" onclick="resetGame()" style="margin-top:16px">Play Again</button></div>';
   hideCards();
 }
 
@@ -1312,11 +1550,28 @@ function renderCal(){
   return'<div class="tl-item"><div class="tl-dot '+dc+'">'+di+'</div><div class="tl-content"><div class="tl-date">Day '+d+'</div><div class="tl-ev '+(st==='done'?'done':'')+'">'+e.title+'</div><div class="tl-desc">'+e.desc+'</div></div></div>';}).join('');
 }
 
+// ═══ MEMORY GALLERY ═══
+function renderGallery(){
+  var g=el('gallery-grid');if(!g)return;
+  if(!G.world||!G.world.gallery||!G.world.gallery.length){
+    g.innerHTML='<p style="color:var(--dim);font-size:.83rem;grid-column:1/-1">No moments recorded yet. Play more and they\'ll accumulate here.</p>';return;
+  }
+  var sorted=G.world.gallery.slice().sort(function(a,b){return a.day-b.day;});
+  g.innerHTML=sorted.map(function(m,i){
+    var rot=((i%5)-2)*1.8;
+    return'<div class="polaroid" style="transform:rotate('+rot+'deg)">'
+      +'<div class="pol-icon">'+m.icon+'</div>'
+      +'<div class="pol-day">Day '+m.day+'</div>'
+      +'<div class="pol-label">'+m.label+'</div>'
+      +'<div class="pol-season">'+m.season+'</div></div>';
+  }).join('');
+}
+
 // ═══ TABS ═══
 document.getElementById('nav').addEventListener('click',function(e){var b=e.target.closest('.tab-btn');if(!b)return;var t=b.dataset.tab;
 document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.toggle('active',x===b);});
 document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active',p.id==='tab-'+t);});
-if(t==='characters')renderChars();if(t==='stats')refreshStats();if(t==='calendar')renderCal();});
+if(t==='characters')renderChars();if(t==='stats')refreshStats();if(t==='calendar')renderCal();if(t==='moments')renderGallery();});
 
 function resetGame(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('td4');location.reload();}
 
