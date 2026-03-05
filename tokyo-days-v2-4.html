@@ -125,6 +125,25 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 .win-note{border-left:3px solid var(--gold);padding:8px 13px;margin:10px 0;background:rgba(255,209,102,.05);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--gold);line-height:1.6}
 /* ── Carmen arc note ── */
 .carmen-note{border-left:3px solid var(--pink-soft);padding:8px 13px;margin:10px 0;background:rgba(255,107,157,.04);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--pink-soft);line-height:1.6}
+/* ── Flashcard Choice Deck ── */
+.choice-deck{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}
+.choice-card{background:rgba(255,255,255,.032);border:1px solid var(--border);border-radius:16px;padding:16px 14px 13px;cursor:pointer;text-align:left;font-family:'Noto Sans JP',sans-serif;color:var(--ink);display:flex;flex-direction:column;gap:7px;transition:transform .16s,box-shadow .16s,border-color .16s;min-height:96px;position:relative;overflow:hidden}
+.choice-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-accent,rgba(255,255,255,.1))}
+.choice-card:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.45);border-color:rgba(255,255,255,.1)}
+.choice-card:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.choice-card.selected{opacity:.92;transform:translateY(-1px)}
+.choice-card--wide{grid-column:1/-1}
+.choice-card[data-type="standard"]{--card-accent:var(--sky)}
+.choice-card[data-type="social"]{--card-accent:var(--sakura)}
+.choice-card[data-type="bold"]{--card-accent:var(--gold)}
+.choice-card[data-type="reflective"]{--card-accent:var(--purple)}
+.choice-card[data-type="world"]{--card-accent:var(--mint)}
+.cc-letter{font-family:'Dela Gothic One',sans-serif;font-size:.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.cc-desc{font-size:.83rem;line-height:1.52;flex:1}
+.cc-hint{font-size:.7rem;color:var(--dim);margin-top:auto;padding-top:4px}
+/* ── Free action card ── */
+.free-card{background:rgba(255,255,255,.018);border:1px dashed rgba(255,255,255,.1);border-radius:14px;padding:13px 14px;margin-top:6px}
+.free-card .cc-letter{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -1209,55 +1228,174 @@ function buildChoices(tpl,blk,ctx,rng){
 
 // Generate context-aware outcome text for procedural choices
 function makeProcOutcome(ch,ctx,rng){
+  var blk=ctx.blk||'class';
   var type=ch.type||'Standard';
-  var pools={
-    Standard:[
-      '<p>Jorge handles it steadily. The routine holds — and there\'s comfort in that.</p>',
-      '<p>He moves through it with growing familiarity. Less foreign each time.</p>',
-      '<p>Jorge manages it quietly, which is enough. Not everything needs to be remarkable to matter.</p>'
-    ],
-    Social:(function(){
-      var pool=[
-        ctx.charm>=3?'<p>It comes easier now — reading the room, finding the right timing. Charm is a skill. He\'s getting good at it.</p>':'<p>Not his strongest mode, but he tries. That counts for something.</p>',
-        '<p>A small social exchange. It accumulates, invisibly.</p>'
-      ];
-      if(ctx.hasSato&&ctx.bondSato>=2)pool.push('<p>Sato gives a brief nod — approval in its smallest form. He\'s learning what that means here.</p>');
-      if(ctx.hasSato&&ctx.bondSato>=7)pool.push('<p>Sato says something that isn\'t about anything specific and is somehow about everything. Jorge files it. That\'s how things are with Sato now — layers.</p>');
-      if(ctx.hasRyusei&&ctx.bondRyusei>=5)pool.push('<p>Ryusei doesn\'t say much but he said it like Jorge was already part of something. That\'s new. Or maybe Jorge only just noticed.</p>');
-      if(ctx.hasKuroda&&ctx.bondKuroda>=5)pool.push('<p>Kuroda answered a question he didn\'t ask. She anticipated it. He\'s not sure if that\'s unsettling or exactly right.</p>');
-      if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=6)pool.push('<p>She looked up when he came in. Just for a moment. But she looked up.</p>');
-      if(ctx.hasHina&&ctx.bondHina>=6)pool.push('<p>Hina showed him something in her sketchbook — a small thing, a margin drawing — without explanation. He understood it anyway.</p>');
-      if(ctx.hasIzumi&&ctx.bondIzumi>=5)pool.push('<p>Izumi said something unprompted. Short, exact, useful. From him that\'s the social equivalent of a long conversation.</p>');
-      return pool;
-    })(),
-    Bold:[
-      ctx.guts>=3?'<p>He committed, and it landed. Confidence is a skill. He\'s actively building it, one moment at a time.</p>':'<p>Harder than expected. But done. The discomfort is information: next time will be easier.</p>',
-      '<p>Not everyone would have tried that. Jorge did. That matters more than the outcome.</p>'
-    ],
-    Reflective:[
-      '<p>Some moments are just for collecting. Filed away into the growing catalog of being here.</p>',
-      '<p>He watches. Notes. Learns the texture of this place with patient attention.</p>',
-      ctx.knowledge>=3?'<p>The observation is careful, analytical — a habit that\'s gotten sharper here. He doesn\'t miss much anymore.</p>':'<p>There\'s more going on than is immediately visible. He\'s learning to see it.</p>'
-    ]
+
+  var POOLS={
+    morning:{
+      Standard:[
+        '<p>Jorge arrived before most of the class. Bag down, schedule checked, the day taking shape through the window. Not dramatic — just solid.</p>',
+        '<p>Morning homeroom moved at its usual pace. He copied the announcements, updated his planner, watched the day organize itself. The routine has weight now. He trusts it.</p>',
+        '<p>He moved through the morning preparation without incident, which is most of what a morning asks. Small acts that make the actual day possible.</p>'
+      ],
+      Social:[
+        '<p>He caught someone near the entrance — a brief exchange, nothing weighted. Morning is the right time for that: everyone still arriving, not yet defended against the day. He said the right thing without thinking too hard about it.</p>',
+        '<p>A short conversation before homeroom — two people figuring out something small together. It became better than either of them planned. That\'s the best kind.</p>',
+        '<p>He said something in passing that turned into a proper exchange. The social ledger adds up in small deposits. This was a real one.'
+      ],
+      Bold:[
+        '<p>He did the thing before he\'d thought about it enough to talk himself out of it. It landed. Not perfectly — but it landed, and that\'s what the morning needed.</p>',
+        '<p>He raised his hand. He said the thing. The room moved on, but he felt the small click of having done it when it counted. That click is worth something.</p>',
+        '<p>He committed to something he would have avoided last month. Smaller than it sounds from the outside. Bigger from the inside. Done, which is the only relevant fact.</p>'
+      ],
+      Reflective:[
+        '<p>He lingered at the window before the bell. Tokyo in the early morning is still deciding what kind of day it will be. He watches it make up its mind and feels, briefly, like he\'s ahead of it.</p>',
+        '<p>He came in early and sat before the others arrived. Some days you need the room before it fills up. He knows when those days are now — that itself is a kind of knowledge.</p>',
+        '<p>He noticed something on the way to school — a detail he\'d walked past before without registering. The city is still revealing itself. So is everything else.</p>'
+      ]
+    },
+    class:{
+      Standard:[
+        '<p>The lesson held its shape. He took notes, followed the argument, filled in the page. Not every class needs to be remarkable. Presence is the baseline — he\'s meeting it consistently.</p>',
+        '<p>He followed the lecture carefully, notebook filling as it went. The material is starting to have texture — not just facts to memorize but a structure underneath them. He\'s beginning to see it.</p>',
+        '<p>Class. A solid one. He understood the main thing and wrote it down before it evaporated. That\'s the whole contract, most days.</p>'
+      ],
+      Social:[
+        '<p>The group discussion wandered the way class discussions always do — official topic, then the real one underneath. Jorge said something. It fit. Someone picked it up and ran with it.</p>',
+        '<p>He made the exchange during the group task — brief, useful, actually helpful. The social math of class is its own system. He\'s getting fluent in it.</p>',
+        '<p>A comment during discussion, well-timed. The room shifted toward him for a moment. He didn\'t flinch from the attention. That\'s newer than it sounds.</p>'
+      ],
+      Bold:[
+        '<p>The question arrived before he\'d fully formed it. The room\'s attention shifted for two seconds — then moved on, but differently. Something changed in the texture of the period after that.</p>',
+        '<p>He said something that required saying out loud. Not performing — just accurate. The class registered it and continued. But it was registered.</p>',
+        '<p>He tried the harder answer. It was close. Closer than last week. The metric that matters is direction, not score. Direction is right.</p>'
+      ],
+      Reflective:[
+        '<p>He took notes and looked out the window — not escaping, just breathing. The lesson continued. He caught the important parts. Sometimes you sit in class and also sit with yourself.</p>',
+        '<p>Something the teacher said opened into something larger. He\'s still turning it over — the specific phrase, the angle it implied. He\'ll probably have something to say about it by tomorrow.</p>',
+        '<p>He let the material settle at its own pace. Understanding sometimes arrives a day later, in the shower, on the walk home. He\'s learned to trust the delay.</p>'
+      ]
+    },
+    lunch:{
+      Standard:[
+        '<p>He ate. The cafeteria at full volume — a specific school-lunch loudness that\'s become familiar enough to be background. He had his food, finished it, watched the room run its patterns.</p>',
+        '<p>Lunch at its most functional: tray, table, the ambient sound of several hundred conversations happening at once. He ate slowly. Felt human again after morning classes.</p>',
+        '<p>He took his time with lunch. Nothing exceptional happened. Afterward he felt like something had been restored. That\'s its own kind of event.</p>'
+      ],
+      Social:[
+        '<p>The table conversation moved fast — jokes, callbacks, interruptions nobody minded. He was in it, not watching it from the outside. That difference is still new enough to notice.</p>',
+        '<p>He found a thread in the conversation and held it. The table is easier to navigate each week. Each day the map becomes a little more detailed, a little more his.</p>',
+        '<p>An easy exchange that became an actual exchange. Lunch is becoming a real place — not just time between lessons, but somewhere he actually exists.</p>'
+      ],
+      Bold:[
+        '<p>He said the thing out loud. Not everyone agreed. Some people looked. But the table didn\'t break, and three minutes later the conversation had moved on. Exactly the result he needed.</p>',
+        '<p>He moved toward the harder seat — the one that required something from him to justify taking. He took it. Stayed. Staying turned out to be the whole argument.</p>',
+        '<p>He made something happen at lunch. The thing that required actual follow-through, not just intention. The follow-through worked. He can exhale properly now.</p>'
+      ],
+      Reflective:[
+        '<p>He watched the room for a while — the currents, the groupings, who sat where and why. The cafeteria is an anthropological document if you know how to read it. He\'s getting better at reading it.</p>',
+        '<p>He ate slowly and watched. All of it is information if you treat it that way. He\'s learning what to do with the information he collects here.</p>',
+        '<p>He sat with his lunch and let the noise be background. Some meals are for thinking. He turned something over — didn\'t solve it, but it has a different shape now than it did this morning.</p>'
+      ]
+    },
+    afterSchool:{
+      Standard:[
+        '<p>The afternoon passed in its own way. Some of it was useful, some was just time — the post-school hour with its particular quality of four-thirty light. He moved through it without wasting it.</p>',
+        '<p>He stayed to finish something before heading home. The school gets quieter by degrees after the bell. He\'s learned the right time to leave: when it\'s quiet enough to think, not so quiet it feels abandoned.</p>',
+        '<p>After-school: the hour between who he is in class and who he is at home. He uses it deliberately, which is more than most people manage.</p>'
+      ],
+      Social:[
+        '<p>He ran into someone on the way out. The conversation happened in that easy after-school register — nothing weighted, nothing scheduled. They walked the same direction for a while. It felt natural.</p>',
+        '<p>He stopped somewhere — the clubrooms, the courtyard, the vending machines — and spoke to someone for longer than expected. These conversations happen when you stop watching the clock.</p>',
+        '<p>The hallways at three-thirty have their own population. He moved through it and arrived somewhere specific. Something happened there — nothing huge, but something he\'ll still remember tomorrow.</p>'
+      ],
+      Bold:[
+        '<p>He stayed when most people had already gone. The school gets different in the late afternoon — less performed, more itself. He did the thing he\'d been putting off. It\'s done now.</p>',
+        '<p>He went somewhere he wasn\'t certain about. Knocked, or didn\'t, or waited. Some version of first-move. It worked — or at least it didn\'t fail. That\'s the right metric at this stage.</p>',
+        '<p>He committed to something after school that cost him something small and real. Small costs are what small progress runs on. He\'s beginning to understand this accounting.</p>'
+      ],
+      Reflective:[
+        '<p>He walked slowly on the way home. No headphones. Tokyo at four PM has a particular texture — warm, traffic-loud, turning golden between the buildings. He let it accumulate.</p>',
+        '<p>He sat somewhere after school — a bench, a step, the edge of the track — and watched the day wind down. It helps to watch things wind down before going home to start again.</p>',
+        '<p>He took the long way home. Let his hand trail the school wall on the way out. The kind of thing you do without deciding to, when a place has become yours.</p>'
+      ]
+    },
+    evening:{
+      Standard:[
+        '<p>The apartment was quiet. He unpacked his bag at the table, checked tomorrow\'s schedule, made a note in the margin of his planner. Carmen was in the kitchen. Everything in its usual configuration.</p>',
+        '<p>Evening: homework, dinner, the neighbor\'s TV through the wall. Nothing exceptional. He finished the work he needed to finish. That has its own satisfaction — the close of a properly used day.</p>',
+        '<p>He moved through the evening at a steady pace. Study, eat, decompress. Carmen asked about his day. He gave the real version, not the summary. They sat with it for a while.</p>'
+      ],
+      Social:[
+        '<p>They talked over dinner — actually talked, phones down. Carmen asked about someone from school. He gave the real answer. She listened in the particular way she has: taking everything seriously without making it heavy.</p>',
+        '<p>The evening had a real conversation in it. Not just logistics — something with texture. Carmen, or a message exchange that kept going past its expected end. Social life doesn\'t stop at the school gate.</p>',
+        '<p>He messaged someone about something specific. They responded faster than expected. It continued from there. Small connections maintained. They accumulate into something larger without announcing when it happened.</p>'
+      ],
+      Bold:[
+        '<p>He made a decision tonight. Set the alarm, wrote the note, committed before sleep could talk him out of it. Decisions made the evening before hold better than morning ones. He\'s learning this.</p>',
+        '<p>He did the work he\'d been putting off all week. All at once, at the kitchen table, overhead light on. Done before midnight. A small discipline, but disciplines compound.</p>',
+        '<p>He said something to Carmen he\'d been holding for a while — not a confession, just something true that needed air. She nodded. "I know," she said. "I know." Some conversations are shorter than you expect them to be.</p>'
+      ],
+      Reflective:[
+        '<p>He sat by the window after dinner. Tokyo at night is a different city — same streets, differently lit, differently populated. He\'s getting to know both versions. The night one is starting to feel more his.</p>',
+        '<p>Before sleep: he writes something down. Not a diary entry — just a fragment. A thing noticed. A phrase from class. An image from the walk home. Evidence that today was real and he was in it.</p>',
+        '<p>He turned the day over before bed — not the events, just the texture. Some days need processing. This was one. He\'ll have the shape of it by morning.</p>'
+      ]
+    }
   };
-  var pool=pools[type]||pools.Standard;
-  var text=pick(pool,rng);
-  // Append exam pressure note if relevant
+
+  var blkPool=POOLS[blk]||POOLS.class;
+  var typePool=blkPool[type]||blkPool.Standard;
+
+  // Character-specific additions based on who's around and bond level
+  var extras=[];
+  if(type==='Social'){
+    if(blk==='lunch'&&ctx.hasSato&&ctx.bondSato>=4)
+      extras.push('<p>Sato had a story — something from PE or the konbini or somewhere, the details already fuzzy. Hayashi filled in the wrong facts. Sato didn\'t bother correcting him. Somehow this made everyone laugh harder than the story deserved.</p>');
+    if(blk==='lunch'&&ctx.hasHayashi&&ctx.bondHayashi>=3)
+      extras.push('<p>Hayashi said something with full confidence and zero accuracy. Everyone at the table knew. Nobody corrected him. Jorge is learning to honor this particular social contract. It takes practice.</p>');
+    if(blk==='class'&&ctx.hasKomori&&ctx.bondKomori>=4)
+      extras.push('<p>Komori caught his eye across the room and gave the small nod that means she agreed with what he said. From Komori, that\'s formal recognition. He\'ll take it.</p>');
+    if(blk==='afterSchool'&&ctx.hasRyusei&&ctx.bondRyusei>=3)
+      extras.push('<p>Ryusei was outside in his track gear, doing something with his shoes. They exchanged ten words. With Ryusei, ten words means you\'re on each other\'s radar — that\'s the full currency here.</p>');
+    if(blk==='afterSchool'&&ctx.hasWindowGirl&&ctx.bondWindowGirl>=4)
+      extras.push('<p>He passed the literary club room on the way out. She was at the table, reading something with a heavy spine. She didn\'t look up. But she shifted — slightly, almost nothing — in the way people do when they\'re aware of you.</p>');
+    if(blk==='morning'&&ctx.hasIzumi&&ctx.bondIzumi>=4)
+      extras.push('<p>Izumi was at his desk already — headphones off, which is unusual. He acknowledged Jorge in a way that involved approximately zero words and about two percent more eye contact than last month. Progress.</p>');
+    if(blk==='evening'&&ctx.bondCarmen>=7)
+      extras.push('<p>Carmen said something at the table that he\'ll probably remember for a long time. Not profound — just exactly right for the moment. She has that. He doesn\'t know where she learned it. Maybe it can\'t be learned.</p>');
+    if(blk==='lunch'&&ctx.hasAbe&&ctx.bondAbe>=3)
+      extras.push('<p>Abe landed a joke mid-conversation that nobody saw coming. The table recovered slowly. Jorge was still smiling thirty seconds after everyone else had moved on. Abe noticed. He always notices.</p>');
+    if(blk==='class'&&ctx.hasHina&&ctx.bondHina>=4)
+      extras.push('<p>Hina passed him something she\'d drawn in the margin of her notebook — a small geometric shape with a note next to it that might have been a question. He looked at it for a while and then wrote back. This is how they communicate. He\'s stopped thinking it\'s strange.</p>');
+  }
+  if(type==='Bold'){
+    if(ctx.guts>=3)
+      extras.push('<p>He\'s been building this — the capacity for the clean follow-through, the action before the second-guess. It clicked today. Not every day has a click. He notices when they do.</p>');
+    if(blk==='class'&&ctx.knowledge>=3)
+      extras.push('<p>He answered the one that stumped the room. Not to demonstrate anything — just because he knew it and it was relevant. There\'s a clean satisfaction in that. Knowledge used at the right moment.</p>');
+  }
+  if(type==='Reflective'&&ctx.knowledge>=3)
+    extras.push('<p>He made a connection today between something in the current lesson and something from weeks ago. The teacher didn\'t draw it — he did, privately. That\'s what learning actually feels like from the inside.</p>');
+
+  var combined=typePool.concat(extras);
+  var text=pick(combined,rng);
+
+  // Exam pressure
   if(ctx.examSoon&&(type==='Standard'||type==='Reflective')){
     var dl=ctx.examDay-ctx.day;
-    text+='<div class="inner-voice">'+CAL_EVENTS[ctx.examDay].title+' in '+dl+' day'+(dl>1?'s':'')+'. The weight of it sits at the edge of everything.</div>';
+    text+='<div class="inner-voice">'+CAL_EVENTS[ctx.examDay].title+' in '+dl+' day'+(dl>1?'s':'')+'. The weight of it sits at the back of everything.</div>';
   }
-  // Carmen arc-aware evening ambient
-  if(ctx.blk==='evening'&&ctx.bondCarmen>=6&&rng()<0.35){
+  // Carmen arc evening ambient
+  if(blk==='evening'&&ctx.bondCarmen>=6&&rng()<0.35){
     var cEvPhase=CARMEN_ARC[ctx.carmenPhase||0];
     if(cEvPhase)text+='<p class="carmen-note">'+pick(cEvPhase.evening,rng)+'</p>';
-    else text+='<p style="color:var(--dim);font-size:.84rem">From the kitchen, Carmen hums something — an old song. Some things don\'t change, wherever you are.</p>';
   }
-  // Bridge score — unlocks specific social outcomes when crossing 3+ groups
+  // Bridge score
   if(ctx.bridgeScore>=3&&type==='Social'&&rng()<0.4){
     text+='<div class="inner-voice">He exists in multiple tables now. Someone from track, someone from the lit club, someone from Sato\'s orbit. They don\'t all know each other. He does. That\'s a specific kind of position.</div>';
   }
-  // Weather effects on outcomes
+  // Weather effects
   if(ctx.isRainy&&(blk==='afterSchool'||blk==='morning')&&rng()<0.5){
     text+='<p style="color:var(--dim);font-size:.84rem">The rain changed the texture of the afternoon. Things that would have happened outside moved inside. Different conversations. Sometimes that\'s better.</p>';
   }
@@ -1448,12 +1586,21 @@ function renderSceneUI(sc,nxt){
     +'<span class="badge b-acad">📖 '+h.acad+'</span></div>';
   out+=(sc.calHtml||'')+(sc.trans||'');
   out+='<div class="scene-card"><div class="scene-header">◈ NARRATIVE — Day '+G.day+'</div><div class="scene-body">'+sc.html+'</div></div>';
-  out+='<div class="dec-card"><div class="dec-title">DECISION TIME</div>';
+  var statIcons={knowledge:'📚',guts:'⚡',proficiency:'🎯',kindness:'💖',charm:'✨'};
+  out+='<div class="dec-card"><div class="dec-title">— WHAT DOES JORGE DO? —</div><div class="choice-deck">';
   sc.choices.forEach(function(c){
-    var rc=c.risk==='low'?'c-low':c.risk==='med'?'c-med':'c-high';
-    out+='<button class="choice" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')"><span class="c-label">'+c.lbl+' — '+c.type+'</span>'+c.desc+'<div class="c-meta"><span class="'+rc+'">⏱ '+c.time+' | ⚠ '+c.risk+'</span></div></button>';
+    var tClass=(c.type||'standard').toLowerCase();
+    var wide=(c.id==='W')?'choice-card--wide':'';
+    var statKey=c.stats?Object.keys(c.stats)[0]:null;
+    var hint=statKey?(statIcons[statKey]||'')+' '+statKey:'';
+    out+='<button class="choice-card '+wide+'" data-type="'+tClass+'" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')">'
+      +'<div class="cc-letter">'+c.id+' · '+(c.type||'action')+'</div>'
+      +'<div class="cc-desc">'+c.desc+'</div>'
+      +(hint?'<div class="cc-hint">'+hint+'</div>':'')
+      +'</button>';
   });
-  if(!sc._clubfair){out+='<div class="choice" style="cursor:default"><span class="c-label">✏) FREE — Write your own action</span><div class="open-row"><input class="open-in" id="open-in" type="text" placeholder="What does Jorge do?" maxlength="200"><button class="go-btn" id="open-go" onclick="doOpen(\''+(nxt||'')+'\')">→</button></div><div class="c-meta">⏱ Custom | ⚠ varies</div></div>';}
+  out+='</div>';
+  if(!sc._clubfair){out+='<div class="free-card"><div class="cc-letter">✏ free action</div><div class="open-row"><input class="open-in" id="open-in" type="text" placeholder="What does Jorge do?" maxlength="200"><button class="go-btn" id="open-go" onclick="doOpen(\''+(nxt||'')+'\')">→</button></div></div>';}
   out+='</div>';
   el('scene-area').innerHTML=out;
   el('scene-area').scrollIntoView({behavior:'smooth',block:'start'});
