@@ -1226,11 +1226,268 @@ function buildChoices(tpl,blk,ctx,rng){
   }).filter(Boolean);
 }
 
+// ── Outcome Construction System ──
+// 1) Activity line: anchors the outcome to what was chosen
+function getActivityLine(desc,blk,rng){
+  if(!desc)return'';
+  var d=desc.toLowerCase();
+  // Reading
+  if(/read|book|manga|novel|lit club|page/i.test(d)){
+    return pick([
+      '<p>He settled in with the book — whichever one he\'d been putting off. The pages moved faster than expected. Time passed the right way.</p>',
+      '<p>He read for a while. The story made the apartment feel less its usual size. That was the point.</p>',
+      '<p>He picked up where he\'d left off. The book is one of the things that works the same here as anywhere.</p>'
+    ],rng);
+  }
+  // Studying / homework
+  if(/stud|homework|review|note|vocabular|kanji|exam|quiz|練習|math|algebra|history/i.test(d)){
+    return pick([
+      '<p>Notes out, pen moving. He worked through it steadily — no shortcuts, no rushing. The right kind of tired at the end of it.</p>',
+      '<p>He went through the material again. Not because he had to — because he wanted to actually understand it, not just pass through it.</p>',
+      '<p>He studied. Properly, at the desk, with the books open and the phone face-down. An hour. Maybe more.</p>'
+    ],rng);
+  }
+  // Listening to music
+  if(/music|listen|playlist|headphone|song|album|track/i.test(d)){
+    return pick([
+      '<p>Headphones on, volume just above ambient. Music has its own time signature and he let it run.</p>',
+      '<p>He put something on — not as background noise, but as the main thing. Listened properly for once.</p>',
+      '<p>He found a new track and played it twice. Some songs need two tries before they give up what they are.</p>'
+    ],rng);
+  }
+  // Gaming / phone
+  if(/game|console|controller|app|phone game/i.test(d)){
+    return pick([
+      '<p>He picked up the controller. The game had its own logic — different rules, different stakes, different version of competence. Good for an hour.</p>',
+      '<p>He played. Not to escape exactly — just to be somewhere with clear rules for a while.</p>'
+    ],rng);
+  }
+  // Eating / food / konbini
+  if(/cook|food|eat|konbini|ramen|dinner|meal|snack|lunch/i.test(d)){
+    return pick([
+      '<p>He made something — simple enough, but made. The kitchen smells better when it\'s been used for something.</p>',
+      '<p>He ate. Slowly, at the table, with the window open. Not every meal needs to be anything other than food.</p>',
+      '<p>Konbini run. He picked the things he always picks, plus one he hasn\'t tried. That\'s his system.</p>'
+    ],rng);
+  }
+  // Moving / exercise / walking
+  if(/run|jog|exercise|walk|stretch|gym|track|move/i.test(d)){
+    return pick([
+      '<p>He moved. Outside or in the small space of the apartment — the body needed it either way. Different kind of tired after.</p>',
+      '<p>He ran. Not fast, not far. Just enough to feel like himself again after a day of being still.</p>',
+      '<p>He walked the neighborhood with no particular destination. Tokyo at this hour has its own rhythm. He matched it.</p>'
+    ],rng);
+  }
+  // Creating / drawing / writing
+  if(/draw|sketch|write|journal|create|art|doodle|paint/i.test(d)){
+    return pick([
+      '<p>He made something — on paper or in his head or somewhere between. Not for anyone else. Just for the act of making.</p>',
+      '<p>He wrote a few lines. Not a diary — just fragments. Things that needed somewhere to go.</p>',
+      '<p>He sketched something. It wasn\'t finished. That was fine. Sometimes starting is the whole point.</p>'
+    ],rng);
+  }
+  // Resting / sleeping
+  if(/sleep|rest|nap|lie down|lay|bed|just exist|do nothing/i.test(d)){
+    return pick([
+      '<p>He let himself stop. Quiet, horizontal, eyes closed. The day kept going outside without him for a while. That was fine.</p>',
+      '<p>He rested. Not slept exactly — just stopped moving and let things settle. Sometimes that\'s the productive choice.</p>'
+    ],rng);
+  }
+  // Cleaning / organizing
+  if(/clean|organiz|tidy|room|laundry|dishes/i.test(d)){
+    return pick([
+      '<p>He put things in order. Not urgently — just one thing controlled and correct in a day that asked a lot.</p>',
+      '<p>He cleaned the room. The floor visible again. The desk usable. It costs an hour and pays back in clarity.</p>'
+    ],rng);
+  }
+  // Messaging / calling
+  if(/call|text|message|chat|line|reply|contact|reach out/i.test(d)){
+    return pick([
+      '<p>He picked up his phone and reached out. The conversation had its own momentum once it started.</p>',
+      '<p>He texted. The reply came. They talked about something specific, then something else. That\'s how it works.</p>'
+    ],rng);
+  }
+  // Silent observation / just being
+  if(/observ|watch|sit|window|quiet|alone|silent|exist/i.test(d)){
+    return pick([
+      '<p>He watched. The room, the hallway, the street below — wherever he was. Observation is its own kind of doing.</p>',
+      '<p>He sat with it. The thing he\'d been carrying. Didn\'t solve it, just acknowledged it was there.</p>'
+    ],rng);
+  }
+  // Asking / talking / approaching someone
+  if(/ask|talk|speak|approach|say|tell|introduce|conversation/i.test(d)){
+    return pick([
+      '<p>He started the conversation. Found the right opening and took it. The words came out closer to how he\'d intended than usual.</p>',
+      '<p>He said the thing. Not perfectly — but out loud, which is the requirement. The other person heard it.</p>'
+    ],rng);
+  }
+  // Focus / paying attention / working
+  if(/focus|pay attention|concentrate|work|prepare|practice/i.test(d)){
+    return pick([
+      '<p>He focused. Genuinely — not just sitting in the same room as the work, but actually doing it. There\'s a difference and he knows it.</p>',
+      '<p>He prepared. The specific kind of preparation that costs something now to save something later.</p>'
+    ],rng);
+  }
+  // Browse / explore / look around
+  if(/browse|look|explore|wander|check/i.test(d)){
+    return pick([
+      '<p>He moved through it without a fixed destination. Sometimes that\'s how you find the things you weren\'t looking for.</p>',
+      '<p>He looked around. Took stock of what was there. Filed it for later.</p>'
+    ],rng);
+  }
+  return''; // no keyword match — will fall back to block-type pool
+}
+
+// 2) World modifier: one sentence that grounds the state of the world
+function getWorldModifier(blk,ctx,rng){
+  var mods=[];
+  // Carmen state
+  if(blk==='evening'){
+    if(ctx.carmenAway)mods.push(pick([
+      '<p class="world-note">The apartment had the particular quiet of being genuinely empty — not Carmen-in-the-kitchen quiet, but actually nobody-home quiet.</p>',
+      '<p class="world-note">Carmen was still at work. The apartment his alone for the evening.</p>',
+      '<p class="world-note">He\'d eaten alone. The table one plate, one chair, the city outside doing its thing.</p>'
+    ],rng));
+    else if(ctx.carmenMood<=4)mods.push('<p class="carmen-note">Carmen was home but quiet — the working-something-out kind of quiet. He didn\'t push.</p>');
+    else if(ctx.bondCarmen>=7&&rng()<0.4)mods.push(pick([
+      '<p class="carmen-note">Carmen came home and they overlapped for a while in the kitchen — not a conversation exactly, just the easy occupation of the same space.</p>',
+      '<p class="carmen-note">Dinner with Carmen. She\'s been here long enough that she knows which things to ask and which things to leave alone.</p>'
+    ],rng));
+  }
+  // Weather
+  if(ctx.isRainy&&(blk==='morning'||blk==='afterSchool'||blk==='class'))
+    mods.push('<p class="world-note">The rain didn\'t stop. The school smelled like wet coats and floor cleaner.</p>');
+  if(ctx.isHot&&blk==='class')
+    mods.push('<p class="world-note">The heat in the classroom was a physical presence — everything took ten percent more than it should have.</p>');
+  if(ctx.isSnow&&blk==='morning')
+    mods.push('<div class="inner-voice">❄️ Snow again. Tokyo looks briefly impossible when it snows.</div>');
+  // Exam pressure
+  if(ctx.examSoon&&(blk==='class'||blk==='evening')){
+    var dl=ctx.examDay-ctx.day;
+    mods.push('<div class="inner-voice">'+(dl===1?'Tomorrow.':dl+' days.')+' The exam sits at the edge of everything.</div>');
+  }
+  // Season
+  if(ctx.season==='spring'&&blk==='morning'&&rng()<0.2)
+    mods.push('<div class="inner-voice">The sakura are still doing their thing. At some point he stopped noticing them. Then he noticed that.</div>');
+  if(ctx.isSummer&&blk==='class'&&rng()<0.2)
+    mods.push('<p class="world-note">Summer makes the afternoon blocks feel longer than they are. The classroom clock moved visibly.</p>');
+  if(mods.length===0)return'';
+  return mods[0]; // one modifier at a time
+}
+
+// 3) Character echo: NPC-specific reaction based on who's present and bond level
+function getCharacterEcho(type,blk,ctx,rng){
+  var pool=[];
+  if(blk==='lunch'||blk==='morning'||blk==='class'){
+    if(ctx.hasSato&&ctx.bondSato>=4&&type==='Social')
+      pool.push('<p>Sato said something while they were getting their trays — low-stakes, accurate, exactly the kind of thing Sato says. Jorge filed it. That\'s how it works with Sato now.</p>');
+    if(ctx.hasHayashi&&ctx.bondHayashi>=3&&type==='Social')
+      pool.push('<p>Hayashi had an opinion about something. Incorrect, but enthusiastically held. Nobody corrected him. This is one of the unspoken agreements at the table.</p>');
+    if(ctx.hasKomori&&ctx.bondKomori>=4&&type==='Standard')
+      pool.push('<p>Komori glanced at his work and said nothing. That\'s Komori for "acceptable." He\'s learning the register.</p>');
+    if(ctx.hasHina&&ctx.bondHina>=4&&type==='Reflective')
+      pool.push('<p>Hina was working on something in her sketchbook. She tilted it slightly toward him — not showing, just making it visible. He looked. She went back to drawing.</p>');
+    if(ctx.hasAbe&&ctx.bondAbe>=3&&type==='Social')
+      pool.push('<p>Abe said something that shouldn\'t have worked and did. The table took a moment to recover. Jorge was still thinking about it three minutes later.</p>');
+    if(ctx.hasIzumi&&ctx.bondIzumi>=4&&(type==='Social'||type==='Reflective'))
+      pool.push('<p>Izumi made a small sound that might have been agreement. From him, that\'s participatory. That\'s the full transaction.</p>');
+  }
+  if(blk==='afterSchool'){
+    if(ctx.hasRyusei&&ctx.bondRyusei>=3&&type==='Bold')
+      pool.push('<p>Ryusei was heading out to the track. He didn\'t say anything — just held the door one beat longer than necessary. That counts for something in Ryusei\'s accounting.</p>');
+    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=4&&type==='Reflective')
+      pool.push('<p>He passed the lit club room. She was at her usual table with a book open and probably not being read. She didn\'t look up. He didn\'t stop. Something still passed between them, somehow.</p>');
+    if(ctx.hasKuroda&&ctx.bondKuroda>=4&&type==='Standard')
+      pool.push('<p>Kuroda was leaving at the same time. She said something logistical — efficient, no preamble. He answered. That was the exchange. For Kuroda that\'s a relationship.</p>');
+  }
+  if(blk==='class'){
+    if(ctx.hasFujiwara&&type==='Bold')
+      pool.push('<p>Fujiwara-sensei glanced at him after he spoke — not disapproving, not encouraging. The neutral evaluation of someone deciding whether to invest attention. He\'ll know tomorrow.</p>');
+  }
+  if(!pool.length)return'';
+  return pick(pool,rng);
+}
+
+// ── Fallback pools (used only when getActivityLine returns nothing) ──
+var _FALLBACK={
+  morning:{
+    Standard:'<p>He moved through the morning preparation at a steady pace. Small acts that make the actual day possible.</p>',
+    Social:'<p>A brief exchange before the first bell — easier than it used to be. The social ledger adds up in small deposits.</p>',
+    Bold:'<p>He did the thing before he\'d thought about it enough to talk himself out of it. That\'s the practice.</p>',
+    Reflective:'<p>He arrived early and sat with the room before it filled up. Some days you need that.</p>'
+  },
+  class:{
+    Standard:'<p>The lesson held its shape. He took notes and followed the argument. Presence is the baseline.</p>',
+    Social:'<p>He made the exchange during class — brief, useful, actually heard. The social math of class is its own system.</p>',
+    Bold:'<p>He said the thing that required saying out loud. The room registered it and continued. But it was registered.</p>',
+    Reflective:'<p>He took notes and also sat with his own thoughts. The lesson continued. He caught the important parts.</p>'
+  },
+  lunch:{
+    Standard:'<p>He ate. The cafeteria at full volume. He had his food, finished it, watched the room run its patterns.</p>',
+    Social:'<p>The table conversation moved fast. He was in it, not watching it from outside. That difference matters.</p>',
+    Bold:'<p>He said the thing out loud. The table didn\'t break. Three minutes later the conversation had moved on. That\'s the result he needed.</p>',
+    Reflective:'<p>He ate slowly and watched. The cafeteria is an anthropological document. He\'s getting better at reading it.</p>'
+  },
+  afterSchool:{
+    Standard:'<p>The afternoon passed in its own way. He moved through it without wasting it.</p>',
+    Social:'<p>He ran into someone on the way out. Conversation in that easy after-school register — nothing weighted, just real.</p>',
+    Bold:'<p>He stayed when most people had already gone. He did the thing he\'d been putting off.</p>',
+    Reflective:'<p>He walked slowly on the way home. No headphones. Tokyo at four PM has a particular texture. He let it accumulate.</p>'
+  },
+  evening:{
+    Standard:'<p>He moved through the evening at a steady pace — study, eat, the neighbor\'s TV through the wall. Everything accounted for.</p>',
+    Social:'<p>The evening had a real conversation in it. Not just logistics — something with texture.</p>',
+    Bold:'<p>He made a decision tonight and committed to it before sleep could talk him out of it.</p>',
+    Reflective:'<p>He turned the day over before bed — not the events, just the texture of it. He\'ll have the shape of it by morning.</p>'
+  }
+};
+
 // Generate context-aware outcome text for procedural choices
+// CONSTRUCTION-BASED: assembles outcome from specific components instead of picking from a pool
 function makeProcOutcome(ch,ctx,rng){
   var blk=ctx.blk||'class';
   var type=ch.type||'Standard';
+  var parts=[];
 
+  // 1) Activity line — grounded in what was actually chosen (ch.desc)
+  var actLine=getActivityLine(ch.desc||'',blk,rng);
+  if(!actLine){
+    // No keyword match → use type+block fallback
+    var fb=(_FALLBACK[blk]||_FALLBACK.class);
+    actLine=fb[type]||fb.Standard;
+  }
+  parts.push(actLine);
+
+  // 2) World modifier — one sentence about the current world state
+  var wMod=getWorldModifier(blk,ctx,rng);
+  if(wMod)parts.push(wMod);
+
+  // 3) Character echo — NPC reaction based on who's present and bond level
+  if(rng()<0.55){var cEcho=getCharacterEcho(type,blk,ctx,rng);if(cEcho)parts.push(cEcho);}
+
+  // 4) Inner note — introspective or arc-aware closer (occasional)
+  if(rng()<0.38){
+    var innerNotes=[];
+    if(ctx.phase==='early')innerNotes.push('<div class="inner-voice">Still figuring out the coordinates of this place. Getting closer.</div>');
+    if(ctx.phase==='mid'&&ctx.bridgeScore>=2)innerNotes.push('<div class="inner-voice">He\'s in multiple orbits now. That happened gradually, then suddenly.</div>');
+    if(ctx.phase==='late')innerNotes.push('<div class="inner-voice">A year in. He knows things now that he didn\'t know he\'d need to know.</div>');
+    if(type==='Bold'&&ctx.guts>=3)innerNotes.push('<div class="inner-voice">He\'s been building this — the capacity for the clean follow-through. It clicked today.</div>');
+    if(type==='Reflective'&&ctx.knowledge>=3)innerNotes.push('<div class="inner-voice">He made a connection — between today and something from weeks ago. The teacher didn\'t draw it. He did.</div>');
+    if(ctx.bridgeScore>=3&&type==='Social')innerNotes.push('<div class="inner-voice">He exists in multiple tables now. They don\'t all know each other. He does. That\'s a specific kind of position.</div>');
+    if(innerNotes.length)parts.push(pick(innerNotes,rng));
+  }
+
+  // 5) Carmen arc evening addition (only when she's home)
+  if(blk==='evening'&&!ctx.carmenAway&&ctx.bondCarmen>=6&&rng()<0.35){
+    var cEvPhase=CARMEN_ARC[ctx.carmenPhase||0];
+    if(cEvPhase)parts.push('<p class="carmen-note">'+pick(cEvPhase.evening,rng)+'</p>');
+  }
+
+  return parts.join('');
+}
+
+// ── OLD POOLS (kept as dead code for reference, not used) ──
+function _unusedOldPools(){
   var POOLS={
     morning:{
       Standard:[
@@ -1344,65 +1601,6 @@ function makeProcOutcome(ch,ctx,rng){
     }
   };
 
-  var blkPool=POOLS[blk]||POOLS.class;
-  var typePool=blkPool[type]||blkPool.Standard;
-
-  // Character-specific additions based on who's around and bond level
-  var extras=[];
-  if(type==='Social'){
-    if(blk==='lunch'&&ctx.hasSato&&ctx.bondSato>=4)
-      extras.push('<p>Sato had a story — something from PE or the konbini or somewhere, the details already fuzzy. Hayashi filled in the wrong facts. Sato didn\'t bother correcting him. Somehow this made everyone laugh harder than the story deserved.</p>');
-    if(blk==='lunch'&&ctx.hasHayashi&&ctx.bondHayashi>=3)
-      extras.push('<p>Hayashi said something with full confidence and zero accuracy. Everyone at the table knew. Nobody corrected him. Jorge is learning to honor this particular social contract. It takes practice.</p>');
-    if(blk==='class'&&ctx.hasKomori&&ctx.bondKomori>=4)
-      extras.push('<p>Komori caught his eye across the room and gave the small nod that means she agreed with what he said. From Komori, that\'s formal recognition. He\'ll take it.</p>');
-    if(blk==='afterSchool'&&ctx.hasRyusei&&ctx.bondRyusei>=3)
-      extras.push('<p>Ryusei was outside in his track gear, doing something with his shoes. They exchanged ten words. With Ryusei, ten words means you\'re on each other\'s radar — that\'s the full currency here.</p>');
-    if(blk==='afterSchool'&&ctx.hasWindowGirl&&ctx.bondWindowGirl>=4)
-      extras.push('<p>He passed the literary club room on the way out. She was at the table, reading something with a heavy spine. She didn\'t look up. But she shifted — slightly, almost nothing — in the way people do when they\'re aware of you.</p>');
-    if(blk==='morning'&&ctx.hasIzumi&&ctx.bondIzumi>=4)
-      extras.push('<p>Izumi was at his desk already — headphones off, which is unusual. He acknowledged Jorge in a way that involved approximately zero words and about two percent more eye contact than last month. Progress.</p>');
-    if(blk==='evening'&&ctx.bondCarmen>=7)
-      extras.push('<p>Carmen said something at the table that he\'ll probably remember for a long time. Not profound — just exactly right for the moment. She has that. He doesn\'t know where she learned it. Maybe it can\'t be learned.</p>');
-    if(blk==='lunch'&&ctx.hasAbe&&ctx.bondAbe>=3)
-      extras.push('<p>Abe landed a joke mid-conversation that nobody saw coming. The table recovered slowly. Jorge was still smiling thirty seconds after everyone else had moved on. Abe noticed. He always notices.</p>');
-    if(blk==='class'&&ctx.hasHina&&ctx.bondHina>=4)
-      extras.push('<p>Hina passed him something she\'d drawn in the margin of her notebook — a small geometric shape with a note next to it that might have been a question. He looked at it for a while and then wrote back. This is how they communicate. He\'s stopped thinking it\'s strange.</p>');
-  }
-  if(type==='Bold'){
-    if(ctx.guts>=3)
-      extras.push('<p>He\'s been building this — the capacity for the clean follow-through, the action before the second-guess. It clicked today. Not every day has a click. He notices when they do.</p>');
-    if(blk==='class'&&ctx.knowledge>=3)
-      extras.push('<p>He answered the one that stumped the room. Not to demonstrate anything — just because he knew it and it was relevant. There\'s a clean satisfaction in that. Knowledge used at the right moment.</p>');
-  }
-  if(type==='Reflective'&&ctx.knowledge>=3)
-    extras.push('<p>He made a connection today between something in the current lesson and something from weeks ago. The teacher didn\'t draw it — he did, privately. That\'s what learning actually feels like from the inside.</p>');
-
-  var combined=typePool.concat(extras);
-  var text=pick(combined,rng);
-
-  // Exam pressure
-  if(ctx.examSoon&&(type==='Standard'||type==='Reflective')){
-    var dl=ctx.examDay-ctx.day;
-    text+='<div class="inner-voice">'+CAL_EVENTS[ctx.examDay].title+' in '+dl+' day'+(dl>1?'s':'')+'. The weight of it sits at the back of everything.</div>';
-  }
-  // Carmen arc evening ambient
-  if(blk==='evening'&&ctx.bondCarmen>=6&&rng()<0.35){
-    var cEvPhase=CARMEN_ARC[ctx.carmenPhase||0];
-    if(cEvPhase)text+='<p class="carmen-note">'+pick(cEvPhase.evening,rng)+'</p>';
-  }
-  // Bridge score
-  if(ctx.bridgeScore>=3&&type==='Social'&&rng()<0.4){
-    text+='<div class="inner-voice">He exists in multiple tables now. Someone from track, someone from the lit club, someone from Sato\'s orbit. They don\'t all know each other. He does. That\'s a specific kind of position.</div>';
-  }
-  // Weather effects
-  if(ctx.isRainy&&(blk==='afterSchool'||blk==='morning')&&rng()<0.5){
-    text+='<p style="color:var(--dim);font-size:.84rem">The rain changed the texture of the afternoon. Things that would have happened outside moved inside. Different conversations. Sometimes that\'s better.</p>';
-  }
-  if(ctx.isHot&&blk==='class'&&rng()<0.35){
-    text+='<p style="color:var(--dim);font-size:.84rem">The heat in the classroom was a presence of its own. Everything took about ten percent more effort than it should have.</p>';
-  }
-  return text;
 }
 
 var REFLS={
@@ -1498,8 +1696,8 @@ function genScene(day,blk){
     }
   }else if(blk==='evening'){
     // Group chat template only if joined; Carmen-away template 30% chance
-    var ePool=[TPL_E[0]];
-    if(rng()<0.3)ePool=[TPL_E[1]];
+    var ePool=[TPL_E[0]];var _carmenAway=false;
+    if(rng()<0.3){ePool=[TPL_E[1]];_carmenAway=true;}
     else if(ctx.groupChat)ePool=[TPL_E[0],TPL_E[2]];
     pool=ePool;
     loc='Home';time='18:30';label='Evening';
@@ -1530,7 +1728,7 @@ function genScene(day,blk){
   // Academic status: reflects upcoming exam pressure
   var acadStatus=ctx.examSoon?'⚠ Exam Soon':'Safe';
   if(ctx.calEv&&ctx.calEv.type==='exam')acadStatus='📝 Exam Day';
-  return{hud:{date:getDateStr(day),time:time,block:label,wx:getWeather(day),loc:loc,acad:acadStatus},trans:trans,calHtml:calHtml,html:html,choices:choices,_ctx:ctx,arch:'Day '+day+' — '+archPhase};
+  return{hud:{date:getDateStr(day),time:time,block:label,wx:getWeather(day),loc:loc,acad:acadStatus},trans:trans,calHtml:calHtml,html:html,choices:choices,_ctx:ctx,arch:'Day '+day+' — '+archPhase,_carmenAway:_carmenAway||false};
 }
 
 // ═══ CORE FUNCTIONS ═══
@@ -1652,6 +1850,7 @@ function doChoice(cid,nxt){
   applyOut({stats:ch.stats||{},log:ch.desc||'Made a choice.',identity:idGain});
   var rng=mkRng(G.day*50+cid.charCodeAt(0));
   var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
+  if(sc._carmenAway)ctx=Object.assign({},ctx,{carmenAway:true});
   var outcomeHtml=makeProcOutcome(ch,ctx,rng);
   showOut(outcomeHtml,nxt,sc.arch);
 }
@@ -1663,7 +1862,11 @@ function doOpen(nxt){
   var sc=window._sc;
   if(sc&&sc.out&&sc.out.E){var o=sc.out.E;applyOut(Object.assign({},o,{log:'Open: '+v}));showOut('<p>Jorge decides: <em>"'+v.replace(/</g,'&lt;')+'"</em></p><p>The moment bends to accommodate the choice — not every path is on the map, but the ones you make yourself are the ones that stick.</p>',o.next||nxt,sc.arch||'Improviser');return;}
   applyOut({stats:{charm:5},log:'Open: '+v});
-  showOut('<p>Jorge decides: <em>"'+v.replace(/</g,'&lt;')+'"</em></p><p>It plays out in a way that feels right — not scripted, not planned, just honest. The story adjusts.</p>',nxt,'Improviser');
+  var _oRng=mkRng(G.day*37+v.length);
+  var _blk=sc&&sc._ctx?sc._ctx.blk:'evening';
+  var _echo=getActivityLine(v,_blk,_oRng);
+  var _fallback='<p>The story accommodates what he chose to do — not the scripted version, the actual one.</p>';
+  showOut('<p><em>'+v.replace(/</g,'&lt;')+'</em></p>'+(_echo||_fallback),nxt,'Improviser');
 }
 
 function showOut(html,nxt,arch){
