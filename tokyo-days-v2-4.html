@@ -472,7 +472,9 @@ day2_sleep:{isRefl:true,text:"Two days. The school is getting less foreign — I
 var TPL_M=[
 {html:'<p>The walk to school is becoming routine — konbini, park, blue vending machine. {WD} {ME}</p><p>At the gate, the shoe lockers smell like they always do — slightly damp, slightly chemical.</p>',c:['Walk in with purpose','Stop at the konbini for something','Take a slightly different route today','Check the group chat while walking']},
 {html:'<p>Morning. {WD} The gate is quieter today — or maybe Jorge is just arriving at a different minute and the entire social geography shifts. {ME}</p><p>His locker opens on the first try. Small victories.</p>',c:['Head straight to class','Check the bulletin boards for updates','Say hi to someone at the lockers','Get a canned coffee from the machine']},
-{html:'<p>Jorge overslept. Carmen\'s alarm didn\'t go off — or maybe it did and he slept through it. The streets are emptier at this hour. {ME}</p><div class="inner-voice">This is fine. This is fixable. This is — okay I\'m running now.</div>',c:['Sprint — make it before the bell','Accept it and walk with dignity','Text someone to cover for you','Stop for breakfast anyway — if late, be fed']}
+{html:'<p>Jorge overslept. Carmen\'s alarm didn\'t go off — or maybe it did and he slept through it. The streets are emptier at this hour. {ME}</p><div class="inner-voice">This is fine. This is fixable. This is — okay I\'m running now.</div>',c:['Sprint — make it before the bell','Accept it and walk with dignity','Text someone to cover for you','Stop for breakfast anyway — if late, be fed']},
+{html:'<p>{WD} The shoe lockers have their own social logic — who arrives early, who comes in at the last possible second. {ME}</p><p>There\'s a moment before the bell where everything is still possible and nothing has gone wrong yet.</p>',c:['Use the moment — get ahead on something','Have a real conversation before class','Review notes for today\'s lesson','Just breathe and arrive']},
+{html:'<p>{ME} {WD} Walking helps Jorge think. Something about movement and rhythm — problems that feel stuck at a desk unknot themselves mid-stride.</p><div class="inner-voice">He\'s been here {DAYS} weeks. He has a routine. That used to sound bleak. It doesn\'t anymore.</div>',c:['Think about something specific while walking','Plan the day — actually plan it','Notice something on the walk you\'ve never noticed','Just exist in the commute']}
 ];
 var TPL_C=[
 {html:'<p>Math. Ogawa-sensei works through {MT} on the board with the confidence of someone who has never doubted a number in their life. Jorge follows along — {MD}. The chalk hits the board with rhythmic certainty.</p><p>{CA}</p>',c:['Focus and take thorough notes','Help the student beside you who looks lost','Raise your hand with a question','Zone out and think about other things']},
@@ -480,7 +482,9 @@ var TPL_C=[
 {html:'<p>Science lab. Ogawa-sensei\'s diagrams are ambitious today. Lab pairs work on {ST}. Jorge\'s partner holds the equipment like it might be alive.</p><p>{CA}</p>',c:['Take the lead on the experiment','Walk your partner through it patiently','Ask Ogawa-sensei a deeper question','Let your partner try first']},
 {html:'<p>History class. The topic: {HT}. {HD} The teacher\'s voice settles into a rhythm.</p><p>{WGC}</p>',c:['Take detailed notes','Connect it to something from your own background','Ask about the cultural context','Let your mind wander and sketch in the margin']},
 {html:'<p>English class. Jorge has an advantage here and he knows it. The teacher reads a passage — {ED}. Half the class follows. The other half has mentally departed.</p>',c:['Stay quiet — don\'t show off','Help when called on — accurate, brief','Volunteer to read aloud','Write something in English in your notebook']},
-{html:'<p>P.E. today: {PA}. The gym {PB}. Jorge finishes {PR}.</p>',c:['Give it everything','Pace yourself steadily','Help someone who\'s struggling','Talk to someone during the water break']}
+{html:'<p>P.E. today: {PA}. The gym {PB}. Jorge finishes {PR}.</p>',c:['Give it everything','Pace yourself steadily','Help someone who\'s struggling','Talk to someone during the water break']},
+{html:'<p>A double period today — the long, slow kind that tests both stamina and posture. {CA} Jorge has learned that {MD}.</p><p>{WGC}</p>',c:['Commit fully — double periods reward focus','Let your mind work through something else quietly','Pair up with someone for the group portion','Use it to get ahead on something due next week']},
+{html:'<p>The lesson is interesting today, actually. {HD} This is the kind of material that makes the subject make sense — the connective tissue between the things you already knew.</p><p>{CA}</p>',c:['Engage directly — ask, answer, push the discussion','Write notes that would make sense to you a month from now','Find the connection to something personal','Let it wash over you — some things land better that way']}
 ];
 var TPL_L=[
 {html:'<p>{LF} The table: {LTS}</p>{LD}',c:['Share food and catch up','Ask the group about something specific','Invite someone new to the table','Eat quickly then go explore']},
@@ -504,15 +508,16 @@ var TPL_WA=[
 {html:'<p>{WKA}</p>',c:['Keep exploring — there\'s more','Head home — good enough for today','Visit a shop or cafe','Text someone about what you found']}
 ];
 var PL={
-WD:['The air is crisp from last night\'s rain.','Morning light cuts between buildings at a low angle.','A breeze carries the smell of someone\'s breakfast from an open window.','The humidity is already building.','Grey sky, but warm.','Clear sky — the kind that makes Tokyo look sharp.'],
-ME:['The old taiso man is in the park, same radio, same precise movements.','A cat watches traffic from the konbini wall with absolute authority.','Two elementary kids sprint past, backpacks enormous.','The konbini has a new seasonal display.','Someone left an umbrella by the vending machine. Nobody has claimed it.','A woman on a bench reads a novel thick enough to be structural.'],
+WD:['The air is crisp from last night\'s rain.','Morning light cuts between buildings at a low angle.','A breeze carries the smell of someone\'s breakfast from an open window.','The humidity is already building.','Grey sky, but warm.','Clear sky — the kind that makes Tokyo look sharp.','The wind is doing something complicated with leaves.','Still. Even the birds are quieter than usual.'],
+ME:['The old taiso man is in the park, same radio, same precise movements.','A cat watches traffic from the konbini wall with absolute authority.','Two elementary kids sprint past, backpacks enormous.','The konbini has a new seasonal display.','Someone left an umbrella by the vending machine. Nobody has claimed it.','A woman on a bench reads a novel thick enough to be structural.','A salaryman sleeps upright on the park bench with the composure of someone who has made peace with their circumstances.','Two crows debate something on the powerline. They come to no resolution.','The ramen shop is already open. The smell is specific and good.','A cyclist weaves through pedestrians with practiced indifference to the laws of physics.'],
+DAYS:['three','four','five','six','seven','eight','nine','ten'],
 MT:['quadratic equations','geometry proofs','statistics basics','algebra review','graphing functions','probability'],
 MD:['this is familiar ground from Mexico','the notation is slightly different but the logic holds','this is new material that requires actual focus','comfortable — he finishes the problems early'],
 FA:['adjusts her glasses and opens the textbook','writes the objective on the board in museum-quality handwriting','returns graded work with precise red comments','reads a passage aloud, pausing for effect'],
 JT:['honorific language levels','kanji compound readings','essay structure and flow','literary analysis of a short passage','classical Japanese grammar forms','the difference between written and spoken register'],
 JP:['75','80','85','70','90'],
 JG:['the literary vocabulary still trips him up','some kanji compounds are unfamiliar territory','the lecture speed is just slightly too fast to catch everything','the idioms are regional and specific','classical forms are entirely new ground'],
-CA:['The classroom hums with its usual mix of concentration and quiet fidgeting.','Someone\'s stomach growls. The silence after is louder than the growl.','Aoyama is drawing in her notebook margins again — the patterns have gotten more complex.','The boy behind Jorge is awake today. Genuine progress.','A bird lands on the window ledge and stays for the entire lesson.','Outside, the clouds shift and a beam of light crosses the room like a spotlight.'],
+CA:['The classroom hums with its usual mix of concentration and quiet fidgeting.','Someone\'s stomach growls. The silence after is louder than the growl.','Aoyama is drawing in her notebook margins again — the patterns have gotten more complex.','The boy behind Jorge is awake today. Genuine progress.','A bird lands on the window ledge and stays for the entire lesson.','Outside, the clouds shift and a beam of light crosses the room like a spotlight.','Someone passes a note. It makes two people try not to smile.','The classroom smells faintly of chalk and someone\'s lunch. Temporary, specific, unrepeatable.','A pencil rolls off a desk at the precise moment of maximum silence.','The clock moves in a way that feels slightly slower than clock-time.','Outside the window, a leaf falls with extraordinary slowness. One student tracks it the entire way down.','The heating is either too much or not enough. Nobody can agree which.'],
 WGC:['The girl with long sleeves takes notes with unusual focus. Her handwriting is small and precise.','She raises her hand once. Her answer is so articulate the teacher pauses before responding.','She stares out the window for most of the period. Her posture doesn\'t shift once.','She is absent from this class today. The seat by the window is empty.'],
 ST:['chemical reactions in solution','plant cell structure under the microscope','basic electrical circuits','weather pattern analysis','the human digestive system','light refraction through prisms'],
 HT:['the Meiji Restoration and modernization','daily life in the Edo period','post-war reconstruction','ancient Silk Road trade routes','the development of Japanese writing systems','feudal social structures'],
@@ -521,19 +526,19 @@ ED:['Jorge could read this faster than the teacher.','The vocabulary is intermed
 PA:['Relay races on the track','Basketball half-court games','Long-distance running and stretching','Badminton — surprisingly competitive','Soccer on the field','Swimming — the pool is finally open'],
 PB:['smells like rubber and determination','echoes with sneaker squeaks and shouted encouragement','is humid and warm today','has a strange calm — half the class is sitting out'],
 PR:['middle of the pack — unremarkable, which is fine','better than expected — something clicked','exhausted but satisfied','near the back, but nobody seemed to notice','first in his group, which surprised him most of all'],
-LF:['Carmen packed onigiri today — she\'s been experimenting with Japanese food.','Tortas again. The reputation precedes them now.','Carmen made tacos — Hayashi is already eyeing the bag.','Bento with last night\'s leftovers, reorganized with precision.','Carmen tried making Japanese curry. The result is Mexican-Japanese fusion. Verdict: unexpectedly good.','Simple rice and egg today. Carmen was tired last night. It\'s still good.'],
-LTS:['Sato\'s table. Hayashi already mid-monologue. The chair is waiting.','The table is fuller today — someone new sat down without asking and nobody objected.','Hayashi is describing something from a show he watched last night with full dramatic gestures.','Sato is unusually quiet. Hayashi fills the silence without noticing, as always.'],
-LD:['<div class="dialogue">"Your mom should open a restaurant," Hayashi says for the fifth time this month.</div>','<div class="dialogue">"Quiz results came back," Sato says. "How\'d everyone do?"</div>','<div class="dialogue">Hayashi: "Film club is watching horror after school." Sato: "It\'s a school night." Hayashi: "Your point?"</div>','<div class="dialogue">"Weekend plans?" Sato asks. The table goes quiet. Nobody has any. That\'s completely fine.</div>'],
-SR:['Sato and Hayashi are in a meeting with Tanaka-sensei.','He just needs the quiet today — social energy is a finite resource.','The cafeteria was too loud, too full, too much.','Sometimes you need to eat without performing for anyone.'],
+LF:['Carmen packed onigiri today — she\'s been experimenting with Japanese food.','Tortas again. The reputation precedes them now.','Carmen made tacos — Hayashi is already eyeing the bag.','Bento with last night\'s leftovers, reorganized with precision.','Carmen tried making Japanese curry. The result is Mexican-Japanese fusion. Verdict: unexpectedly good.','Simple rice and egg today. Carmen was tired last night. It\'s still good.','Carmen included a sticky note. "Oishii!" with a drawing. Jorge considers whether to feel embarrassed. He decides against it.','Leftovers from the pozole — they somehow taste better cold. Carmen knows this.'],
+LTS:['Sato\'s table. Hayashi already mid-monologue. The chair is waiting.','The table is fuller today — someone new sat down without asking and nobody objected.','Hayashi is describing something from a show he watched last night with full dramatic gestures.','Sato is unusually quiet. Hayashi fills the silence without noticing, as always.','The table has rearranged slightly — someone moved, someone stayed. The new configuration is working.','A different table today, by accident or weather. It works out.'],
+LD:['<div class="dialogue">"Your mom should open a restaurant," Hayashi says for the fifth time this month.</div>','<div class="dialogue">"Quiz results came back," Sato says. "How\'d everyone do?"</div>','<div class="dialogue">Hayashi: "Film club is watching horror after school." Sato: "It\'s a school night." Hayashi: "Your point?"</div>','<div class="dialogue">"Weekend plans?" Sato asks. The table goes quiet. Nobody has any. That\'s completely fine.</div>','<div class="dialogue">A conversation that started about homework and has become, somehow, about whether luck is real. Nobody remembers how it got here.</div>','<div class="dialogue">"If you could learn any skill instantly," Hayashi announces, "what is it?" The table takes this seriously.</div>','<div class="dialogue">Sato shows Jorge something on his phone — a location, a video, something brief. He doesn\'t explain it. Jorge looks anyway.</div>'],
+SR:['Sato and Hayashi are in a meeting with Tanaka-sensei.','He just needs the quiet today — social energy is a finite resource.','The cafeteria was too loud, too full, too much.','Sometimes you need to eat without performing for anyone.','The group went somewhere he didn\'t know about. That\'s okay. He\'s not owed every plan.'],
 SL:['corner table by the vending machine','rooftop (the door is still unlocked)','empty classroom, sunlight on the desks','library reading nook, surrounded by books'],
 LE:['A commotion near the entrance — someone dropped an entire tray. The crash echoes. Everyone looks. The dropper stands frozen for three full seconds before slowly kneeling to pick it up.','Komori has set up a sign-up table near the entrance. Her clipboard game is immaculate. She\'s recruiting for something.','A spontaneous trading card tournament has taken over three pushed-together tables. It\'s surprisingly intense — real stakes, real emotions.','A second-year is recruiting for the basketball team with the energy of someone on commission.'],
 CS:['Literary Club. Room 204. The door is open. The usual members are here, and the girl at the window sits in her usual place, long sleeves past her wrists, book open on her lap.','The club room is quieter today — only three people came. The discussion is more intimate, more honest.','Free reading session. No discussion, no debate — just shared silence and the sound of pages turning.','A debate breaks out about whether manga counts as literature. It gets unexpectedly philosophical.'],
 AFS:['The hallway empties. Club sounds fade behind closing doors.','The school grounds are beautiful in the golden hour light — long shadows, warm stone.','A few students linger near the vending machines outside, talking about nothing.','The bulletin board has new flyers. Someone started a weekend study group.'],
 CZ:['Zone A — hallways. Long corridors, lots of glass.','Zone B — your classroom. The desks are heavier than they look.','Zone C — the science lab. The drain still makes that sound.','Zone D — gym entrance. Smells like everything that happened in the gym today.'],
 CP:['Komori, who cleans like she manages — with a system and a clipboard.','A quiet student from the next desk who works without speaking.','Takagi, who has optimized cleaning to a twenty-two-minute process.','Hayashi, who cleans like he talks — chaotically, enthusiastically, everywhere at once.'],
-CES:['Carmen made pozole. The apartment smells like hominy and chili and the specific warmth of food that took hours.','Carmen is on the phone with Yuki, laughing about something. She waves Jorge in and points at the stove.','Carmen is watching a telenovela and pretending she isn\'t emotionally invested.','The kitchen smells like Carmen experimenting — Japanese ingredients, Mexican technique. The result is on the table.','Carmen made enchiladas. The Tuesday enchilada tradition is now established.','Carmen bought taiyaki from a street vendor. "It\'s like a fish-shaped empanada. I have cultural questions."'],
-CD:['<div class="dialogue">"¿Y cómo te fue hoy, mijo?" She sets down plates, studying him.</div>','<div class="dialogue">"Yuki taught me \'oishii\' today. Oishii! Did I say it right?" She looks proud of one word.</div>','<div class="dialogue">"I found real chiles. Jorge. REAL chiles. In Tokyo." She looks like she discovered gold.</div>','<div class="dialogue">"You\'re taller," she says, looking at him. "When did that happen?"</div>'],
-AD:['The apartment is smaller when it\'s empty. The walls feel closer.','His homework is spread on the table. The lamp makes a warm circle of yellow light.','The neighbor\'s TV provides ambient drama through the wall.','The fridge hums. A clock ticks. Tokyo lives and breathes outside the window.'],
+CES:['Carmen made pozole. The apartment smells like hominy and chili and the specific warmth of food that took hours.','Carmen is on the phone with Yuki, laughing about something. She waves Jorge in and points at the stove.','Carmen is watching a telenovela and pretending she isn\'t emotionally invested.','The kitchen smells like Carmen experimenting — Japanese ingredients, Mexican technique. The result is on the table.','Carmen made enchiladas. The Tuesday enchilada tradition is now established.','Carmen bought taiyaki from a street vendor. "It\'s like a fish-shaped empanada. I have cultural questions."','Carmen rearranged the living room. The apartment is the same size but feels different.','Carmen is reading — an actual book, in Spanish, borrowed from a shop she found near Shinjuku. She looks comfortable.'],
+CD:['<div class="dialogue">"¿Y cómo te fue hoy, mijo?" She sets down plates, studying him.</div>','<div class="dialogue">"Yuki taught me \'oishii\' today. Oishii! Did I say it right?" She looks proud of one word.</div>','<div class="dialogue">"I found real chiles. Jorge. REAL chiles. In Tokyo." She looks like she discovered gold.</div>','<div class="dialogue">"You\'re taller," she says, looking at him. "When did that happen?"</div>','<div class="dialogue">"I made a friend today." She says it simply. Like it\'s not significant. Like she knew she would.</div>','<div class="dialogue">"Tell me one thing," she says. Not everything. One thing. Jorge thinks about which one.</div>'],
+AD:['The apartment is smaller when it\'s empty. The walls feel closer.','His homework is spread on the table. The lamp makes a warm circle of yellow light.','The neighbor\'s TV provides ambient drama through the wall.','The fridge hums. A clock ticks. Tokyo lives and breathes outside the window.','The apartment has accumulated small things. A key chain. A konbini bag folded neatly. A Japanese textbook face-down on the counter. It looks lived in.'],
 PE:['The group chat exploded — 87 messages. Hayashi started a debate about the best ramen place in the area and it devolved into sticker warfare.','A DM from Sato: just a link to a video. No context. No explanation. Classic Sato.','Nishikawa created a new group chat called "weekend plans maybe?" with five people added.','A message from an unknown number — someone from class asking about tomorrow\'s homework.'],
 WKM:['Saturday morning. No alarm. Sunlight through thin curtains and the luxury of nowhere to be.','Sunday morning. Rain on the windows — the city sounds different when it\'s resting.','Weekend. Jorge wakes to coffee smell and Carmen\'s humming. The apartment feels bigger on free days.','A slow morning. The kind where you can hear individual birds instead of traffic.'],
 CW:['is already up, making something complicated in the kitchen.','is going to meet Yuki for brunch. She left a note.','is still sleeping — the apartment is perfectly, unusually silent.','left early. Note on the counter: "Gone shopping. There\'s food. Back by lunch."'],
@@ -838,12 +843,21 @@ var ARCS=[
    triggerWindow:[25,55],seedOffset:17,
    beats:[
     {duration:3,blks:['lunch'],
+     ambient:'Notice the gap between Sato and Hayashi — the table geometry has changed',
      text:function(){return'<p class="world-note">Sato and Hayashi sat at the same table but with a gap between them that wasn\'t there before. Something shifted.</p>';},
      refl:['Sato and Hayashi were off today. Not a fight — just a space that didn\'t exist last week.\n\nI didn\'t ask. Probably shouldn\'t have.']},
     {duration:4,blks:['morning','lunch'],
+     ambient:'Something to do about the Sato-Hayashi thing, even if it\'s small',
      text:function(){return'<p class="world-note">Hayashi\'s still talking. But Sato\'s answers are short. One word. Sometimes just a nod. Something is still unresolved.</p>';},
      refl:['Whatever\'s between Sato and Hayashi — it\'s still there. You can feel it in the geometry of the lunch table.\n\nThese things take time. Or they explode. One of those.'],
-     choice:{desc:'Ask Sato quietly if everything\'s okay',stats:{kindness:12},rel:{Sato:1},flag:'helped_sato',outcome:'<p>Sato looks at you for a moment before answering. "Yeah." Then: "Thanks for asking." Two words. With Sato, that\'s everything.</p>'}},
+     choices:[
+       {desc:'Ask Sato quietly if everything\'s okay',reqStat:'kindness',stats:{kindness:12},rel:{Sato:1},flag:'helped_sato',approach:'direct',
+        outcome:'<p>Sato looks at you for a moment before answering. "Yeah." Then: "Thanks for asking." Two words. With Sato, that\'s everything.</p>'},
+       {desc:'Make a joke that pulls both of them in — low-stakes, just enough to break the freeze',reqStat:'charm',stats:{charm:12},rel:{Sato:1,Hayashi:1},flag:'helped_sato',approach:'bridge',
+        outcome:'<p>Hayashi laughs. Sato almost does. For about thirty seconds the table is back to normal. Small, but real — like cracking ice.</p>'},
+       {desc:'Sit quietly with Sato at the start of lunch, no questions',reqStat:'kindness',stats:{kindness:8},rel:{Sato:1},flag:'helped_sato',approach:'presence',
+        outcome:'<p>Sato doesn\'t say anything. But after five minutes he relaxes. Sometimes being there is the whole argument.</p>'}
+     ]},
     {duration:2,blks:['lunch'],resolve:true,
      text:function(){return'<p class="world-note">Hayashi said something in homeroom and Sato laughed — properly, not politely. Whatever it was between them, it\'s over.</p>';},
      refl:['Sato and Hayashi are fine. They worked it out without any help from anyone.\n\nThat\'s how most things get resolved, actually.']}
@@ -853,12 +867,19 @@ var ARCS=[
    triggerWindow:[35,65],seedOffset:29,
    beats:[
     {duration:4,blks:['morning','class'],
+     ambient:'Komori seems like she\'s been here for hours — longer than you',
      text:function(){return'<p class="world-note">Komori was here before the first bell. She\'s been here before the first bell every day this week. The clipboard is getting larger.</p>';},
      refl:['Komori looked tired today. Not the regular kind — the kind where something has been asking too much for too long.\n\nShe didn\'t ask for help. She never does.']},
     {duration:3,blks:['afterSchool'],
+     ambient:'Find Komori before she disappears into another task',
      text:function(){return'<p class="world-note">Komori snapped at someone in the hallway. Quietly, but still. She looked surprised at herself afterward.</p>';},
      refl:['Even Komori has limits. She hit one today. She recovered fast but she hit it.'],
-     choice:{desc:'Offer Komori some genuine help',stats:{kindness:15},rel:{Komori:2},flag:'helped_komori',outcome:'<p>She pauses mid-clipboard. Looks at you. "You don\'t have to." "I know," you say. She hands you half the stack. That\'s Komori for thank you.</p>'}},
+     choices:[
+       {desc:'Offer to take something off Komori\'s list — be specific about what',reqStat:'kindness',stats:{kindness:15},rel:{Komori:2},flag:'helped_komori',approach:'practical',
+        outcome:'<p>She pauses mid-clipboard. "You don\'t have to." "I know." She hands you half the stack without another word. That\'s Komori for thank you.</p>'},
+       {desc:'Tell Komori you noticed — nothing more, no offer required',reqStat:'knowledge',stats:{kindness:10,knowledge:5},rel:{Komori:1},flag:'helped_komori',approach:'witness',
+        outcome:'<p>"I\'m fine," she says. Then, five seconds later: "I\'m actually not that fine." She doesn\'t ask for help. But she said that. To you.</p>'}
+     ]},
     {duration:2,blks:['class','afterSchool'],resolve:true,
      text:function(){return'<p class="world-note">Komori delegated something today — visibly, officially, to Takagi. First time anyone\'s seen that. She looked lighter afterward.</p>';},
      refl:['Komori figured it out. Whether with help or without. She looks less like she\'s carrying something impossible.\n\nGood.']}
@@ -896,12 +917,19 @@ var ARCS=[
    triggerWindow:[50,90],seedOffset:61,
    beats:[
     {duration:4,blks:['class'],
+     ambient:'Izumi is near you — he said something oblique earlier that stayed with you',
      text:function(){return'<p class="world-note">Izumi made a small edit to a comment someone made in class — not out loud, just passed a note forward. Whoever read it looked thoughtful.</p>';},
      refl:['Izumi said something today. Indirectly, but still. He has opinions. He just routes them through other people.\n\nInteresting.']},
     {duration:4,blks:['afterSchool'],
+     ambient:'Izumi is going the same direction — you could let the paths intersect',
      text:function(){return'<p class="world-note">Izumi walked in the same direction as Jorge but half a block behind. Not following — just going the same way. When their paths diverged, he gave a short nod.</p>';},
      refl:['I think Izumi acknowledged me today. Or it might have been coincidence.\n\nWith him it\'s hard to tell on purpose.'],
-     choice:{desc:'Slow down, let the paths converge',stats:{kindness:10,charm:8},rel:{Izumi:2},flag:'met_izumi',outcome:'<p>He doesn\'t say much. You don\'t either. You walk together for about two minutes in perfect silence that doesn\'t feel awkward. That\'s rare. That\'s actually rare.</p>'}},
+     choices:[
+       {desc:'Slow down, let the paths converge naturally',reqStat:'kindness',stats:{kindness:10,charm:8},rel:{Izumi:2},flag:'met_izumi',approach:'quiet',
+        outcome:'<p>He doesn\'t say much. You don\'t either. Two minutes of silence that somehow doesn\'t feel empty. That\'s rare. You\'ve learned to notice when things are rare.</p>'},
+       {desc:'Ask what music he listens to — the headphones are the obvious door',reqStat:'charm',stats:{charm:10,kindness:6},rel:{Izumi:2},flag:'met_izumi',approach:'direct',
+        outcome:'<p>He tells you. Specific, unexpected. Not what you assumed. He watches your reaction before saying anything else — testing whether you\'ll dismiss it. You don\'t.</p>'}
+     ]},
     {duration:2,blks:['morning'],resolve:true,
      text:function(){return'<p class="world-note">Izumi said hello to Jorge first today. Just two words. Didn\'t look surprised that he did it.</p>';},
      refl:['Izumi said hi first. In his way.\n\nSomething opened. Small but open.']}
@@ -911,11 +939,18 @@ var ARCS=[
    triggerWindow:[55,85],seedOffset:47,
    beats:[
     {duration:3,blks:['class'],
+     ambient:'Kuroda missed something earlier — you noticed even if nobody said anything',
      text:function(){return'<p class="world-note">Kuroda got a question wrong in class. She corrected herself before the teacher did. Her expression for the rest of the period was unreadable.</p>';},
      refl:['Kuroda missed one today. She knew before anyone else did.\n\nI don\'t think she\'s the kind of person who lets herself forget things like that.']},
     {duration:3,blks:['lunch'],
+     ambient:'Kuroda is eating alone — you could sit, without making a thing of it',
      text:function(){return'<p class="world-note">Kuroda ate alone today — not by accident. She had her notes out but wasn\'t reading them. Just sitting.</p>';},
-     choice:{desc:'Sit nearby, don\'t force conversation',stats:{kindness:10},rel:{Kuroda:2},flag:'sat_with_kuroda',outcome:'<p>You don\'t say anything. She doesn\'t either. After about five minutes she says, "You\'re not going to ask what\'s wrong?" "No." She exhales something small. "Good," she says, and goes back to her notes.</p>'}},
+     choices:[
+       {desc:'Sit nearby — don\'t force conversation, just be in the same space',reqStat:'kindness',stats:{kindness:10},rel:{Kuroda:2},flag:'sat_with_kuroda',approach:'silent',
+        outcome:'<p>You don\'t say anything. She doesn\'t either. After five minutes: "You\'re not going to ask what\'s wrong?" "No." Something small exhaled. "Good," she says, and goes back to her notes.</p>'},
+       {desc:'Sit next to her and ask about the notes — not about her, about the work',reqStat:'knowledge',stats:{knowledge:10,kindness:6},rel:{Kuroda:2},flag:'sat_with_kuroda',approach:'indirect',
+        outcome:'<p>She explains. Precise, detailed, actually useful. By the end she\'s teaching rather than hiding. You\'re not sure she realizes that\'s what happened. Maybe she does.</p>'}
+     ]},
     {duration:2,blks:['morning'],resolve:true,
      text:function(){return'<p class="world-note">Kuroda\'s back to normal — or her version of it. Maybe she worked something out. Maybe she decided not to.</p>';},
      refl:['Kuroda reset. Whatever it was — she decided to keep it private.\n\nRespect for that, actually.']}
@@ -925,11 +960,20 @@ var ARCS=[
    triggerWindow:[35,65],seedOffset:23,
    beats:[
     {duration:3,blks:['afterSchool'],
+     ambient:'Ryusei is heading to the track — it\'s visible from here if you linger',
      text:function(){return'<p class="world-note">Ryusei paused at the track gate, looked at the field, then back at whoever was nearby. The kind of pause that\'s actually a question.</p>';},
      refl:['Ryusei was at the track again after school. He runs until the field empties.\n\nThere\'s something easy about him. He doesn\'t make a performance of effort.']},
     {duration:3,blks:['afterSchool'],
+     ambient:'Watch Ryusei run for a bit — or maybe join, or maybe just say something',
      text:function(){return'<p class="world-note">Ryusei ran the 200m alone twice. His form is genuinely good. He didn\'t check if anyone was watching.</p>';},
-     choice:{desc:'Linger — watch, maybe say something',stats:{guts:10,charm:8},rel:{Ryusei:2},flag:'talked_ryusei',outcome:'<p>"You any good?" he asks, not unkindly. "At running? Not really." He grins: "Neither was I in year one." He doesn\'t elaborate. It doesn\'t feel like a dismissal.</p>'}},
+     choices:[
+       {desc:'Linger near the track — watch, maybe say something when he stops',reqStat:'guts',stats:{guts:10,charm:8},rel:{Ryusei:2},flag:'talked_ryusei',approach:'observe',
+        outcome:'<p>"You any good?" he asks, not unkindly. "At running? Not really." He grins: "Neither was I in year one." He doesn\'t elaborate. It doesn\'t feel like a dismissal.</p>'},
+       {desc:'Ask if you can run a lap with him — not competitively, just parallel',reqStat:'guts',stats:{guts:12,proficiency:6},rel:{Ryusei:2},flag:'talked_ryusei',approach:'join',
+        outcome:'<p>He doesn\'t say no. He starts, you start. He\'s faster but he doesn\'t make a thing of it — adjusts his pace half a beat. You run one lap. That\'s the conversation.</p>'},
+       {desc:'Comment on his form — you noticed something specific',reqStat:'knowledge',stats:{knowledge:8,charm:6},rel:{Ryusei:1},flag:'talked_ryusei',approach:'comment',
+        outcome:'<p>He stops. Looks at you properly. "You actually know what you\'re looking at." It\'s not a question. The conversation is different after that — less testing, more actual.</p>'}
+     ]},
     {duration:2,blks:['morning'],resolve:true,
      text:function(){return'<p class="world-note">Ryusei spotted Jorge in the hallway and said something about practice timing. Not an invitation exactly — just information, offered like it might be relevant.</p>';},
      refl:['Ryusei mentioned practice hours unprompted. Either I\'m becoming part of the landscape or he\'s extending something.\n\nMaybe both.']}
@@ -1082,15 +1126,27 @@ function getWorldInjection(day,blk,ctx,rng){
 }
 
 // Get optional arc intervention choice (appended to choice list)
+// Supports multi-approach arc beats: beat.choices[] selects by Jorge's top stat
 function getArcChoice(day,blk){
   if(!G.world)return null;
   var found=null;
+  // Top stat for approach selection
+  var topStat=Object.keys(G.stats).sort(function(a,b){return G.stats[b].rank-G.stats[a].rank;})[0];
   ARCS.forEach(function(arc){
     var s=G.world.arcs[arc.id];if(!s||s.done||found)return;
-    var beat=arc.beats[s.beat];if(!beat||!beat.choice)return;
+    var beat=arc.beats[s.beat];if(!beat)return;
     if(beat.blks.indexOf(blk)===-1)return;
-    found={id:'W',lbl:'W) '+beat.choice.desc,type:'World',desc:beat.choice.desc,time:'30 min',risk:'low',
-           stats:beat.choice.stats||{},_arcId:arc.id,_arcChoice:beat.choice};
+    // Unify single choice and multi-approach choices array
+    var rawChoices=beat.choices||(beat.choice?[beat.choice]:null);
+    if(!rawChoices||!rawChoices.length)return;
+    // Filter to choices the player qualifies for (reqStat rank >= 2), prefer top stat match
+    var qualified=rawChoices.filter(function(c){return!c.reqStat||(G.stats[c.reqStat]&&G.stats[c.reqStat].rank>=2);});
+    var preferred=(qualified.filter(function(c){return c.reqStat===topStat;}));
+    var pool=preferred.length?preferred:qualified.length?qualified:rawChoices;
+    var ch=pick(pool,mkRng(day*71+(arc.seedOffset||0)+s.beat*13));
+    if(!ch)return;
+    found={id:'W',lbl:'W) '+ch.desc,type:'World',desc:ch.desc,time:'~20 min',risk:'low',
+           stats:ch.stats||{},_arcId:arc.id,_arcChoice:ch};
   });
   // Carmen arc evening choice — offered when her mood is low or phase transitions
   if(!found&&blk==='evening'&&(G.relations.Carmen||0)>=5&&G.world){
@@ -1124,6 +1180,22 @@ function buildChoices(tpl,blk,ctx,rng){
   var kS=ctx.knowledge>=3?12:8,cS=ctx.charm>=3?12:8,gS=ctx.guts>=3?12:8,kndS=ctx.kindness>=3?12:8;
   var statProfiles=[{knowledge:kS},{charm:cS},{guts:gS,charm:5},{kindness:kndS}];
   var risks=['low','low',ctx.guts>=3?'med':'high','low'];
+  // Arc-ambient injection: replace slot B (Social) with arc-relevant text when an arc is active
+  if(G.world&&G.world.arcs){
+    ARCS.forEach(function(arc){
+      var s=G.world.arcs[arc.id];if(!s||s.done)return;
+      var beat=arc.beats[s.beat];if(!beat||!beat.ambient)return;
+      if(beat.blks.indexOf(blk)>-1&&base.length>=2){
+        var amb=typeof beat.ambient==='function'?beat.ambient(ctx):beat.ambient;
+        if(amb)base[1]=amb;
+      }
+    });
+  }
+  // Phase-aware choice tone: late game choices acknowledge familiarity
+  if(ctx.phase==='late'&&base[3]){
+    var lateRefl=['Let the day settle — you\'ve earned the patience','Sit with it — you know how to do that now','Observe from a position of actual familiarity'];
+    base[3]=pick(lateRefl,rng)||base[3];
+  }
   return base.map(function(desc,i){
     if(i>=4)return null;
     var d=desc;
@@ -1515,8 +1587,8 @@ function showEnding(){
 }
 
 function advance(nxt){
-  if(nxt==='day2_morning')G.day=2;
-  G.block=0;updateProg();renderScene(nxt||'__proc_next__');
+  if(nxt==='day2_morning'){G.day=2;G.block=0;}
+  updateProg();renderScene(nxt||'__proc_next__');
 }
 
 // ═══ STATS ═══
