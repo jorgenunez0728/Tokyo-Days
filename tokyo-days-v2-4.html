@@ -199,7 +199,7 @@ function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;retur
 function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
 
 // ── STATE ──
-function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[]};}
+function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[],todayLog:[],lastContact:{}};}
 function addMem(key,val,label){
 G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});
 G.world.memory.push({key:key,day:G.day,value:val,label:label});
@@ -1087,6 +1087,32 @@ function worldTick(day){
   });
   // First snow detection
   if(wxType(day).isSnow&&!G.flags.first_snow){G.flags.first_snow=true;addMem('first_snow',1,'First snow fell on Tokyo');}
+  // ── NPC Bond Attrition (neglect decay every 30 days without contact) ──
+  if(!G.world.lastContact)G.world.lastContact={};
+  var attritionChars=['Sato','Hayashi','Komori','Hina','Abe','Izumi','Ryusei','WindowGirl','Kuroda','Fujiwara'];
+  // Characters in active arcs are immune
+  var arcProtected={};
+  ARCS.forEach(function(arc){var s=G.world.arcs[arc.id];if(s&&!s.done)arcProtected[arc.id]=true;});
+  attritionChars.forEach(function(ch){
+    var bond=G.relations[ch];
+    if(bond===undefined||bond===null)return; // not yet unlocked
+    var last=G.world.lastContact[ch]||0;
+    var daysSince=day-last;
+    if(daysSince>=30){
+      // Floor: don't decay below 1 (so bonds never go fully cold from neglect alone)
+      var floor=1;
+      if(bond>floor){
+        G.relations[ch]=bond-1;
+        // Toast notification
+        toast('🌫 Bond faded',ch+' — haven\'t crossed paths in a while. Bond: '+bond+'→'+(bond-1),4000);
+        G.log.push('[Day '+day+'] Bond with '+ch+' faded from neglect: '+bond+'→'+(bond-1));
+      }
+      // Reset lastContact clock so it doesn't spam every day
+      G.world.lastContact[ch]=day;
+    }
+  });
+  // ── Reset today's event log ──
+  G.world.todayLog=[];
   save();
 }
 
@@ -1215,6 +1241,46 @@ function buildChoices(tpl,blk,ctx,rng){
     var lateRefl=['Let the day settle — you\'ve earned the patience','Sit with it — you know how to do that now','Observe from a position of actual familiarity'];
     base[3]=pick(lateRefl,rng)||base[3];
   }
+  // ── Improvement 2: Identity Vector → Choice Gating (threshold ≥6) ──
+  var id=ctx.identity||{social:0,drive:0,creative:0,rootedness:0};
+  // Social ≥6: slot B (Social) references a real character by name
+  if(id.social>=6&&base[1]&&blk!=='evening'){
+    var knownChars=[];
+    if(ctx.hasSato)knownChars.push('Sato');
+    if(ctx.hasHayashi)knownChars.push('Hayashi');
+    if(ctx.hasKomori)knownChars.push('Komori');
+    if(ctx.hasHina)knownChars.push('Hina');
+    if(ctx.hasAbe)knownChars.push('Abe');
+    if(knownChars.length){
+      var tChar=knownChars[Math.floor((ctx.day||1)%knownChars.length)];
+      base[1]='Find '+tChar+' and actually have the conversation — you know the one';
+    }
+  }
+  // Drive ≥6: slot A (Standard) becomes goal-oriented
+  if(id.drive>=6&&base[0]){
+    var goalLines=['Push forward on the thing you\'ve been building toward','Put in the focused work — you know what it\'s for now','Work efficiently — thirty minutes of actual output'];
+    base[0]=pick(goalLines,rng)||base[0];
+  }
+  // Creative ≥6: slot D (Reflective) offers creative-specific option
+  if(id.creative>=6&&base[3]){
+    var creativeLines=['Notice how the light falls — and actually sketch it this time','Write it down before the feeling evaporates','Find the right words for the thing you\'ve been observing all week'];
+    base[3]=pick(creativeLines,rng)||base[3];
+  }
+  // Rootedness ≥6: slot C (Bold) evening choice becomes Carmen or home-anchored
+  if(id.rootedness>=6&&blk==='evening'&&base[2]){
+    base[2]='Stay close to home tonight — this is where you belong right now';
+  }
+  // ── Improvement 4: Bridge Score → Mediator Choice ──
+  // When bridgeScore ≥2, replace/augment slot B (Social) with cross-group choice
+  if(ctx.bridgeScore>=2&&base[1]){
+    var bridgeChoices={
+      2:'You know people in both circles — find a way to connect them today',
+      3:'You\'re the person who exists everywhere — bring something from one table to another',
+      4:'You\'ve built the network. Use it — synthesize something that only you could'
+    };
+    var bScore=Math.min(4,ctx.bridgeScore);
+    base[1]=bridgeChoices[bScore]||bridgeChoices[2];
+  }
   return base.map(function(desc,i){
     if(i>=4)return null;
     var d=desc;
@@ -1231,16 +1297,28 @@ function buildChoices(tpl,blk,ctx,rng){
 function getActivityLine(desc,blk,rng){
   if(!desc)return'';
   var d=desc.toLowerCase();
-  // Reading
+  // Dominant identity for prose variation (Improvement 2B)
+  var id=G.identity||{social:0,drive:0,creative:0,rootedness:0};
+  var domId='none';
+  var idMax=5; // threshold before identity flavors prose
+  if(id.creative>=idMax&&id.creative>=id.social&&id.creative>=id.drive&&id.creative>=id.rootedness)domId='creative';
+  else if(id.drive>=idMax&&id.drive>=id.social&&id.drive>=id.rootedness)domId='drive';
+  else if(id.social>=idMax&&id.social>=id.rootedness)domId='social';
+  else if(id.rootedness>=idMax)domId='rootedness';
+  // Reading — identity-varied
   if(/read|book|manga|novel|lit club|page/i.test(d)){
+    if(domId==='creative')return'<p>He read slowly, stopping twice to write in the margins — a word, a reaction, a line that connected to something else. The book absorbed him the right way.</p>';
+    if(domId==='drive')return'<p>He read efficiently. Underlined, kept moving, extracted what he needed. The material had what he was looking for.</p>';
     return pick([
       '<p>He settled in with the book — whichever one he\'d been putting off. The pages moved faster than expected. Time passed the right way.</p>',
       '<p>He read for a while. The story made the apartment feel less its usual size. That was the point.</p>',
       '<p>He picked up where he\'d left off. The book is one of the things that works the same here as anywhere.</p>'
     ],rng);
   }
-  // Studying / homework
+  // Studying / homework — identity-varied
   if(/stud|homework|review|note|vocabular|kanji|exam|quiz|練習|math|algebra|history/i.test(d)){
+    if(domId==='drive')return'<p>He worked through it efficiently — timed himself, finished ahead of schedule, moved on. This is what the system looks like when it runs correctly.</p>';
+    if(domId==='creative')return'<p>He took notes and made connections that weren\'t in the material. His margins are getting interesting. He\'s not sure the teacher would recognize the version of the class he\'s building.</p>';
     return pick([
       '<p>Notes out, pen moving. He worked through it steadily — no shortcuts, no rushing. The right kind of tired at the end of it.</p>',
       '<p>He went through the material again. Not because he had to — because he wanted to actually understand it, not just pass through it.</p>',
@@ -1341,14 +1419,21 @@ function getActivityLine(desc,blk,rng){
 // 2) World modifier: one sentence that grounds the state of the world
 function getWorldModifier(blk,ctx,rng){
   var mods=[];
-  // Carmen state
+  // Improvement 5A: Morning Carmen mood texture
+  if(blk==='morning'){
+    if(ctx.carmenMood<=3)mods.push('<p class="world-note">The apartment still felt weighted from last night. He didn\'t know what to do with that on the way to school — just carried it out the door with him.</p>');
+    else if(ctx.carmenMood>=7&&ctx.bondCarmen>=5&&rng()<0.4)mods.push('<p class="carmen-note">Carmen had left coffee ready. He poured it, stood at the window for a minute. Small thing — the right kind of small thing.</p>');
+  }
+  // Carmen state (evening)
   if(blk==='evening'){
     if(ctx.carmenAway)mods.push(pick([
       '<p class="world-note">The apartment had the particular quiet of being genuinely empty — not Carmen-in-the-kitchen quiet, but actually nobody-home quiet.</p>',
       '<p class="world-note">Carmen was still at work. The apartment his alone for the evening.</p>',
       '<p class="world-note">He\'d eaten alone. The table one plate, one chair, the city outside doing its thing.</p>'
     ],rng));
+    else if(ctx.carmenMood<=3)mods.push('<p class="carmen-note">Carmen was home, but the apartment felt like it was in a different register than usual. Heavy. Not hostile — just not light. He worked around it.</p>');
     else if(ctx.carmenMood<=4)mods.push('<p class="carmen-note">Carmen was home but quiet — the working-something-out kind of quiet. He didn\'t push.</p>');
+    else if(ctx.carmenMood>=9&&rng()<0.5)mods.push('<p class="carmen-note">Carmen was in a genuinely good mood tonight. The apartment felt different when that was the case — warmer in some way that wasn\'t about temperature.</p>');
     else if(ctx.bondCarmen>=7&&rng()<0.4)mods.push(pick([
       '<p class="carmen-note">Carmen came home and they overlapped for a while in the kitchen — not a conversation exactly, just the easy occupation of the same space.</p>',
       '<p class="carmen-note">Dinner with Carmen. She\'s been here long enough that she knows which things to ask and which things to leave alone.</p>'
@@ -1378,34 +1463,58 @@ function getWorldModifier(blk,ctx,rng){
 // 3) Character echo: NPC-specific reaction based on who's present and bond level
 function getCharacterEcho(type,blk,ctx,rng){
   var pool=[];
+  var echoedChar=null;
   if(blk==='lunch'||blk==='morning'||blk==='class'){
-    if(ctx.hasSato&&ctx.bondSato>=4&&type==='Social')
-      pool.push('<p>Sato said something while they were getting their trays — low-stakes, accurate, exactly the kind of thing Sato says. Jorge filed it. That\'s how it works with Sato now.</p>');
-    if(ctx.hasHayashi&&ctx.bondHayashi>=3&&type==='Social')
-      pool.push('<p>Hayashi had an opinion about something. Incorrect, but enthusiastically held. Nobody corrected him. This is one of the unspoken agreements at the table.</p>');
-    if(ctx.hasKomori&&ctx.bondKomori>=4&&type==='Standard')
-      pool.push('<p>Komori glanced at his work and said nothing. That\'s Komori for "acceptable." He\'s learning the register.</p>');
-    if(ctx.hasHina&&ctx.bondHina>=4&&type==='Reflective')
-      pool.push('<p>Hina was working on something in her sketchbook. She tilted it slightly toward him — not showing, just making it visible. He looked. She went back to drawing.</p>');
-    if(ctx.hasAbe&&ctx.bondAbe>=3&&type==='Social')
-      pool.push('<p>Abe said something that shouldn\'t have worked and did. The table took a moment to recover. Jorge was still thinking about it three minutes later.</p>');
-    if(ctx.hasIzumi&&ctx.bondIzumi>=4&&(type==='Social'||type==='Reflective'))
-      pool.push('<p>Izumi made a small sound that might have been agreement. From him, that\'s participatory. That\'s the full transaction.</p>');
+    if(ctx.hasSato&&ctx.bondSato>=4&&type==='Social'){
+      pool.push({ch:'Sato',html:'<p>Sato said something while they were getting their trays — low-stakes, accurate, exactly the kind of thing Sato says. Jorge filed it. That\'s how it works with Sato now.</p>'});
+    }
+    if(ctx.hasHayashi&&ctx.bondHayashi>=3&&type==='Social'){
+      pool.push({ch:'Hayashi',html:'<p>Hayashi had an opinion about something. Incorrect, but enthusiastically held. Nobody corrected him. This is one of the unspoken agreements at the table.</p>'});
+    }
+    if(ctx.hasKomori&&ctx.bondKomori>=4&&type==='Standard'){
+      pool.push({ch:'Komori',html:'<p>Komori glanced at his work and said nothing. That\'s Komori for "acceptable." He\'s learning the register.</p>'});
+    }
+    if(ctx.hasHina&&ctx.bondHina>=4&&type==='Reflective'){
+      pool.push({ch:'Hina',html:'<p>Hina was working on something in her sketchbook. She tilted it slightly toward him — not showing, just making it visible. He looked. She went back to drawing.</p>'});
+    }
+    if(ctx.hasAbe&&ctx.bondAbe>=3&&type==='Social'){
+      pool.push({ch:'Abe',html:'<p>Abe said something that shouldn\'t have worked and did. The table took a moment to recover. Jorge was still thinking about it three minutes later.</p>'});
+    }
+    if(ctx.hasIzumi&&ctx.bondIzumi>=4&&(type==='Social'||type==='Reflective')){
+      pool.push({ch:'Izumi',html:'<p>Izumi made a small sound that might have been agreement. From him, that\'s participatory. That\'s the full transaction.</p>'});
+    }
   }
   if(blk==='afterSchool'){
-    if(ctx.hasRyusei&&ctx.bondRyusei>=3&&type==='Bold')
-      pool.push('<p>Ryusei was heading out to the track. He didn\'t say anything — just held the door one beat longer than necessary. That counts for something in Ryusei\'s accounting.</p>');
-    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=4&&type==='Reflective')
-      pool.push('<p>He passed the lit club room. She was at her usual table with a book open and probably not being read. She didn\'t look up. He didn\'t stop. Something still passed between them, somehow.</p>');
-    if(ctx.hasKuroda&&ctx.bondKuroda>=4&&type==='Standard')
-      pool.push('<p>Kuroda was leaving at the same time. She said something logistical — efficient, no preamble. He answered. That was the exchange. For Kuroda that\'s a relationship.</p>');
+    if(ctx.hasRyusei&&ctx.bondRyusei>=3&&type==='Bold'){
+      pool.push({ch:'Ryusei',html:'<p>Ryusei was heading out to the track. He didn\'t say anything — just held the door one beat longer than necessary. That counts for something in Ryusei\'s accounting.</p>'});
+    }
+    if(ctx.hasWindowGirl&&ctx.bondWindowGirl>=4&&type==='Reflective'){
+      pool.push({ch:'WindowGirl',html:'<p>He passed the lit club room. She was at her usual table with a book open and probably not being read. She didn\'t look up. He didn\'t stop. Something still passed between them, somehow.</p>'});
+    }
+    if(ctx.hasKuroda&&ctx.bondKuroda>=4&&type==='Standard'){
+      pool.push({ch:'Kuroda',html:'<p>Kuroda was leaving at the same time. She said something logistical — efficient, no preamble. He answered. That was the exchange. For Kuroda that\'s a relationship.</p>'});
+    }
   }
   if(blk==='class'){
-    if(ctx.hasFujiwara&&type==='Bold')
-      pool.push('<p>Fujiwara-sensei glanced at him after he spoke — not disapproving, not encouraging. The neutral evaluation of someone deciding whether to invest attention. He\'ll know tomorrow.</p>');
+    if(ctx.hasFujiwara&&type==='Bold'){
+      pool.push({ch:'Fujiwara',html:'<p>Fujiwara-sensei glanced at him after he spoke — not disapproving, not encouraging. The neutral evaluation of someone deciding whether to invest attention. He\'ll know tomorrow.</p>'});
+    }
+  }
+  // Bridge-aware echo — when score is high, add cross-group social texture
+  if(ctx.bridgeScore>=3&&type==='Social'&&blk!=='evening'){
+    pool.push({ch:null,html:'<p>He said something that worked in both registers — the kind of comment that travels. Someone from a different corner of the room looked over. That\'s the bridge effect. He\'s getting good at it.</p>'});
   }
   if(!pool.length)return'';
-  return pick(pool,rng);
+  var chosen=pick(pool,rng);
+  // Track lastContact for bond attrition
+  if(chosen.ch&&G.world){
+    if(!G.world.lastContact)G.world.lastContact={};
+    G.world.lastContact[chosen.ch]=ctx.day||G.day;
+    // Log to todayLog for reflection system
+    if(!G.world.todayLog)G.world.todayLog=[];
+    G.world.todayLog.push({type:'charEcho',key:chosen.ch});
+  }
+  return chosen.html;
 }
 
 // ── Fallback pools (used only when getActivityLine returns nothing) ──
@@ -1695,9 +1804,11 @@ function genScene(day,blk){
       if(cd2&&cd2.indexOf(getDow(day))>-1)pool=[TPL_A[0]];
     }
   }else if(blk==='evening'){
-    // Group chat template only if joined; Carmen-away template 30% chance
+    // Group chat template only if joined; Carmen-away template probability driven by mood
     var ePool=[TPL_E[0]];var _carmenAway=false;
-    if(rng()<0.3){ePool=[TPL_E[1]];_carmenAway=true;}
+    var cMoodNow=G.world?G.world.carmenMood||7:7;
+    var awayChance=cMoodNow<=3?0.55:0.3; // Improvement 5B: low mood → Carmen pulls away more
+    if(rng()<awayChance){ePool=[TPL_E[1]];_carmenAway=true;}
     else if(ctx.groupChat)ePool=[TPL_E[0],TPL_E[2]];
     pool=ePool;
     loc='Home';time='18:30';label='Evening';
@@ -1739,6 +1850,8 @@ if(!G.world.gallery)G.world.gallery=[];
 if(G.world.carmenPhase===undefined)G.world.carmenPhase=0;
 if(G.world.carmenMood===undefined)G.world.carmenMood=7;
 if(!G.world.missedWindows)G.world.missedWindows=[];
+if(!G.world.todayLog)G.world.todayLog=[];
+if(!G.world.lastContact)G.world.lastContact={};
 if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};}
 function el(id){return document.getElementById(id);}
 function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
@@ -1851,6 +1964,36 @@ function doChoice(cid,nxt){
   var rng=mkRng(G.day*50+cid.charCodeAt(0));
   var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
   if(sc._carmenAway)ctx=Object.assign({},ctx,{carmenAway:true});
+  // Log event to todayLog for dynamic day-end reflections
+  if(G.world){
+    if(!G.world.todayLog)G.world.todayLog=[];
+    var blkName=ctx.blk||'class';
+    G.world.todayLog.push({type:'choice',key:ch.type||'Standard',blk:blkName,desc:ch.desc||''});
+    // Track if a time window fired today
+    if(ctx.activeWindows&&ctx.activeWindows.length){
+      G.world.todayLog.push({type:'window',key:ctx.activeWindows[0].id||'window'});
+    }
+    // Track arc activity
+    if(G.world.arcs){
+      Object.keys(G.world.arcs).forEach(function(aid){var s=G.world.arcs[aid];if(s&&!s.done&&s.beat>0)G.world.todayLog.push({type:'arc',key:aid});});
+    }
+    // Track carmen state
+    if(blkName==='evening'){
+      var cmMood=G.world.carmenMood||7;
+      G.world.todayLog.push({type:'carmenEvening',key:ctx.carmenAway?'away':(cmMood<=3?'low':cmMood>=8?'warm':'neutral')});
+    }
+  }
+  // Carmen mood stat ripple (Improvement 5C)
+  var cmNow=G.world?G.world.carmenMood||7:7;
+  if(cmNow<=3&&(ch.type==='Social'||ch.type==='Reflective')&&ctx.blk==='evening'){
+    // Reduce social gains by ~30% when home feels off
+    if(G.stats.kindness&&ch.stats&&ch.stats.kindness){G.stats.kindness.xp=Math.max(0,G.stats.kindness.xp-Math.ceil((ch.stats.kindness||0)*0.3));}
+    if(G.stats.charm&&ch.stats&&ch.stats.charm){G.stats.charm.xp=Math.max(0,G.stats.charm.xp-Math.ceil((ch.stats.charm||0)*0.3));}
+  }
+  if(cmNow>=8&&ctx.blk==='evening'&&ch.type!=='Standard'){
+    // Warm home: evening identity rootedness bonus
+    if(G.identity)G.identity.rootedness=Math.min(20,(G.identity.rootedness||0)+1);
+  }
   var outcomeHtml=makeProcOutcome(ch,ctx,rng);
   showOut(outcomeHtml,nxt,sc.arch);
 }
@@ -1885,8 +2028,69 @@ function renderRefl(sc){
   ref.appendChild(btn);ref.classList.add('show');ref.scrollIntoView({behavior:'smooth'});save();refreshStats();
 }
 
+// Build a dynamic first sentence for the day-end reflection based on todayLog
+function getDayReflLine(todayLog,ctx){
+  if(!todayLog||!todayLog.length)return'';
+  // Find the most interesting event: charEcho > arc > window > carmenEvening > choice
+  var charEcho=todayLog.filter(function(e){return e.type==='charEcho';})[0];
+  var arcEv=todayLog.filter(function(e){return e.type==='arc';})[0];
+  var windowEv=todayLog.filter(function(e){return e.type==='window';})[0];
+  var carmenEv=todayLog.filter(function(e){return e.type==='carmenEvening';})[0];
+  var choices=todayLog.filter(function(e){return e.type==='choice';});
+  var boldChosen=choices.some(function(e){return e.key==='Bold';});
+  var socialChosen=choices.some(function(e){return e.key==='Social';});
+  var reflChosen=choices.some(function(e){return e.key==='Reflective';});
+  // 1) Character echo — most specific
+  if(charEcho){
+    var cName=charEcho.key;
+    var cLines={
+      Sato:['Sato was around today. Hard to say exactly when it happened, but there\'s a running tally now, and Sato is in it.','He crossed paths with Sato. These things accumulate without announcing themselves.'],
+      Hayashi:['Hayashi said something that still hasn\'t quite resolved. That\'s the thing about Hayashi.','The table had Hayashi\'s energy today. Loud, wrong about one thing, right about another.'],
+      Komori:['Komori acknowledged something today. Brief. Filed.','He got a nod from Komori. In Komori\'s system, that\'s the full sentence.'],
+      Hina:['Hina was nearby today. Something communicated — the sketchbook, maybe. Or the angle of her chair.','He noticed Hina. Hina may have noticed back. Impossible to be certain, which is part of it.'],
+      Abe:['Abe landed something today that\'s still echoing. The way Abe does.','He ran into Abe. Whatever Abe said — it was the kind of thing that recirculates for a while.'],
+      Izumi:['Izumi was present today. Quietly. That counts for something now that he knows what to count.','He and Izumi were in the same room. That small thing felt slightly less small than before.'],
+      Ryusei:['Ryusei somewhere in the background today — track shoes, probably. That specific kind of focus.','He saw Ryusei. The exchange was short. The register was correct.'],
+      WindowGirl:['The window girl was at her table again. Something about that particular stillness.','He passed the lit club room. She was there. He kept walking. That\'s also a kind of contact.'],
+      Kuroda:['Kuroda said something efficient today. He\'s learned to hear what\'s underneath it.','He ran into Kuroda. Quick exchange. She doesn\'t waste syllables. He\'s started to appreciate that.'],
+      Fujiwara:['Fujiwara-sensei looked at him today — that evaluating look. He doesn\'t flinch from it the way he used to.','He answered something in class today. Fujiwara-sensei\'s expression didn\'t change. He\'s learning to read the absence of expression.']
+    };
+    var lines=cLines[cName]||['He crossed paths with someone today. The transaction was small and probably permanent.','The day had a person in it who didn\'t used to be in it.'];
+    return'<p>'+lines[Math.floor((ctx.day||1)%lines.length)]+'</p>';
+  }
+  // 2) Arc event
+  if(arcEv){
+    var arcLines={
+      'photo_mystery':['Something is still unresolved with the photographs. He keeps thinking about it.','The photo thing is a thread that won\'t close.'],
+      'komori_project':['Komori\'s project has its own momentum now. He\'s part of it, whether he decided to be or not.','The collaboration with Komori — still in motion.'],
+      'festival_committee':['The festival is building. He can feel it in how the school organizes itself this time of year.','Festival prep. The school has a different gravity right now.'],
+      default:['There\'s something happening at school — ambient, ongoing, not fully resolved.','A situation he\'s been watching is still developing. He\'s involved now, even peripherally.']
+    };
+    var al=(arcLines[arcEv.key]||arcLines.default);
+    return'<p>'+al[(ctx.day||1)%al.length]+'</p>';
+  }
+  // 3) Active time window
+  if(windowEv){
+    return'<p>There was something in the air today — he couldn\'t name it exactly, but the school felt like it was in a particular register. The kind of day that only happens a few times a year.</p>';
+  }
+  // 4) Carmen evening
+  if(carmenEv){
+    if(carmenEv.key==='away')return'<p>Carmen wasn\'t home when he got back. The apartment had its different acoustic — not worse, not better. Just different. He\'s learned the distinction.</p>';
+    if(carmenEv.key==='low')return'<p>There was something heavy at home tonight. Not a fight, not a conversation — just weight. The kind that sits in the room and doesn\'t explain itself.</p>';
+    if(carmenEv.key==='warm')return'<p>Home was good tonight. That\'s worth writing down, even in the shorthand of a thought before sleep. Home was good.</p>';
+  }
+  // 5) Dominant choice type fallback
+  if(boldChosen)return'<p>He did the harder thing today. Not dramatic from the outside — from the inside, it was. He\'s keeping count of those.</p>';
+  if(socialChosen)return'<p>There were people in the day today. Real ones, not the background kind. He was present for them, which is its own thing to be.</p>';
+  if(reflChosen)return'<p>He took his time today. Not every day has to run at full speed. Some of them need to be slow to be worth remembering.</p>';
+  return'';
+}
+
 function renderProcRefl(){
   el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day settles. Jorge is in bed. The apartment is quiet except for the neighbor\'s TV — a late drama tonight, muffled emotional music through the wall.</p></div></div>';
+  // Capture todayLog BEFORE worldTick resets it
+  var todayLogSnap=(G.world&&G.world.todayLog)?G.world.todayLog.slice():[];
+  var carmenMoodSnap=G.world?G.world.carmenMood||7:7;
   worldTick(G.day);
   var rng=mkRng(G.day*31);var text=getRefl(G.day,rng);
   G.log.push('[Day '+G.day+'] Day completed.');
@@ -1905,13 +2109,22 @@ function renderProcRefl(){
     if(G.relations[k]>=5&&G.ach.indexOf('bond5')<0)unlock('bond5');
     if(G.relations[k]>=8&&G.ach.indexOf('bond8')<0)unlock('bond8');
   });
-  var reflHTML='<h3>💭 NIGHT THOUGHTS</h3><div><p>'+text.replace(/\n/g,'</p><p>')+'</p>';
+  // Build dynamic reflection: specific first sentence + phase pool second sentence
+  var reflCtx=buildCtx(G.day,'evening');
+  var dynamicFirst=getDayReflLine(todayLogSnap,reflCtx);
+  var reflHTML='<h3>💭 NIGHT THOUGHTS</h3><div>';
+  if(dynamicFirst)reflHTML+=dynamicFirst;
+  reflHTML+='<p>'+text.replace(/\n/g,'</p><p>')+'</p>';
   // Identity milestone snapshot on days 30, 100, 200
   if([30,100,200].indexOf(G.day)>-1){
     reflHTML+='<div class="identity-snap">'+getIdentitySnapshot()+'</div>';
   }
   // Carmen phase transition note
   if(G.world){var newCPCheck=getCarmenPhaseIdx(G.day);var cPhN=CARMEN_ARC[newCPCheck];if(cPhN&&G.day===cPhN.days[0]+1){reflHTML+='<p style="color:var(--sakura);font-size:.8rem;font-style:italic">Something shifted at home. Carmen is in a new chapter of her own.</p>';}}
+  // Carmen mood reflection callback (Improvement 5D)
+  if(carmenMoodSnap<=3){
+    reflHTML+='<p style="color:var(--dim);font-size:.82rem;font-style:italic">The apartment felt weighted tonight. He doesn\'t always know what to do with that — the specific weight of someone else\'s quiet struggle in the same space.</p>';
+  }
   reflHTML+='</div>';
   var ref=el('reflection');ref.innerHTML=reflHTML;
   var btn=document.createElement('button');btn.className='go-next';
@@ -2022,6 +2235,8 @@ function importSave(){
         if(G.world.carmenPhase===undefined)G.world.carmenPhase=0;
         if(G.world.carmenMood===undefined)G.world.carmenMood=7;
         if(!G.world.missedWindows)G.world.missedWindows=[];
+        if(!G.world.todayLog)G.world.todayLog=[];
+        if(!G.world.lastContact)G.world.lastContact={};
         if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};
         save();updateProg();refreshStats();
         renderScene(G.scene==='__proc__'||!SC[G.scene]?'__proc__':G.scene);
