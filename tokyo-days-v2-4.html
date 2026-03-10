@@ -199,7 +199,7 @@ function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;retur
 function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
 
 // ── STATE ──
-function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[],todayLog:[],lastContact:{}};}
+function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[],todayLog:[],lastContact:{},stress:3,examPrep:0,examCycle:0,windowEngaged:{},lastClubMeeting:0,clubMissStreak:0};}
 function addMem(key,val,label){
 G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});
 G.world.memory.push({key:key,day:G.day,value:val,label:label});
@@ -635,9 +635,9 @@ function buildCtx(day,blk){
     calEv:CAL_EVENTS[day],
     examDay:examDay,examSoon:examDay!==null,
     topStat:topStat,topRank:topRank,bestFriend:bestFriend,
-    // Character presence guards
-    hasSato:has('sato'),hasHayashi:has('hayashi'),
-    hasKomori:has('komori'),hasTakagi:has('takagi'),
+    // Character presence guards (some may be temporarily absent via arc consequences)
+    hasSato:has('sato'),hasHayashi:has('hayashi')&&npcBond('Sato','Hayashi')>1,
+    hasKomori:has('komori')&&!(G.flags.komori_absent_until&&day<G.flags.komori_absent_until),hasTakagi:has('takagi'),
     hasMori:has('mori'),hasHina:has('notebook_girl'),
     hasWindowGirl:has('window_girl'),hasFujiwara:has('fujiwara'),
     hasNishikawa:has('nishikawa'),
@@ -648,7 +648,7 @@ function buildCtx(day,blk){
     // Bond levels
     bondSato:bond('Sato'),bondHayashi:bond('Hayashi'),
     bondCarmen:bond('Carmen'),bondKomori:bond('Komori'),
-    bondWindowGirl:bond('WindowGirl'),
+    bondWindowGirl:(G.flags.wg_cold_until&&day<G.flags.wg_cold_until)?0:bond('WindowGirl'),
     bondRyusei:bond('Ryusei'),bondAshida:bond('Ashida'),
     bondIzumi:bond('Izumi'),bondKuroda:bond('Kuroda'),
     bondHina:bond('Hina'),bondShirogane:bond('Shirogane'),
@@ -674,6 +674,13 @@ function buildCtx(day,blk){
     festivalDiplomat:getMem('festival_diplomat')>0,
     // NPC dynamics
     satoHayashiBond:npcBond('Sato','Hayashi'),
+    satoHayashiTense:npcBond('Sato','Hayashi')<=3,
+    satoHayashiClose:npcBond('Sato','Hayashi')>=8,
+    komoriTakagiCold:npcBond('Komori','Takagi')<=2,
+    hayashiNishikawaFrosty:npcBond('Hayashi','Nishikawa')<=2,
+    // Arc absence flags
+    komoriAbsent:!!(G.flags.komori_absent_until&&day<G.flags.komori_absent_until),
+    wgCold:!!(G.flags.wg_cold_until&&day<G.flags.wg_cold_until),
     // Season tone
     season:day<=80?'spring':day<=129?'summer':day<=200?'autumn':'winter',
     // Weather system
@@ -683,10 +690,12 @@ function buildCtx(day,blk){
     // Carmen arc
     carmenPhase:G.world?G.world.carmenPhase||0:0,
     carmenMood:G.world?G.world.carmenMood||7:7,
-    // Active time windows
-    activeWindows:TIME_WINDOWS.filter(function(w){return day>=w.days[0]&&day<=w.days[1];}),
+    // Active time windows (excluding already-engaged ones)
+    activeWindows:TIME_WINDOWS.filter(function(w){return day>=w.days[0]&&day<=w.days[1]&&!(G.world&&G.world.windowEngaged&&G.world.windowEngaged[w.id]);}),
     // Identity vector
-    identity:G.identity||{social:0,drive:0,creative:0,rootedness:0}
+    identity:G.identity||{social:0,drive:0,creative:0,rootedness:0},
+    // Stress
+    stress:G.world?G.world.stress||3:3
   };
 }
 
@@ -1049,15 +1058,37 @@ function worldTick(day){
     var pct=(day-w[0])/(w[1]-w[0]);
     if(r()<0.15+pct*0.45)G.world.arcs[arc.id]={beat:0,startDay:day,done:false,playerInvolved:false};
   });
-  // Advance arc beats
+  // Advance arc beats + consequence branching (Improvement 3)
   ARCS.forEach(function(arc){
     var s=G.world.arcs[arc.id];if(!s||s.done)return;
     var elapsed=day-s.startDay;
     var phaseDur=0;for(var i=0;i<=s.beat;i++)phaseDur+=arc.beats[i]?arc.beats[i].duration:0;
     if(elapsed>=phaseDur){
       s.beat++;
-      if(s.beat>=arc.beats.length){s.done=true;}
-      else if(arc.beats[s.beat-1]&&arc.beats[s.beat-1].resolve)s.done=true;
+      var justDone=false;
+      if(s.beat>=arc.beats.length){s.done=true;justDone=true;}
+      else if(arc.beats[s.beat-1]&&arc.beats[s.beat-1].resolve){s.done=true;justDone=true;}
+      // ── Arc consequence: fire once when arc completes ──
+      if(justDone&&!s.consequenceApplied){
+        s.consequenceApplied=true;
+        var involved=s.playerInvolved;
+        if(arc.id==='komori_burnout'){
+          if(!involved){G.relations.Komori=Math.max(0,(G.relations.Komori||0)-2);G.flags.komori_absent_until=day+15;G.log.push('[Day '+day+'] Komori burned out. You weren\'t there. She took some time off.');}
+          else{G.log.push('[Day '+day+'] You were there for Komori. She noticed.');}
+        }else if(arc.id==='sato_hayashi_tension'){
+          if(!involved){G.world.npcRel['Sato_Hayashi']=Math.min(G.world.npcRel['Sato_Hayashi']||8,3);G.log.push('[Day '+day+'] Sato and Hayashi drifted. You watched it happen.');}
+          else{G.world.npcRel['Sato_Hayashi']=Math.min(10,(G.world.npcRel['Sato_Hayashi']||3)+2);G.log.push('[Day '+day+'] You helped smooth things over between Sato and Hayashi.');}
+        }else if(arc.id==='ryusei_invitation'){
+          if(!involved){G.flags.ryusei_path='closed';G.log.push('[Day '+day+'] Ryusei moved on without you. The window closed.');}
+          else{G.relations.Ryusei=Math.min(10,(G.relations.Ryusei||0)+2);G.log.push('[Day '+day+'] Ryusei remembers that you showed up.');}
+        }else if(arc.id==='window_girl_absence'){
+          if(!involved){G.flags.wg_cold_until=day+20;G.log.push('[Day '+day+'] She came back. But something shifted. She\'s a little colder.');}
+          else{G.relations.WindowGirl=Math.min(10,(G.relations.WindowGirl||0)+1);G.log.push('[Day '+day+'] She noticed that you noticed she was gone.');}
+        }else if(arc.id==='culture_festival_factions'){
+          if(!involved){var fctChars=['Sato','Komori','Hayashi','Hina'];var fc=fctChars[day%fctChars.length];if(G.relations[fc]!==undefined)G.relations[fc]=Math.max(0,(G.relations[fc]||0)-1);G.log.push('[Day '+day+'] The factions sorted themselves without you. Someone in the mix is a little cooler toward you.');}
+          else{addMem('festival_diplomat',1,'Mediated the festival factions');G.log.push('[Day '+day+'] People remember you held the center during the festival.');}
+        }
+      }
     }
   });
   // Bond8 achievement check
@@ -1077,6 +1108,56 @@ function worldTick(day){
   if(G.world.carmenMood>cPhase.moodTarget&&cmRng()<0.2)G.world.carmenMood=Math.max(0,G.world.carmenMood-1);
   // Player's bond with Carmen boosts her mood
   if((G.relations.Carmen||0)>=8&&G.world.carmenMood<8)G.world.carmenMood=Math.min(8,G.world.carmenMood+1);
+  // ── Improvement 1: Stress sleep recovery ──
+  if(G.world.stress===undefined)G.world.stress=3;
+  var stressRecovery=ctx.isFree?4:2;
+  G.world.stress=Math.max(0,G.world.stress-stressRecovery);
+  // ── Improvement 2: Exam resolution ──
+  if(CAL_EVENTS[day]&&(CAL_EVENTS[day].type==='exam'||CAL_EVENTS[day].type==='competition')){
+    var ev=CAL_EVENTS[day];
+    var prep=G.world.examPrep||0;
+    if(ev.type==='exam'){
+      var knRank=G.stats.knowledge?G.stats.knowledge.rank:1;
+      var examResult=prep>=20||knRank>=4?'prepared':prep>=10?'adequate':'underprepared';
+      G.world.todayLog=G.world.todayLog||[];
+      G.world.todayLog.push({type:'examResult',key:examResult});
+      if(examResult==='prepared'){gainStat('knowledge',10);G.log.push('[Day '+day+'] Exam: well prepared. The material clicked.');}
+      else if(examResult==='underprepared'){G.world.stress=Math.min(10,(G.world.stress||3)+2);G.log.push('[Day '+day+'] Exam: underprepared. The gaps showed.');}
+      else{G.log.push('[Day '+day+'] Exam: held it together.');}
+    }else if(ev.type==='competition'){
+      var compScore=(G.stats.proficiency?G.stats.proficiency.rank:1)+(G.stats.guts?G.stats.guts.rank:1);
+      var compResult=compScore>=6?'podium':compScore>=4?'placed':'participated';
+      G.world.todayLog=G.world.todayLog||[];
+      G.world.todayLog.push({type:'compResult',key:compResult});
+      if(compResult==='podium'){gainStat('proficiency',12);gainStat('guts',8);G.log.push('[Day '+day+'] Competition: podium finish.');}
+      else if(compResult==='placed'){gainStat('proficiency',6);G.log.push('[Day '+day+'] Competition: placed well.');}
+      else{G.log.push('[Day '+day+'] Competition: participated.');}
+    }
+    G.world.examPrep=0;
+  }
+  // ── Improvement 5: Club passive weekly bonus ──
+  if(G.flags.active_club&&!G.flags.club_inactive&&!G.flags.club_irregular){
+    var lastMeet=G.world.lastClubMeeting||0;
+    if(day-lastMeet<=7){
+      var clubBonus={lit:{knowledge:2},film:{knowledge:2},art:{},newspaper:{charm:2},track:{proficiency:2,guts:2},music:{}};
+      var cb=clubBonus[G.flags.active_club]||{};
+      Object.keys(cb).forEach(function(s){gainStat(s,cb[s]);});
+      // Creative identity boost for creative clubs (every 14 days)
+      if((G.flags.active_club==='art'||G.flags.active_club==='music')&&day%14===0){
+        if(G.identity)G.identity.creative=Math.min(20,(G.identity.creative||0)+1);
+      }
+    }
+  }
+  // ── Improvement 6: NPC pair drift toast (when pair drops to threshold) ──
+  var npcPairChecks=[['Sato','Hayashi'],['Komori','Takagi'],['Hayashi','Nishikawa']];
+  npcPairChecks.forEach(function(pair){
+    var key=pair[0]+'_'+pair[1];
+    var val=G.world.npcRel[key];
+    var prevKey='_prev_npc_'+key;
+    var prev=G.world[prevKey]||val;
+    if(val<=3&&prev>3){toast('👥 Social shift',pair[0]+' and '+pair[1]+' seem distant lately.',4000);}
+    G.world[prevKey]=val;
+  });
   // ── Time Window Tracking ──
   TIME_WINDOWS.forEach(function(w){
     // Flag missed windows the day after they close
@@ -1271,8 +1352,15 @@ function buildChoices(tpl,blk,ctx,rng){
     base[2]='Stay close to home tonight — this is where you belong right now';
   }
   // ── Improvement 4: Bridge Score → Mediator Choice ──
-  // When bridgeScore ≥2, replace/augment slot B (Social) with cross-group choice
-  if(ctx.bridgeScore>=2&&base[1]){
+  // ── Improvement 6: NPC Pair → Mediate Choice ──
+  // When Sato/Hayashi tension is visible, Social slot becomes a mediation option
+  if(ctx.satoHayashiTense&&ctx.hasSato&&ctx.hasHayashi&&ctx.bridgeScore>=1&&base[1]){
+    base[1]='Sato and Hayashi are off — you know both of them. Do something about it';
+    types[1]='Social';
+    statProfiles[1]={kindness:12,charm:8};
+  }
+  // ── Improvement 4B: Bridge cross-group (only when no pair tension overrode it) ──
+  else if(ctx.bridgeScore>=2&&base[1]){
     var bridgeChoices={
       2:'You know people in both circles — find a way to connect them today',
       3:'You\'re the person who exists everywhere — bring something from one table to another',
@@ -1281,6 +1369,12 @@ function buildChoices(tpl,blk,ctx,rng){
     var bScore=Math.min(4,ctx.bridgeScore);
     base[1]=bridgeChoices[bScore]||bridgeChoices[2];
   }
+  // ── Improvement 1: Stress → Bold slot modification ──
+  var stress=ctx.stress||3;
+  if(stress>=9&&base[2]){
+    // Exhausted: Bold slot becomes "push through" (no stat bonus)
+    base[2]='Push through anyway — you don\'t have much left but you\'re not done';
+  }
   return base.map(function(desc,i){
     if(i>=4)return null;
     var d=desc;
@@ -1288,7 +1382,12 @@ function buildChoices(tpl,blk,ctx,rng){
     if(ctx.examSoon&&blk==='evening'&&i===0){d='Study for the upcoming exam — focus, no distractions';statProfiles[0]={knowledge:15};}
     // Competition day: replace morning standard choice with competition prep
     if(ctx.calEv&&ctx.calEv.type==='competition'&&blk==='morning'&&i===0){d='Focus on the competition — mental preparation';statProfiles[0]={knowledge:12,guts:8};}
-    return{id:labels[i],lbl:labels[i]+') '+d,type:types[i],desc:d,time:'30 min',risk:risks[i],stats:statProfiles[i]};
+    var ch={id:labels[i],lbl:labels[i]+') '+d,type:types[i],desc:d,time:'30 min',risk:risks[i],stats:statProfiles[i]};
+    // Flag stress-exhausted bold choice
+    if(i===2&&stress>=9)ch._stressedBold=true;
+    // Flag club meeting attendance choices
+    if(i===0&&d.indexOf('Club meeting')===0)ch._clubMeeting=true;
+    return ch;
   }).filter(Boolean);
 }
 
@@ -1419,10 +1518,14 @@ function getActivityLine(desc,blk,rng){
 // 2) World modifier: one sentence that grounds the state of the world
 function getWorldModifier(blk,ctx,rng){
   var mods=[];
-  // Improvement 5A: Morning Carmen mood texture
+  // Improvement 5A: Morning Carmen mood texture + stress state
   if(blk==='morning'){
     if(ctx.carmenMood<=3)mods.push('<p class="world-note">The apartment still felt weighted from last night. He didn\'t know what to do with that on the way to school — just carried it out the door with him.</p>');
     else if(ctx.carmenMood>=7&&ctx.bondCarmen>=5&&rng()<0.4)mods.push('<p class="carmen-note">Carmen had left coffee ready. He poured it, stood at the window for a minute. Small thing — the right kind of small thing.</p>');
+    // Stress morning notes
+    if(ctx.stress>=9)mods.push('<div class="inner-voice">He woke up already tired — the bad kind, not the sleep kind. His body had been running all night even when he wasn\'t in it.</div>');
+    else if(ctx.stress>=7)mods.push('<div class="inner-voice">He moved through the morning on autopilot. Everything functional, nothing easy. The frayed version of a school morning.</div>');
+    else if(ctx.stress<=2)mods.push('<div class="inner-voice">Something was lighter this morning. Not anything specific — just the overall weight of it. He noticed that.</div>');
   }
   // Carmen state (evening)
   if(blk==='evening'){
@@ -1465,10 +1568,16 @@ function getCharacterEcho(type,blk,ctx,rng){
   var pool=[];
   var echoedChar=null;
   if(blk==='lunch'||blk==='morning'||blk==='class'){
-    if(ctx.hasSato&&ctx.bondSato>=4&&type==='Social'){
+    // NPC pair tension/warmth overlay (Improvement 6)
+    if(ctx.satoHayashiTense&&ctx.hasSato&&ctx.hasHayashi&&blk==='lunch'){
+      pool.push({ch:null,html:'<p>There was something compressed between Sato and Hayashi today. Not a fight — just the particular silence of two people mid-something. Jorge noticed. He wasn\'t sure if he was supposed to.</p>'});
+    }else if(ctx.satoHayashiClose&&ctx.hasSato&&ctx.hasHayashi&&blk==='lunch'&&rng()<0.5){
+      pool.push({ch:null,html:'<p>The lunch table was good today — one of those where the conversation just ran. Sato and Hayashi have a rhythm together that\'s worth being around.</p>'});
+    }
+    if(ctx.hasSato&&ctx.bondSato>=4&&type==='Social'&&!ctx.satoHayashiTense){
       pool.push({ch:'Sato',html:'<p>Sato said something while they were getting their trays — low-stakes, accurate, exactly the kind of thing Sato says. Jorge filed it. That\'s how it works with Sato now.</p>'});
     }
-    if(ctx.hasHayashi&&ctx.bondHayashi>=3&&type==='Social'){
+    if(ctx.hasHayashi&&ctx.bondHayashi>=3&&type==='Social'&&!ctx.satoHayashiTense){
       pool.push({ch:'Hayashi',html:'<p>Hayashi had an opinion about something. Incorrect, but enthusiastically held. Nobody corrected him. This is one of the unspoken agreements at the table.</p>'});
     }
     if(ctx.hasKomori&&ctx.bondKomori>=4&&type==='Standard'){
@@ -1780,6 +1889,7 @@ function genScene(day,blk){
   var rng=mkRng(day*100+blk.charCodeAt(0)*7);
   var ctx=buildCtx(day,blk);
   var free=ctx.isFree;
+  var _isClubDay=false;
   var pool,loc,time,label;
   if(blk==='morning'){
     pool=free?TPL_WM:TPL_M;
@@ -1803,6 +1913,7 @@ function genScene(day,blk){
       var cd2=CLUB_DAYS[ctx.activeClub];
       if(cd2&&cd2.indexOf(getDow(day))>-1)pool=[TPL_A[0]];
     }
+    _isClubDay=!free&&ctx.activeClub&&(function(){var CDTMP={lit:[2,4],film:[1],art:[3,5],track:[1,3,5],newspaper:[2,4],music:[2,5]};var d=CDTMP[ctx.activeClub];return d&&d.indexOf(getDow(day))>-1;})();
   }else if(blk==='evening'){
     // Group chat template only if joined; Carmen-away template probability driven by mood
     var ePool=[TPL_E[0]];var _carmenAway=false;
@@ -1832,8 +1943,32 @@ function genScene(day,blk){
   var trans=(blk==='class'||blk==='lunch')?'<div class="trans-card">'+pick(['The blocks between classes passed in their usual rhythm — hallway traffic, bathroom breaks, the distant sound of a ball bouncing from the gym wing.','A short break. The hallway smelled like floor cleaner and cologne that was trying too hard.','Ten minutes between classes. Jorge reorganized his notes and watched people pass.','Brief pause. Checked phone — no new messages worth replying to.','The hallway current carried him between rooms like a leaf in a stream.'],rng)+'</div>':'';
   // Context-aware choices: rewards scale with stats, risks reflect guts level
   var choices=buildChoices(tpl,blk,ctx,rng);
+  // ── Club meeting: replace slot A description when it's a club day ──
+  if(_isClubDay&&choices[0]){
+    var clubNames={lit:'Literary Club',film:'Film Club',art:'Art Club',track:'Track Club',newspaper:'Newspaper',music:'Music Club'};
+    choices[0]=Object.assign({},choices[0],{
+      desc:'Club meeting today — '+( clubNames[ctx.activeClub]||ctx.activeClub)+' room, after class',
+      _clubMeeting:true
+    });
+  }
   // Optional arc intervention choice
   var arcCh=getArcChoice(day,blk);if(arcCh)choices.push(arcCh);
+  // ── Time Window W choice injection (Improvement 4) ──
+  var _activeWindow=ctx.activeWindows[0]||null;
+  if(_activeWindow){
+    var WIN_CHOICES={
+      sakura_peak:  {desc:'Stop and actually watch the sakura — you can study later',stats:{knowledge:3},identity:{rootedness:1},outcome:'<p>He stopped. The trees were doing the thing — petals at the edge of falling, the whole weight of the season in the light coming through them. He stood there for a few minutes. It was worth more than studying.</p><p>This specific kind of beauty doesn\'t repeat.</p>'},
+      golden_week:  {desc:'Go somewhere during the break — just to have gone somewhere',stats:{charm:5},identity:{rootedness:1},outcome:'<p>He took the train somewhere he\'d never been — not far, just different. The city is large in ways he hasn\'t mapped yet. He added a small piece to it today.</p>'},
+      summer_matsuri:{desc:'Go to the festival tonight — alone is fine',stats:{charm:8,kindness:3},identity:{social:1},outcome:'<p>The festival had lights and noise and yakitori smoke and the particular physics of a summer crowd — everyone moving, nobody going anywhere. He ate something, watched, let it run. Good alone. Actually good.</p>'},
+      autumn_leaves: {desc:'Take the long way home through the park',stats:{knowledge:3},identity:{creative:1},outcome:'<p>He went the long way. The park was doing its autumn thing — the leaves at the exact moment they\'re most themselves, before they fall. He walked slowly. The slowness was the point.</p>'},
+      first_snow:   {desc:'Stand outside in it for a minute — just to have stood in it',stats:{knowledge:3},identity:{rootedness:1},outcome:'<p>He stepped outside and let it land on him. Snow in Tokyo turns the city briefly impossible — like someone corrected the contrast and got carried away. He stood in it until he was cold. It was worth it.</p>'},
+      year_end:     {desc:'Mark the year somehow — find the right words before it\'s over',stats:{knowledge:5},identity:{creative:1,rootedness:1},outcome:'<p>He sat with it — the year, what it had been. Not a list. Just the texture of it: who he\'d been in April, who he was now. The distance between those two was either very small or very large, and he couldn\'t decide which. That itself was an answer.</p>'}
+    };
+    var wc=WIN_CHOICES[_activeWindow.id];
+    if(wc){
+      choices.push({id:'W',lbl:'W) '+wc.desc,type:'world',desc:wc.desc,time:'—',risk:'low',stats:wc.stats,_windowId:_activeWindow.id,_windowOutcome:wc.outcome,_windowIdentity:wc.identity});
+    }
+  }
   // Dynamic arch tag based on narrative phase
   var archPhase=ctx.phase==='early'?'Finding Footing':ctx.phase==='mid'?'Belonging':'Becoming';
   // Academic status: reflects upcoming exam pressure
@@ -1852,6 +1987,12 @@ if(G.world.carmenMood===undefined)G.world.carmenMood=7;
 if(!G.world.missedWindows)G.world.missedWindows=[];
 if(!G.world.todayLog)G.world.todayLog=[];
 if(!G.world.lastContact)G.world.lastContact={};
+if(G.world.stress===undefined)G.world.stress=3;
+if(G.world.examPrep===undefined)G.world.examPrep=0;
+if(G.world.examCycle===undefined)G.world.examCycle=0;
+if(!G.world.windowEngaged)G.world.windowEngaged={};
+if(G.world.lastClubMeeting===undefined)G.world.lastClubMeeting=0;
+if(G.world.clubMissStreak===undefined)G.world.clubMissStreak=0;
 if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};}
 function el(id){return document.getElementById(id);}
 function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
@@ -1904,10 +2045,17 @@ function renderSceneUI(sc,nxt){
     var wide=(c.id==='W')?'choice-card--wide':'';
     var statKey=c.stats?Object.keys(c.stats)[0]:null;
     var hint=statKey?(statIcons[statKey]||'')+' '+statKey:'';
+    // Stress warning on Bold slot
+    var stressWarn=(c.id==='C'&&(G.world&&(G.world.stress||3)>=7))?'<div class="cc-hint" style="color:var(--sakura)">· frayed'+(G.world.stress>=9?' — running on empty':'')+'</div>':'';
+    // Window choice badge
+    var winBadge=(c.id==='W')?'<div class="cc-hint" style="color:var(--mint)">⏳ one-time opportunity</div>':'';
+    // Club meeting badge
+    var clubBadge=(c._clubMeeting)?'<div class="cc-hint" style="color:var(--sky)">📌 club meeting</div>':'';
     out+='<button class="choice-card '+wide+'" data-type="'+tClass+'" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')">'
       +'<div class="cc-letter">'+c.id+' · '+(c.type||'action')+'</div>'
       +'<div class="cc-desc">'+c.desc+'</div>'
       +(hint?'<div class="cc-hint">'+hint+'</div>':'')
+      +stressWarn+winBadge+clubBadge
       +'</button>';
   });
   out+='</div>';
@@ -1928,6 +2076,18 @@ function doChoice(cid,nxt){
   // Procedural scene: use NCE to generate context-aware outcome
   var ch=sc.choices?sc.choices.filter(function(c){return c.id===cid;})[0]:null;
   if(!ch)return;
+  // ── Improvement 4: Time Window choice ──
+  if(ch._windowId){
+    applyOut({stats:ch.stats||{},log:'Engaged with '+ch._windowId+' moment.',identity:ch._windowIdentity||{}});
+    if(G.world){
+      if(!G.world.windowEngaged)G.world.windowEngaged={};
+      G.world.windowEngaged[ch._windowId]=G.day;
+      G.world.todayLog=G.world.todayLog||[];
+      G.world.todayLog.push({type:'windowEngaged',key:ch._windowId});
+    }
+    showOut(ch._windowOutcome||'<p>He stopped and took the moment. That was the right call.</p>',nxt,'Tokyo');
+    return;
+  }
   // Club Fair: join a club
   if(ch._club){
     G.flags['joined_'+ch._club]=true;G.flags.active_club=ch._club;
@@ -1964,6 +2124,51 @@ function doChoice(cid,nxt){
   var rng=mkRng(G.day*50+cid.charCodeAt(0));
   var ctx=sc._ctx||buildCtx(G.day,sc.hud?sc.hud.block.toLowerCase():'class');
   if(sc._carmenAway)ctx=Object.assign({},ctx,{carmenAway:true});
+  // ── Improvement 1: Stress accumulation ──
+  if(G.world){
+    if(G.world.stress===undefined)G.world.stress=3;
+    var stressDelta=0;
+    if(ch.type==='Bold')stressDelta+=1;
+    if(ch.type==='Social')stressDelta-=1;
+    if(ch.type==='Reflective')stressDelta-=1;
+    if(/stud|homework|review|note|kanji|exam/i.test(ch.desc||''))stressDelta+=1;
+    if(ch._clubMeeting)stressDelta+=1;
+    // Stressed Bold yields half stat gains (already spent, adjust XP down)
+    if(ch._stressedBold&&G.world.stress>=9){
+      Object.keys(ch.stats||{}).forEach(function(s){if(G.stats[s])G.stats[s].xp=Math.max(0,G.stats[s].xp-Math.floor((ch.stats[s]||0)*0.5));});
+    }
+    // Clear state: bonus +15% on Bold (add extra XP)
+    if(ch.type==='Bold'&&G.world.stress<=2){
+      Object.keys(ch.stats||{}).forEach(function(s){if(G.stats[s])gainStat(s,Math.ceil((ch.stats[s]||0)*0.15));});
+    }
+    G.world.stress=Math.max(0,Math.min(10,G.world.stress+stressDelta));
+  }
+  // ── Improvement 2: Exam prep accumulation ──
+  if(G.world&&ctx.examSoon&&/stud|homework|review|note|kanji|vocabular/i.test(ch.desc||'')){
+    G.world.examPrep=Math.min(30,(G.world.examPrep||0)+3);
+    G.world.todayLog=G.world.todayLog||[];
+    G.world.todayLog.push({type:'examPrep',key:'studied'});
+  }
+  // ── Improvement 5: Club meeting attendance tracking ──
+  if(G.world&&ch._clubMeeting){
+    if(cid==='A'){
+      G.world.lastClubMeeting=G.day;
+      G.world.clubMissStreak=0;
+      G.flags.club_irregular=false;
+    }else{
+      G.world.clubMissStreak=(G.world.clubMissStreak||0)+1;
+      if(G.world.clubMissStreak===3){toast('📋 Club notice','You\'ve been skipping '+(G.flags.active_club||'club')+'. The others are noticing.',5000);G.flags.club_irregular=true;}
+      if(G.world.clubMissStreak>=5){G.flags.club_inactive=true;toast('📋 Club inactive','Your membership in '+(G.flags.active_club||'club')+' is on hold. Show up to reactivate.',5000);}
+    }
+  }
+  // ── Improvement 6: NPC pair mediation ──
+  if(ch.desc&&ch.desc.indexOf('Sato and Hayashi are off')===0&&G.world){
+    G.world.npcRel['Sato_Hayashi']=Math.min(10,(G.world.npcRel['Sato_Hayashi']||3)+2);
+    if(!G.world.lastContact)G.world.lastContact={};
+    G.world.lastContact['Sato']=G.day;G.world.lastContact['Hayashi']=G.day;
+    G.world.todayLog=G.world.todayLog||[];
+    G.world.todayLog.push({type:'mediated',key:'Sato_Hayashi'});
+  }
   // Log event to todayLog for dynamic day-end reflections
   if(G.world){
     if(!G.world.todayLog)G.world.todayLog=[];
@@ -2079,7 +2284,34 @@ function getDayReflLine(todayLog,ctx){
     if(carmenEv.key==='low')return'<p>There was something heavy at home tonight. Not a fight, not a conversation — just weight. The kind that sits in the room and doesn\'t explain itself.</p>';
     if(carmenEv.key==='warm')return'<p>Home was good tonight. That\'s worth writing down, even in the shorthand of a thought before sleep. Home was good.</p>';
   }
-  // 5) Dominant choice type fallback
+  // 3) Exam result — high priority
+  var examEv2=todayLog.filter(function(e){return e.type==='examResult';});
+  if(examEv2.length){
+    var er2=examEv2[0].key;
+    if(er2==='prepared')return'<p>The exam. He went in with the material and it came back to him — the preparation did what preparation is supposed to do.</p>';
+    if(er2==='underprepared')return'<p>The exam today. He felt the gaps while he was in it — the exact places where the preparation should have been and wasn\'t. He\'s going to remember this.</p>';
+    return'<p>Exam day. He got through it. The score of it is still unresolved. He\'ll find out.</p>';
+  }
+  var compEv2=todayLog.filter(function(e){return e.type==='compResult';});
+  if(compEv2.length){
+    var cr2=compEv2[0].key;
+    if(cr2==='podium')return'<p>He placed at the top today. That specific feeling — having something become real. He stood there for a second and let himself have it.</p>';
+    if(cr2==='placed')return'<p>He placed in the competition. Not the top — but in it. There\'s a version of this that would have been a lot worse.</p>';
+    return'<p>Competition day. He competed. That was what was asked of him and he did it.</p>';
+  }
+  // 4) Time window engaged
+  var winEv=todayLog.filter(function(e){return e.type==='windowEngaged';})[0];
+  if(winEv){
+    var wLines={sakura_peak:'He stopped today. The sakura — he actually stopped and looked at them. He won\'t forget that he did.',summer_matsuri:'The festival. He went, alone, which was the right way to go. Something about being in a crowd by choice.',golden_week:'He went somewhere today. Didn\'t plan it carefully. That was the right call.',autumn_leaves:'The park, the long way home. He let the leaves do their thing. Some days you just need to be in it.',first_snow:'The snow. He stood in it. Tokyo briefly impossible. He was there for it.',year_end:'He tried to mark it — the year. Sat with it. Got something close to the shape of it.'};
+    return'<p>'+(wLines[winEv.key]||'He made space for something today that didn\'t need to be useful.')+'</p>';
+  }
+  // 5) Mediation
+  var medEv=todayLog.filter(function(e){return e.type==='mediated';})[0];
+  if(medEv)return'<p>He stepped into something today that wasn\'t strictly his to step into. He\'s the person who can see both sides of certain situations. He used that.</p>';
+  // 6) Exam prep
+  var prepEv=todayLog.filter(function(e){return e.type==='examPrep';})[0];
+  if(prepEv)return'<p>He studied. The exam is coming and he put in real time today — the kind where you know you actually moved the needle.</p>';
+  // 7) Dominant choice type fallback
   if(boldChosen)return'<p>He did the harder thing today. Not dramatic from the outside — from the inside, it was. He\'s keeping count of those.</p>';
   if(socialChosen)return'<p>There were people in the day today. Real ones, not the background kind. He was present for them, which is its own thing to be.</p>';
   if(reflChosen)return'<p>He took his time today. Not every day has to run at full speed. Some of them need to be slow to be worth remembering.</p>';
@@ -2088,9 +2320,10 @@ function getDayReflLine(todayLog,ctx){
 
 function renderProcRefl(){
   el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day settles. Jorge is in bed. The apartment is quiet except for the neighbor\'s TV — a late drama tonight, muffled emotional music through the wall.</p></div></div>';
-  // Capture todayLog BEFORE worldTick resets it
+  // Capture todayLog + stress BEFORE worldTick resets them
   var todayLogSnap=(G.world&&G.world.todayLog)?G.world.todayLog.slice():[];
   var carmenMoodSnap=G.world?G.world.carmenMood||7:7;
+  var stressSnap=G.world?G.world.stress||3:3;
   worldTick(G.day);
   var rng=mkRng(G.day*31);var text=getRefl(G.day,rng);
   G.log.push('[Day '+G.day+'] Day completed.');
@@ -2124,6 +2357,43 @@ function renderProcRefl(){
   // Carmen mood reflection callback (Improvement 5D)
   if(carmenMoodSnap<=3){
     reflHTML+='<p style="color:var(--dim);font-size:.82rem;font-style:italic">The apartment felt weighted tonight. He doesn\'t always know what to do with that — the specific weight of someone else\'s quiet struggle in the same space.</p>';
+  }
+  // Stress reflection (Improvement 1)
+  if(stressSnap>=8){
+    reflHTML+='<p style="color:var(--dim);font-size:.82rem;font-style:italic">He hit the pillow like it had always been there waiting for him. Some days use you up that way.</p>';
+  }
+  // Exam result callback (Improvement 2) — worldTick already pushed to todayLog but snap has pre-tick log; check todayLog after tick
+  var examEv=todayLogSnap.filter(function(e){return e.type==='examResult';});
+  if(examEv.length){
+    var er=examEv[0].key;
+    if(er==='prepared')reflHTML+='<p style="color:var(--mint);font-size:.82rem;font-style:italic">The exam. He\'d put in the work — it showed up when it mattered.</p>';
+    else if(er==='underprepared')reflHTML+='<p style="color:var(--sakura);font-size:.82rem;font-style:italic">The exam was today. The gaps he\'d left showed. He\'ll remember this feeling next time there\'s a chance to prepare.</p>';
+  }
+  var compEv=todayLogSnap.filter(function(e){return e.type==='compResult';});
+  if(compEv.length){
+    var cr=compEv[0].key;
+    if(cr==='podium')reflHTML+='<p style="color:var(--gold);font-size:.82rem;font-style:italic">Podium. He stood there and let it land. It was real.</p>';
+    else if(cr==='placed')reflHTML+='<p style="color:var(--sky);font-size:.82rem;font-style:italic">He placed. Not the top — but in it. That matters.</p>';
+  }
+  // Missed time window reflection (Improvement 4)
+  TIME_WINDOWS.forEach(function(w){
+    if(G.day===w.days[1]+1&&G.world&&!(G.world.windowEngaged&&G.world.windowEngaged[w.id])){
+      var missLines={
+        sakura_peak:'The sakura finished without him stopping to look. He\'ll remember that he didn\'t.',
+        golden_week:'Golden Week passed. He didn\'t go anywhere. There\'s always next year — except there isn\'t, not the same one.',
+        summer_matsuri:'The matsuri is over. He heard it from his window a few times. That\'s not the same as going.',
+        autumn_leaves:'The leaves are gone now. He walked past the park on his way home most days. He didn\'t stop.',
+        first_snow:'The first snow came and went. He was inside for all of it.',
+        year_end:'The year ran out before he marked it. It happened anyway.'
+      };
+      var ml=missLines[w.id];
+      if(ml)reflHTML+='<p style="color:var(--dim);font-size:.82rem;font-style:italic">'+ml+'</p>';
+    }
+  });
+  // Mediation acknowledgment (Improvement 6)
+  var mediEv=todayLogSnap.filter(function(e){return e.type==='mediated';});
+  if(mediEv.length){
+    reflHTML+='<p style="color:var(--sky);font-size:.82rem;font-style:italic">He stepped into the middle of something today. Not his situation — but he was the person who could do something, so he did. That\'s a particular kind of involvement.</p>';
   }
   reflHTML+='</div>';
   var ref=el('reflection');ref.innerHTML=reflHTML;
@@ -2237,6 +2507,11 @@ function importSave(){
         if(!G.world.missedWindows)G.world.missedWindows=[];
         if(!G.world.todayLog)G.world.todayLog=[];
         if(!G.world.lastContact)G.world.lastContact={};
+        if(G.world.stress===undefined)G.world.stress=3;
+        if(G.world.examPrep===undefined)G.world.examPrep=0;
+        if(!G.world.windowEngaged)G.world.windowEngaged={};
+        if(G.world.lastClubMeeting===undefined)G.world.lastClubMeeting=0;
+        if(G.world.clubMissStreak===undefined)G.world.clubMissStreak=0;
         if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};
         save();updateProg();refreshStats();
         renderScene(G.scene==='__proc__'||!SC[G.scene]?'__proc__':G.scene);
