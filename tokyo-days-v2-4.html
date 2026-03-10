@@ -144,6 +144,44 @@ nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 /* ── Free action card ── */
 .free-card{background:rgba(255,255,255,.018);border:1px dashed rgba(255,255,255,.1);border-radius:14px;padding:13px 14px;margin-top:6px}
 .free-card .cc-letter{margin-bottom:6px}
+/* ── U1: System status panel ── */
+.sys-panel{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:10px;padding:8px 13px;margin-bottom:14px;font-size:.76rem}
+.sys-panel-header{cursor:pointer;color:var(--dim);display:flex;align-items:center;gap:6px;user-select:none;letter-spacing:.5px}
+.sys-panel-body{display:none;padding-top:8px}
+.sys-panel-body.open{display:block}
+.sys-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.05)}
+.sys-lbl{color:var(--dim);width:76px;font-size:.7rem;flex-shrink:0}
+.sys-bar{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.sys-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.sys-val{font-size:.7rem;color:var(--ink);width:36px;text-align:right;flex-shrink:0}
+.sys-badge{font-size:.66rem;margin-left:4px;white-space:nowrap}
+/* ── U2: Day summary card ── */
+.summary-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;animation:fadeIn .4s ease}
+.summary-card .sum-title{font-family:'Dela Gothic One',sans-serif;font-size:.76rem;color:var(--gold);letter-spacing:2px;margin-bottom:10px}
+.sum-row{display:flex;gap:10px;font-size:.78rem;padding:3px 0;border-top:1px solid rgba(255,255,255,.05)}
+.sum-row:first-of-type{border-top:none}
+.sum-lbl{color:var(--dim);width:80px;flex-shrink:0}
+.sum-val{color:var(--ink);flex:1}
+/* ── U3: Stat rank-up badge ── */
+@keyframes rankUpFloat{0%{opacity:0;transform:translateX(-50%) translateY(30px) scale(.9)}20%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.05)}80%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
+.rank-up-badge{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),#FF9A3C);color:#0A1628;font-family:'Dela Gothic One',sans-serif;font-size:1rem;padding:11px 26px;border-radius:40px;z-index:600;animation:rankUpFloat 3.5s ease forwards;pointer-events:none;white-space:nowrap}
+@keyframes statPulse{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 3px var(--gold)}}
+.rank-up{animation:statPulse 2s ease}
+/* ── U4: NPC pair grid ── */
+.pair-grid{margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
+.pair-title{font-family:'Dela Gothic One',sans-serif;font-size:.72rem;color:var(--dim);letter-spacing:2px;margin-bottom:10px}
+.pair-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.05)}
+.pair-names{font-size:.78rem;color:var(--ink);width:160px;flex-shrink:0}
+.pair-bar{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.pair-bar-fill{height:100%;border-radius:3px}
+.pair-status{font-size:.68rem;margin-left:4px;white-space:nowrap}
+/* ── U5: HUD urgency badge ── */
+.hud-badge{font-size:.62rem;padding:3px 9px;border-radius:20px;font-weight:700;letter-spacing:.4px;border:1px solid}
+.hud-badge.mint{background:rgba(80,255,160,.08);color:var(--mint);border-color:rgba(80,255,160,.25)}
+.hud-badge.gold{background:rgba(255,209,102,.1);color:var(--gold);border-color:rgba(255,209,102,.3)}
+.hud-badge.urgent{background:rgba(255,107,157,.1);color:var(--sakura);border-color:rgba(255,107,157,.35);animation:urgentPulse 2s ease infinite}
+@keyframes urgentPulse{0%,100%{border-color:rgba(255,107,157,.35)}50%{border-color:rgba(255,107,157,.8)}}
+.choice-card[data-urgent="true"]{border-color:var(--sakura);animation:urgentPulse 2s ease infinite}
 </style>
 </head>
 <body>
@@ -199,7 +237,7 @@ function mkRng(seed){var s=seed;return function(){s=(s*16807+0)%2147483647;retur
 function pick(arr,rng){return arr[Math.floor((rng?rng():Math.random())*arr.length)];}
 
 // ── STATE ──
-function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[],todayLog:[],lastContact:{},stress:3,examPrep:0,examCycle:0,windowEngaged:{},lastClubMeeting:0,clubMissStreak:0};}
+function defaultWorld(){return{arcs:{},bgFired:{},npcRel:{'Sato_Hayashi':8,'Komori_Takagi':4,'Hayashi_Nishikawa':3,'Ryusei_Abe':5},memory:[],gallery:[],carmenPhase:0,carmenMood:7,missedWindows:[],todayLog:[],lastContact:{},stress:3,examPrep:0,examCycle:0,windowEngaged:{},lastClubMeeting:0,clubMissStreak:0,highStressDays:0,clubRank:0,clubConsecWeeks:0,lastMemoryFired:{}};}
 function addMem(key,val,label){
 G.world.memory=G.world.memory.filter(function(m){return m.key!==key;});
 G.world.memory.push({key:key,day:G.day,value:val,label:label});
@@ -1108,10 +1146,32 @@ function worldTick(day){
   if(G.world.carmenMood>cPhase.moodTarget&&cmRng()<0.2)G.world.carmenMood=Math.max(0,G.world.carmenMood-1);
   // Player's bond with Carmen boosts her mood
   if((G.relations.Carmen||0)>=8&&G.world.carmenMood<8)G.world.carmenMood=Math.min(8,G.world.carmenMood+1);
-  // ── Improvement 1: Stress sleep recovery ──
+  // ── R1: Stress sleep recovery + high-stress cascade ──
   if(G.world.stress===undefined)G.world.stress=3;
   var stressRecovery=ctx.isFree?4:2;
   G.world.stress=Math.max(0,G.world.stress-stressRecovery);
+  // Track sustained high-stress days
+  if(G.world.stress>=7){G.world.highStressDays=(G.world.highStressDays||0)+1;}
+  else{G.world.highStressDays=Math.max(0,(G.world.highStressDays||0)-1);}
+  // Fire a stress break event after 3+ sustained high-stress days (once per run until recovered)
+  if(G.world.highStressDays>=3&&(!G.flags.stressEventFired||(day-G.flags.stressEventFired)>=4)){
+    var seRng=mkRng(day*53+17);
+    var sePool=['overslept','snapped','headache','skipped_lunch'];
+    var seEvent=sePool[Math.floor(seRng()*sePool.length)];
+    G.flags.stressEvent=seEvent;
+    G.flags.stressEventFired=day;
+    G.world.todayLog=G.world.todayLog||[];
+    G.world.todayLog.push({type:'stressEvent',key:seEvent});
+    // Snapped: random present NPC loses 1 bond
+    if(seEvent==='snapped'){
+      var snapChars=['Sato','Hayashi','Komori','Hina','Abe'];
+      var sc2=snapChars.filter(function(c){return G.relations[c]!==undefined&&G.relations[c]>0;});
+      if(sc2.length){var sn=sc2[day%sc2.length];G.relations[sn]=Math.max(0,G.relations[sn]-1);G.log.push('[Day '+day+'] Snapped at '+sn+' — stress talking. Bond: '+(G.relations[sn]+1)+'→'+G.relations[sn]);}
+    }
+    toast('😶 Running low','Something gave way. High stress is taking a toll.',4500);
+  }
+  // Clear stressEvent once stress has recovered
+  if(G.world.stress<=4&&G.flags.stressEvent){delete G.flags.stressEvent;}
   // ── Improvement 2: Exam resolution ──
   if(CAL_EVENTS[day]&&(CAL_EVENTS[day].type==='exam'||CAL_EVENTS[day].type==='competition')){
     var ev=CAL_EVENTS[day];
@@ -1141,11 +1201,29 @@ function worldTick(day){
     if(day-lastMeet<=7){
       var clubBonus={lit:{knowledge:2},film:{knowledge:2},art:{},newspaper:{charm:2},track:{proficiency:2,guts:2},music:{}};
       var cb=clubBonus[G.flags.active_club]||{};
-      Object.keys(cb).forEach(function(s){gainStat(s,cb[s]);});
+      var rankMult=(G.world.clubRank||0)>=1?1.25:1.0;
+      Object.keys(cb).forEach(function(s){gainStat(s,Math.ceil((cb[s]||0)*rankMult));});
       // Creative identity boost for creative clubs (every 14 days)
       if((G.flags.active_club==='art'||G.flags.active_club==='music')&&day%14===0){
         if(G.identity)G.identity.creative=Math.min(20,(G.identity.creative||0)+1);
       }
+    }
+  }
+  // R3: Club rank progression (weekly check)
+  if(G.flags.active_club&&!G.flags.club_inactive&&day%7===0){
+    var lastMeetR3=G.world.lastClubMeeting||0;
+    if(day-lastMeetR3<=7&&!G.flags.club_irregular){
+      G.world.clubConsecWeeks=(G.world.clubConsecWeeks||0)+1;
+      var cw=G.world.clubConsecWeeks;
+      var cr=G.world.clubRank||0;
+      var rankNames=['New Member','Regular','Veteran','Core Member'];
+      var rankThresh=[0,4,10,20];
+      if(cr<3&&cw>=rankThresh[cr+1]){
+        G.world.clubRank=cr+1;
+        toast('📌 Club recognition','Your presence in '+(G.flags.active_club||'the club')+' is being recognized. Rank: '+rankNames[G.world.clubRank],5000);
+      }
+    }else{
+      G.world.clubConsecWeeks=Math.max(0,(G.world.clubConsecWeeks||1)-1);
     }
   }
   // ── Improvement 6: NPC pair drift toast (when pair drops to threshold) ──
@@ -1195,6 +1273,34 @@ function worldTick(day){
   // ── Reset today's event log ──
   G.world.todayLog=[];
   save();
+}
+
+// R5: Event anticipation — named events create gravity days before they happen
+function getEventAnticipation(day,blk,ctx){
+  var prose=[];
+  var evDays=Object.keys(CAL_EVENTS).map(Number);
+  evDays.forEach(function(ed){
+    var ev=CAL_EVENTS[ed];
+    if(!ev||!(ev.type==='competition'||ev.type==='special'||ev.type==='holiday'))return;
+    var dl=ed-day;
+    if(dl<1||dl>7)return;
+    var key='antici_'+ed+'_'+day;
+    if(G.flags[key])return;
+    // Only one anticipation note per day
+    var evtName=ev.title;
+    var note='';
+    if(dl===7&&blk==='morning'){note='Something different in the hallway traffic — everyone\'s already thinking about the '+evtName+'.';}
+    else if(dl===5&&blk==='lunch'){
+      if(ctx.hasHayashi)note='Hayashi is already catastrophizing about the '+evtName+'. That\'s how you know it\'s real.';
+      else if(ctx.hasKomori)note='Komori has a clipboard again. It probably says '+evtName+' somewhere on it.';
+      else note='The lunch table energy is different today. The '+evtName+' is getting closer — you can feel it in how people are talking.';
+    }
+    else if(dl===3&&blk==='class'){note='Fujiwara-sensei mentioned the '+evtName+' in passing. The way she said it — like it mattered. The class sat slightly differently for the rest of the period.';}
+    else if(dl===2&&blk==='evening'){note='Two days.';}
+    else if(dl===1&&blk==='morning'){note='Tomorrow.';}
+    if(note){G.flags[key]=true;prose.push(dl===1||dl===2?'<div class="inner-voice">'+note+'</div>':'<p class="world-note">'+note+'</p>');}
+  });
+  return prose.join('');
 }
 
 // Inject arc/bg event ambient text into scene HTML
@@ -1247,6 +1353,9 @@ function getWorldInjection(day,blk,ctx,rng){
       notes.push('<p class="carmen-note">'+pick(cp.evening,rng)+'</p>');
     }
   }
+  // R5: Event anticipation buildup
+  var anticip=getEventAnticipation(day,blk,ctx);
+  if(anticip)notes.push(anticip);
   if(!notes.length)return'';
   return'<div class="arc-events">'+notes.join('')+'</div>';
 }
@@ -1382,6 +1491,10 @@ function buildChoices(tpl,blk,ctx,rng){
     if(ctx.examSoon&&blk==='evening'&&i===0){d='Study for the upcoming exam — focus, no distractions';statProfiles[0]={knowledge:15};}
     // Competition day: replace morning standard choice with competition prep
     if(ctx.calEv&&ctx.calEv.type==='competition'&&blk==='morning'&&i===0){d='Focus on the competition — mental preparation';statProfiles[0]={knowledge:12,guts:8};}
+    // R1: Overslept — slot A on morning gives no stat gain
+    if(G.flags&&G.flags.stressEvent==='overslept'&&blk==='morning'&&i===0){d='Got in late — barely made homeroom';statProfiles[0]={};}
+    // R1: Headache — Bold choice yields 60% XP
+    if(G.flags&&G.flags.stressEvent==='headache'&&i===2){var hpOrig=statProfiles[2];statProfiles[2]={};Object.keys(hpOrig).forEach(function(s){statProfiles[2][s]=Math.ceil((hpOrig[s]||0)*0.6);});}
     var ch={id:labels[i],lbl:labels[i]+') '+d,type:types[i],desc:d,time:'30 min',risk:risks[i],stats:statProfiles[i]};
     // Flag stress-exhausted bold choice
     if(i===2&&stress>=9)ch._stressedBold=true;
@@ -1660,6 +1773,72 @@ var _FALLBACK={
   }
 };
 
+// R4: Memory echo system — past choices resurface as inner voice
+function getMemoryEcho(ctx,rng){
+  if(!G.world)return'';
+  var day=ctx.day||G.day;
+  var lmf=G.world.lastMemoryFired||{};
+  var echoes=[];
+  // Window engagements (fires >7 days after engaging)
+  var wKeys=Object.keys(G.world.windowEngaged||{});
+  wKeys.forEach(function(wk){
+    var wday=G.world.windowEngaged[wk];
+    if(day-wday>7&&(!lmf[wk]||day-lmf[wk]>=20)){
+      var wProse={
+        sakura_peak:'The sakura were weeks ago now. He still thinks about standing under them — not the beauty of it, but the fact that he stopped.',
+        summer_matsuri:'The festival already feels like a different season. He was there. That\'s a fact about him now.',
+        golden_week:'He went somewhere during the break. Just to go. He can still find that place on the map.',
+        autumn_leaves:'The park, the long way home. He doesn\'t always take it. He remembers when he did.',
+        first_snow:'First snow. He stood in it. Tokyo looked impossible for about ten minutes.',
+        year_end:'He tried to mark the year. Got something close to the shape of it.'
+      };
+      if(wProse[wk])echoes.push({key:wk,text:wProse[wk]});
+    }
+  });
+  // Arc completion with player involvement
+  ARCS.forEach(function(arc){
+    var s=G.world.arcs&&G.world.arcs[arc.id];
+    if(s&&s.done&&s.playerInvolved){
+      var ek='arc_'+arc.id;
+      if(!lmf[ek]||day-lmf[ek]>=20){
+        var arcProse={
+          photo_mystery:'The photo thing resolved itself. He was part of that resolution.',
+          komori_project:'Komori\'s project — he was in it. Whatever Komori built, he contributed to the material.',
+          festival_committee:'The festival happened. He helped make it happen. That\'s a different relationship to a thing than just attending it.',
+          default:'Something at school sorted itself. He\'d been part of how it sorted.'
+        };
+        echoes.push({key:ek,text:arcProse[arc.id]||arcProse.default});
+      }
+    }
+  });
+  // Missed windows (regret note, occasional)
+  if((G.world.missedWindows||[]).length>0&&rng()<0.4){
+    var mwk='missed_'+G.world.missedWindows[0];
+    if(!lmf[mwk]||day-lmf[mwk]>=20){
+      echoes.push({key:mwk,text:'He let one of those days go by without doing the thing. He knows which one. It doesn\'t keep him up, but it\'s there.'});
+    }
+  }
+  // Warm Carmen + late phase
+  if(ctx.carmenMood>=8&&(ctx.carmenPhase||0)>=4){
+    var ck='carmen_warm_late';
+    if(!lmf[ck]||day-lmf[ck]>=20){
+      echoes.push({key:ck,text:'Home means something specific now. It took most of the year. He notices the difference.'});
+    }
+  }
+  // High stress history
+  if(G.flags&&G.flags.stressEventFired&&day-G.flags.stressEventFired>5){
+    var sk='stress_recovery';
+    if(!lmf[sk]||day-lmf[sk]>=20){
+      echoes.push({key:sk,text:'He remembers what overextending felt like. He\'s learned to read the signals earlier now.'});
+    }
+  }
+  if(!echoes.length)return'';
+  var chosen=echoes[Math.floor(rng()*echoes.length)];
+  G.world.lastMemoryFired=lmf;
+  lmf[chosen.key]=day;
+  return'<div class="inner-voice">'+chosen.text+'</div>';
+}
+
 // Generate context-aware outcome text for procedural choices
 // CONSTRUCTION-BASED: assembles outcome from specific components instead of picking from a pool
 function makeProcOutcome(ch,ctx,rng){
@@ -1700,6 +1879,9 @@ function makeProcOutcome(ch,ctx,rng){
     var cEvPhase=CARMEN_ARC[ctx.carmenPhase||0];
     if(cEvPhase)parts.push('<p class="carmen-note">'+pick(cEvPhase.evening,rng)+'</p>');
   }
+
+  // R4: Memory echo — 18% chance, past choices resurface
+  if(rng()<0.18){var memEcho=getMemoryEcho(ctx,rng);if(memEcho)parts.push(memEcho);}
 
   return parts.join('');
 }
@@ -1929,6 +2111,20 @@ function genScene(day,blk){
   var html=rvCtx(tpl.html,rng,ctx);
   // Inject world/arc ambient events
   html+=getWorldInjection(day,blk,ctx,rng);
+  // ── R1: Stress event scene modifications ──
+  var seNow=G.flags&&G.flags.stressEvent;
+  if(seNow==='overslept'&&blk==='morning'){
+    html+='<div class="inner-voice">He was late. The alarm went off — or it didn\'t — and he got in during homeroom with everyone already in their seats. Not the day he planned.</div>';
+  }
+  if(seNow==='headache'&&(blk==='class'||blk==='morning')){
+    html+='<div class="inner-voice">A headache — the persistent low-grade kind that makes every light slightly wrong. He worked around it.</div>';
+  }
+  if(seNow==='skipped_lunch'&&blk==='lunch'){
+    html+='<div class="inner-voice">He didn\'t eat. Just sat in the stairwell for a while. The cafeteria was too much today.</div>';
+  }
+  if(seNow==='snapped'&&blk==='lunch'){
+    html+='<div class="inner-voice">He said something sharp to someone who didn\'t deserve it. He knew it immediately. Apologized badly. Something to carry home.</div>';
+  }
   // Append exam pressure note to morning scenes when exam is close
   if(blk==='morning'&&ctx.examSoon){
     var dl=ctx.examDay-day;
@@ -1950,6 +2146,16 @@ function genScene(day,blk){
       desc:'Club meeting today — '+( clubNames[ctx.activeClub]||ctx.activeClub)+' room, after class',
       _clubMeeting:true
     });
+    // R3: Core member (rank 3) — leadership slot B
+    if((G.world.clubRank||0)>=3&&choices[1]){
+      var cln=clubNames[ctx.activeClub]||ctx.activeClub;
+      choices[1]=Object.assign({},choices[1],{
+        id:'B',lbl:'B) They asked you to run today\'s session',
+        desc:'Lead the '+cln+' meeting today',type:'Social',
+        stats:{charm:10,kindness:5},_clubLeadership:true,_clubMeeting:false,
+        _socialIdentity:1
+      });
+    }
   }
   // Optional arc intervention choice
   var arcCh=getArcChoice(day,blk);if(arcCh)choices.push(arcCh);
@@ -1968,6 +2174,12 @@ function genScene(day,blk){
     if(wc){
       choices.push({id:'W',lbl:'W) '+wc.desc,type:'world',desc:wc.desc,time:'—',risk:'low',stats:wc.stats,_windowId:_activeWindow.id,_windowOutcome:wc.outcome,_windowIdentity:wc.identity});
     }
+  }
+  // R2: Carmen talk choice — when she's home + bond ≥ 5
+  if(!_carmenAway&&blk==='evening'&&(G.relations.Carmen||0)>=5&&G.world){
+    choices.push({id:'T',lbl:'T) Talk with Carmen tonight — actually talk, not just coexist',type:'world',
+      desc:'Sit down with her, phones away',time:'—',risk:'low',stats:{},
+      _carmenTalk:true,_carmenPhase:G.world.carmenPhase||0,_carmenBond:G.relations.Carmen||0});
   }
   // Dynamic arch tag based on narrative phase
   var archPhase=ctx.phase==='early'?'Finding Footing':ctx.phase==='mid'?'Belonging':'Becoming';
@@ -1993,10 +2205,32 @@ if(G.world.examCycle===undefined)G.world.examCycle=0;
 if(!G.world.windowEngaged)G.world.windowEngaged={};
 if(G.world.lastClubMeeting===undefined)G.world.lastClubMeeting=0;
 if(G.world.clubMissStreak===undefined)G.world.clubMissStreak=0;
+if(G.world.highStressDays===undefined)G.world.highStressDays=0;
+if(G.world.clubRank===undefined)G.world.clubRank=0;
+if(G.world.clubConsecWeeks===undefined)G.world.clubConsecWeeks=0;
+if(!G.world.lastMemoryFired)G.world.lastMemoryFired={};
 if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};}
 function el(id){return document.getElementById(id);}
 function toast(t,b,ms){ms=ms||4000;el('notif-t').textContent=t;el('notif-b').textContent=b;var n=el('notif');n.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(function(){n.classList.remove('show');},ms);}
-function gainStat(k,v){if(!G.stats[k])return;G.stats[k].xp+=v;var thr=G.stats[k].rank*30;if(G.stats[k].xp>=thr&&G.stats[k].rank<5){G.stats[k].rank++;G.stats[k].xp=0;toast(k.toUpperCase()+' UP!','Rank '+G.stats[k].rank+'!',3500);}}
+function gainStat(k,v){
+  if(!G.stats[k])return;
+  G.stats[k].xp+=v;
+  var thr=G.stats[k].rank*30;
+  if(G.stats[k].xp>=thr&&G.stats[k].rank<5){
+    G.stats[k].rank++;G.stats[k].xp=0;
+    toast(k.toUpperCase()+' UP!','Rank '+G.stats[k].rank+'!',3500);
+    // U3: Floating rank-up badge
+    var statIc={knowledge:'📚',guts:'⚡',proficiency:'🎯',kindness:'💖',charm:'✨'};
+    var badge=document.createElement('div');
+    badge.className='rank-up-badge';
+    badge.textContent=(statIc[k]||'⬡')+' '+k.toUpperCase()+' — RANK '+G.stats[k].rank;
+    document.body.appendChild(badge);
+    setTimeout(function(){if(badge.parentNode)badge.parentNode.removeChild(badge);},3600);
+    // Pulse stat row in stat panel
+    var statRow=document.getElementById('sr-'+k);
+    if(statRow){statRow.classList.remove('rank-up');void statRow.offsetWidth;statRow.classList.add('rank-up');setTimeout(function(){statRow.classList.remove('rank-up');},2100);}
+  }
+}
 function unlock(id){if(G.ach.indexOf(id)>-1)return;G.ach.push(id);var a=ACHS.filter(function(x){return x.id===id;})[0];if(a)toast('🏆 Achievement!',a.icon+' '+a.name,5000);}
 function applyOut(o){
   if(o.stats)Object.keys(o.stats).forEach(function(k){gainStat(k,o.stats[k]);});
@@ -2035,7 +2269,35 @@ function renderSceneUI(sc,nxt){
     +'<span class="badge b-time">🕐 '+h.time+' — '+h.block+'</span>'
     +'<span class="badge b-wx">'+h.wx+'</span>'
     +'<span class="badge b-loc">📍 '+h.loc+'</span>'
-    +'<span class="badge b-acad">📖 '+h.acad+'</span></div>';
+    +'<span class="badge b-acad">📖 '+h.acad+'</span>';
+  // U5: Active window countdown badge in HUD
+  if(sc._ctx&&sc._ctx.activeWindows&&sc._ctx.activeWindows.length){
+    var hudWin=sc._ctx.activeWindows[0];
+    if(!(G.world&&G.world.windowEngaged&&G.world.windowEngaged[hudWin.id])){
+      var hudDays=hudWin.days[1]-G.day;
+      var hudUrgency=hudDays<=2?'urgent':hudDays<=4?'gold':'mint';
+      out+='<span class="hud-badge '+hudUrgency+'">'+(hudWin.icon||'🌸')+' '+(hudWin.id.replace(/_/g,' '))+' · '+hudDays+'d left</span>';
+    }
+  }
+  out+='</div>';
+  // U1: System status panel
+  if(G.world){
+    var sp_open=localStorage.getItem('sys_panel_open')==='1';
+    var sp_stress=G.world.stress||0;var sp_exam=G.world.examPrep||0;
+    var sp_cm=G.world.carmenMood||7;var sp_cr=G.world.clubRank||0;
+    var sp_cw=G.world.clubConsecWeeks||0;
+    var rankNames2=['New','Regular','Veteran','Core'];
+    var stressLabel=sp_stress>=9?'<span class="sys-badge" style="color:var(--sakura)">critical</span>':sp_stress>=7?'<span class="sys-badge" style="color:var(--gold)">frayed</span>':sp_stress>=4?'<span class="sys-badge" style="color:var(--dim)">manageable</span>':'<span class="sys-badge" style="color:var(--mint)">stable</span>';
+    var cmLabel=sp_cm>=8?'<span class="sys-badge" style="color:var(--mint)">warm</span>':sp_cm>=5?'<span class="sys-badge" style="color:var(--dim)">neutral</span>':'<span class="sys-badge" style="color:var(--sakura)">distant</span>';
+    var spRows='';
+    spRows+='<div class="sys-row"><span class="sys-lbl">🔥 Stress</span><div class="sys-bar"><div class="sys-bar-fill" style="width:'+Math.round(sp_stress/10*100)+'%;background:'+(sp_stress>=7?'var(--sakura)':sp_stress>=4?'var(--gold)':'var(--mint)')+'"></div></div><span class="sys-val">'+sp_stress+'/10</span>'+stressLabel+'</div>';
+    if(sc._ctx&&sc._ctx.examSoon)spRows+='<div class="sys-row"><span class="sys-lbl">📝 Exam prep</span><div class="sys-bar"><div class="sys-bar-fill" style="width:'+Math.min(100,Math.round(sp_exam/30*100))+'%;background:var(--sky)"></div></div><span class="sys-val">'+sp_exam+'/30</span></div>';
+    spRows+='<div class="sys-row"><span class="sys-lbl">💜 Carmen</span><div class="sys-bar"><div class="sys-bar-fill" style="width:'+Math.round(sp_cm/10*100)+'%;background:var(--pink-soft)"></div></div><span class="sys-val">'+sp_cm+'/10</span>'+cmLabel+'</div>';
+    if(G.flags.active_club&&!G.flags.club_inactive)spRows+='<div class="sys-row"><span class="sys-lbl">📌 Club</span><span class="sys-val" style="width:auto">'+sp_cw+'w</span><span class="sys-badge" style="color:var(--sky)">'+rankNames2[Math.min(3,sp_cr)]+'</span></div>';
+    var aw=(sc._ctx&&sc._ctx.activeWindows&&sc._ctx.activeWindows[0]);
+    if(aw&&!(G.world.windowEngaged&&G.world.windowEngaged[aw.id])){var awDays=aw.days[1]-G.day;spRows+='<div class="sys-row"><span class="sys-lbl">'+aw.icon+' '+aw.id.replace(/_/g,' ')+'</span><span class="sys-badge" style="color:'+(awDays<=2?'var(--sakura)':awDays<=4?'var(--gold)':'var(--mint)')+'">'+awDays+'d left</span></div>';}
+    out+='<div class="sys-panel"><div class="sys-panel-header" onclick="var b=this.nextElementSibling;b.classList.toggle(\'open\');localStorage.setItem(\'sys_panel_open\',b.classList.contains(\'open\')?\'1\':\'0\')">⚙ STATUS '+(sp_open?'▲':'▼')+'</div><div class="sys-panel-body'+(sp_open?' open':'')+'">'+spRows+'</div></div>';
+  }
   out+=(sc.calHtml||'')+(sc.trans||'');
   out+='<div class="scene-card"><div class="scene-header">◈ NARRATIVE — Day '+G.day+'</div><div class="scene-body">'+sc.html+'</div></div>';
   var statIcons={knowledge:'📚',guts:'⚡',proficiency:'🎯',kindness:'💖',charm:'✨'};
@@ -2047,11 +2309,19 @@ function renderSceneUI(sc,nxt){
     var hint=statKey?(statIcons[statKey]||'')+' '+statKey:'';
     // Stress warning on Bold slot
     var stressWarn=(c.id==='C'&&(G.world&&(G.world.stress||3)>=7))?'<div class="cc-hint" style="color:var(--sakura)">· frayed'+(G.world.stress>=9?' — running on empty':'')+'</div>':'';
-    // Window choice badge
-    var winBadge=(c.id==='W')?'<div class="cc-hint" style="color:var(--mint)">⏳ one-time opportunity</div>':'';
+    // U5: Window choice countdown badge
+    var winBadge='';
+    if(c.id==='W'&&c._windowId){
+      var wDaysLeft=(sc._ctx&&sc._ctx.activeWindows&&sc._ctx.activeWindows[0])?sc._ctx.activeWindows[0].days[1]-G.day:null;
+      if(wDaysLeft!==null){
+        var wUrgent=wDaysLeft<=2;
+        winBadge='<div class="cc-hint" style="color:'+(wUrgent?'var(--sakura)':'var(--mint)')+'">⏳ Closes in '+wDaysLeft+' day'+(wDaysLeft!==1?'s':'')+'</div>';
+      }else winBadge='<div class="cc-hint" style="color:var(--mint)">⏳ one-time opportunity</div>';
+    }
     // Club meeting badge
     var clubBadge=(c._clubMeeting)?'<div class="cc-hint" style="color:var(--sky)">📌 club meeting</div>':'';
-    out+='<button class="choice-card '+wide+'" data-type="'+tClass+'" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')">'
+    var urgentAttr=(c.id==='W'&&c._windowId&&sc._ctx&&sc._ctx.activeWindows&&sc._ctx.activeWindows[0]&&(sc._ctx.activeWindows[0].days[1]-G.day)<=2)?' data-urgent="true"':'';
+    out+='<button class="choice-card '+wide+'"'+urgentAttr+' data-type="'+tClass+'" id="hc-'+c.id+'" onclick="doChoice(\''+c.id+'\',\''+(nxt||'')+'\')">'
       +'<div class="cc-letter">'+c.id+' · '+(c.type||'action')+'</div>'
       +'<div class="cc-desc">'+c.desc+'</div>'
       +(hint?'<div class="cc-hint">'+hint+'</div>':'')
@@ -2115,6 +2385,47 @@ function doChoice(cid,nxt){
     showOut('<p>'+cEv+'</p><p>They sit together for a while. Easy silence — the kind you have to earn.</p>',nxt,'Home');
     return;
   }
+  // R2: Carmen conversational talk
+  if(ch._carmenTalk){
+    var ctPhase=ch._carmenPhase||0;var ctBond=ch._carmenBond||0;
+    var isDeep=ctBond>=8;
+    var ctData=[
+      {topic:'How\'s the neighborhood treating you?',
+       deep:'She started talking about the bakery three blocks over, then the route she\'d been testing to the station, then the old man who sweeps outside the laundry. He\'d heard none of it. She\'d been building a whole mental map and hadn\'t had a reason to share it until now.',
+       surface:'She said it was fine. He said good. They both knew there was more to it, but the moment passed.',
+       dStats:{kindness:3},dMood:1,dBond:1,dStress:1,dId:{rootedness:1}},
+      {topic:'The Japanese you\'ve picked up — show me?',
+       deep:'She pulled out her notebook — phonetic spellings, kanji she\'d learned from labels, a page of phrases from the subway map. She read them out with an accent that was uniquely hers. He corrected gently. She repeated, laughing at herself. An hour disappeared.',
+       surface:'She laughed it off. "Another time," she said. He didn\'t push.',
+       dStats:{knowledge:5,kindness:3},dMood:1,dBond:1,dStress:0,dId:{social:1}},
+      {topic:'You mentioned Yuki — good friend?',
+       deep:'Her face changed when he asked. She talked about Yuki for twenty minutes — the way Yuki corrects her Spanish with the same face she uses to learn it, how they split the bill at the Thursday café, what Yuki said about her daughter. Carmen looks different when she talks about having a friend here.',
+       surface:'She said yes. Then the topic closed. There\'s more to it than that, but she wasn\'t opening the door.',
+       dStats:{kindness:8},dMood:1,dBond:1,dStress:0,dId:{social:1,rootedness:1}},
+      {topic:'You seem different lately. Is it home?',
+       deep:'She was quiet for a long time after he asked. Then she talked — not about a specific thing, but about the shape of it: the call with Abuela, the way a Spanish word sometimes makes her homesick for a thing she can\'t name, the feeling of being fluent in a place and a stranger in the same moment. It cost her to say it. It cost him to hear it. They stayed at the table until it was very late.',
+       surface:'She said she was fine. He let it go. The wrong call, probably, but the moment required something he didn\'t know how to give yet.',
+       dStats:{kindness:5},dMood:2,dBond:2,dStress:2,dId:{rootedness:1}},
+      {topic:'Do you feel like this is home now?',
+       deep:'She didn\'t answer immediately. Looked at the kitchen, the window, the small plant she\'d put on the sill. "I think," she said finally, "that home is a verb." He thought about that for the rest of the evening.',
+       surface:'"Getting there," she said. Small smile. He believed her.',
+       dStats:{kindness:3},dMood:1,dBond:0,dStress:0,dId:{rootedness:2}}
+    ];
+    var ct=ctData[ctPhase]||ctData[0];
+    var prose=isDeep?ct.deep:ct.surface;
+    var statGain=isDeep?ct.dStats:{};
+    var moodGain=isDeep?ct.dMood:(ct.dMood>0?1:0);
+    var bondGain=isDeep?ct.dBond:0;
+    var stressGain=isDeep?ct.dStress:0;
+    var idGain=isDeep?ct.dId:{rootedness:1};
+    if(G.world){G.world.carmenMood=Math.min(10,(G.world.carmenMood||7)+moodGain);}
+    applyOut({stats:statGain,rel:{Carmen:bondGain},log:'Talked with Carmen: '+ct.topic,identity:idGain});
+    if(stressGain&&G.world)G.world.stress=Math.min(10,(G.world.stress||3)+stressGain);
+    G.world.todayLog=G.world.todayLog||[];
+    G.world.todayLog.push({type:'carmenTalk',key:isDeep?'deep':'surface',phase:ctPhase});
+    showOut('<p><span class="world-note">'+ct.topic+'</span></p><p>'+prose+'</p>',nxt,'Home');
+    return;
+  }
   // Auto-apply identity vector from choice type
   var idMap={Social:{social:1},Bold:{drive:1},Reflective:{rootedness:1},Standard:{drive:1}};
   var idGain=idMap[ch.type]||{};
@@ -2160,6 +2471,12 @@ function doChoice(cid,nxt){
       if(G.world.clubMissStreak===3){toast('📋 Club notice','You\'ve been skipping '+(G.flags.active_club||'club')+'. The others are noticing.',5000);G.flags.club_irregular=true;}
       if(G.world.clubMissStreak>=5){G.flags.club_inactive=true;toast('📋 Club inactive','Your membership in '+(G.flags.active_club||'club')+' is on hold. Show up to reactivate.',5000);}
     }
+  }
+  // R3: Club leadership choice tracking
+  if(G.world&&ch._clubLeadership){
+    G.world.lastClubMeeting=G.day;G.world.clubMissStreak=0;G.flags.club_irregular=false;
+    if(G.identity)G.identity.social=Math.min(20,(G.identity.social||0)+1);
+    G.world.todayLog.push({type:'clubLeadership',key:G.flags.active_club||'club'});
   }
   // ── Improvement 6: NPC pair mediation ──
   if(ch.desc&&ch.desc.indexOf('Sato and Hayashi are off')===0&&G.world){
@@ -2245,6 +2562,17 @@ function getDayReflLine(todayLog,ctx){
   var boldChosen=choices.some(function(e){return e.key==='Bold';});
   var socialChosen=choices.some(function(e){return e.key==='Social';});
   var reflChosen=choices.some(function(e){return e.key==='Reflective';});
+  // 0) Stress break event — high priority
+  var stressEv=todayLog.filter(function(e){return e.type==='stressEvent';})[0];
+  if(stressEv){
+    var seLines={
+      overslept:'He was late today. Not catastrophically — but late enough that everyone saw it. That\'s what sustained overextension produces eventually.',
+      snapped:'He said something sharp to someone who didn\'t deserve it. He\'s been running too hot. That was the pressure valve.',
+      headache:'He carried a headache through most of it. Not dramatic — just present. A reminder that the body keeps its own accounts.',
+      skipped_lunch:'He didn\'t eat at lunch. Just sat somewhere quiet. Some days the only resource management that works is subtraction.'
+    };
+    return'<p>'+(seLines[stressEv.key]||'Something slipped today. He\'s been pushing past what the system can sustain.')+'</p>';
+  }
   // 1) Character echo — most specific
   if(charEcho){
     var cName=charEcho.key;
@@ -2277,6 +2605,12 @@ function getDayReflLine(todayLog,ctx){
   // 3) Active time window
   if(windowEv){
     return'<p>There was something in the air today — he couldn\'t name it exactly, but the school felt like it was in a particular register. The kind of day that only happens a few times a year.</p>';
+  }
+  // 3.5) Carmen talk (real conversation)
+  var carmenTalkEv=todayLog.filter(function(e){return e.type==='carmenTalk';})[0];
+  if(carmenTalkEv){
+    if(carmenTalkEv.key==='deep')return'<p>They actually talked tonight. The kind of conversation that rearranges the furniture of a relationship. He went to bed with more of her in his head than before. That counts.</p>';
+    return'<p>He tried. The conversation didn\'t quite get where it should have. Something to try again — differently, with better timing or better nerve.</p>';
   }
   // 4) Carmen evening
   if(carmenEv){
@@ -2318,12 +2652,45 @@ function getDayReflLine(todayLog,ctx){
   return'';
 }
 
+// U2: Day Summary Card
+function renderDaySummary(todayLog,stressBefore,examPrepBefore){
+  if(!todayLog||!todayLog.length)return'';
+  var rows=[];
+  var choices=todayLog.filter(function(e){return e.type==='choice';});
+  if(choices.length){
+    var typeStr=choices.map(function(e){return e.key;}).join(' · ');
+    rows.push({icon:'🎯',lbl:'Choices',val:typeStr});
+  }
+  var stressNow=G.world?G.world.stress||3:3;
+  var stressDelta=stressBefore-stressNow;// positive = recovered
+  var stressColor=stressBefore>=7?'var(--sakura)':stressBefore>=4?'var(--gold)':'var(--mint)';
+  rows.push({icon:'🔥',lbl:'Stress',val:stressBefore+' <span style="color:var(--dim);font-size:.7rem">→ after sleep: '+(stressBefore-Math.min(stressBefore,2))+'</span>',color:stressColor});
+  var echoed=todayLog.filter(function(e){return e.type==='charEcho';}).map(function(e){return e.key;});
+  if(echoed.length)rows.push({icon:'👥',lbl:'Encounters',val:echoed.join(', ')});
+  var prepEv=todayLog.filter(function(e){return e.type==='examPrep';});
+  if(prepEv.length&&examPrepBefore!==undefined)rows.push({icon:'📝',lbl:'Exam prep',val:examPrepBefore+' → '+(G.world?G.world.examPrep||0:0)});
+  var winEv=todayLog.filter(function(e){return e.type==='windowEngaged';})[0];
+  if(winEv)rows.push({icon:'✨',lbl:'Window',val:winEv.key.replace(/_/g,' ')+' — taken',color:'var(--mint)'});
+  else{
+    var ctx2=buildCtx(G.day,'evening');
+    if(ctx2.activeWindows&&ctx2.activeWindows.length){var aw2=ctx2.activeWindows[0];rows.push({icon:aw2.icon||'🌸',lbl:'Window',val:aw2.id.replace(/_/g,' ')+' — not taken',color:'var(--dim)'});}
+  }
+  var carmenTalk=todayLog.filter(function(e){return e.type==='carmenTalk';})[0];
+  if(carmenTalk)rows.push({icon:'💜',lbl:'Carmen',val:carmenTalk.key==='deep'?'deep conversation':'brief exchange'});
+  if(!rows.length)return'';
+  var html='<div class="summary-card"><div class="sum-title">◈ DAY '+G.day+' SUMMARY</div>';
+  rows.forEach(function(r){html+='<div class="sum-row"><span class="sum-lbl" style="'+(r.color?'color:'+r.color:'')+'">'+r.icon+' '+r.lbl+'</span><span class="sum-val">'+r.val+'</span></div>';});
+  html+='</div>';
+  return html;
+}
+
 function renderProcRefl(){
   el('scene-area').innerHTML='<div class="scene-card"><div class="scene-header">◈ END OF DAY '+G.day+'</div><div class="scene-body"><p style="color:var(--dim);font-size:.76rem;text-transform:uppercase;margin-bottom:6px;">Night</p><p>The day settles. Jorge is in bed. The apartment is quiet except for the neighbor\'s TV — a late drama tonight, muffled emotional music through the wall.</p></div></div>';
   // Capture todayLog + stress BEFORE worldTick resets them
   var todayLogSnap=(G.world&&G.world.todayLog)?G.world.todayLog.slice():[];
   var carmenMoodSnap=G.world?G.world.carmenMood||7:7;
   var stressSnap=G.world?G.world.stress||3:3;
+  var examPrepSnap=G.world?G.world.examPrep||0:0;
   worldTick(G.day);
   var rng=mkRng(G.day*31);var text=getRefl(G.day,rng);
   G.log.push('[Day '+G.day+'] Day completed.');
@@ -2345,7 +2712,9 @@ function renderProcRefl(){
   // Build dynamic reflection: specific first sentence + phase pool second sentence
   var reflCtx=buildCtx(G.day,'evening');
   var dynamicFirst=getDayReflLine(todayLogSnap,reflCtx);
-  var reflHTML='<h3>💭 NIGHT THOUGHTS</h3><div>';
+  // U2: Day summary card (assembled from pre-tick state)
+  var summaryHTML=renderDaySummary(todayLogSnap,stressSnap,examPrepSnap);
+  var reflHTML=(summaryHTML||'')+'<h3>💭 NIGHT THOUGHTS</h3><div>';
   if(dynamicFirst)reflHTML+=dynamicFirst;
   reflHTML+='<p>'+text.replace(/\n/g,'</p><p>')+'</p>';
   // Identity milestone snapshot on days 30, 100, 200
@@ -2428,7 +2797,7 @@ function advance(nxt){
 function refreshStats(){
   var r=el('stat-rows');if(!r)return;
   r.innerHTML=Object.keys(G.stats).map(function(n){var d=G.stats[n];var p=((d.rank-1)/4)*100;var s='★'.repeat(d.rank)+'☆'.repeat(5-d.rank);
-  return'<div class="stat-row"><div class="s-icon">'+d.icon+'</div><div class="s-name">'+n[0].toUpperCase()+n.slice(1)+'</div><div class="s-track"><div class="s-bar"><div class="s-fill" style="width:'+p+'%;background:'+d.color+'"></div></div><div class="s-stars">'+s+'</div></div><div class="s-rank">Rank '+d.rank+'</div></div>';}).join('');
+  return'<div class="stat-row" id="sr-'+n+'"><div class="s-icon">'+d.icon+'</div><div class="s-name">'+n[0].toUpperCase()+n.slice(1)+'</div><div class="s-track"><div class="s-bar"><div class="s-fill" style="width:'+p+'%;background:'+d.color+'"></div></div><div class="s-stars">'+s+'</div></div><div class="s-rank">Rank '+d.rank+'</div></div>';}).join('');
   var a=el('ach-grid');if(a)a.innerHTML=ACHS.map(function(x){var u=G.ach.indexOf(x.id)>-1;return'<div class="ach-item '+(u?'':'locked')+'"><div class="ach-icon">'+x.icon+'</div><div><div class="ach-name">'+(u?x.name:'???')+'</div><div class="ach-desc">'+(u?x.desc:'Locked')+'</div></div></div>';}).join('');
   var l=el('story-log');if(l)l.innerHTML=G.log.length?G.log.slice(-30).map(function(e){return'<p>• '+e+'</p>';}).join(''):'<p>Your story begins...</p>';
 }
@@ -2437,6 +2806,26 @@ function refreshStats(){
 function renderChars(){
   el('char-grid').innerHTML=Object.keys(CHARS).map(function(id){var c=CHARS[id];var u=!c.locked||G.chars.indexOf(id)>-1;var bv=c.bond&&G.relations[c.bond]!=null?G.relations[c.bond]:null;var bp=bv!=null?Math.round(bv/10*100):0;
   return'<div class="char-card '+(u?'':'locked')+'" style="--cgrad:'+c.grad+'">'+(u?'<div class="unlk-badge">KNOWN</div>':'')+'<div class="char-av" style="background:'+(u?c.grad:'#1e2a40')+'">'+( u?c.av:'?')+'</div><div class="char-name">'+(u?c.name:'???')+'</div><div class="char-role">'+(u?c.role:'Unknown')+'</div>'+(u?'<div class="char-trope">'+c.trope+'</div>':'')+(u&&c.desc?'<div class="char-desc">'+c.desc+'</div>':'')+(u&&bv!=null?'<div class="bond-wrap"><div class="bond-lbl">BOND</div><div class="bond-bar"><div class="bond-fill" style="width:'+bp+'%"></div></div><div class="bond-v">'+bv+'/10</div></div>':'')+'</div>';}).join('');
+  // U4: NPC pair dynamics panel
+  var npcPairs=[
+    {key:'Sato_Hayashi',a:'sato',b:'hayashi',aName:'Sato',bName:'Hayashi',note:'Affects the atmosphere at the lunch table'},
+    {key:'Komori_Takagi',a:'komori',b:'takagi',aName:'Komori',bName:'Takagi',note:'Affects class events and shared duties'},
+    {key:'Hayashi_Nishikawa',a:'hayashi',b:'nishikawa',aName:'Hayashi',bName:'Nishikawa',note:'Affects the energy in the hallway crew'}
+  ];
+  var isUnlocked=function(charId){var c2=CHARS[charId];return c2&&(!c2.locked||G.chars.indexOf(charId)>-1);};
+  var visiblePairs=npcPairs.filter(function(p){return isUnlocked(p.a)&&isUnlocked(p.b);});
+  if(visiblePairs.length&&G.world&&G.world.npcRel){
+    var pairHTML='<div class="pair-grid"><div class="pair-title">— NPC DYNAMICS —</div>';
+    visiblePairs.forEach(function(p){
+      var bv2=G.world.npcRel[p.key]||5;var bp2=Math.round(bv2/10*100);
+      var col=bv2>=7?'var(--mint)':bv2>=4?'var(--sky)':bv2>=3?'var(--gold)':'var(--sakura)';
+      var status=bv2>=7?'healthy':bv2>=4?'neutral':bv2>=3?'⚠ strained':'✗ tense';
+      pairHTML+='<div class="pair-row"><span class="pair-names">'+p.aName+'──'+p.bName+'</span><div class="pair-bar"><div class="pair-bar-fill" style="width:'+bp2+'%;background:'+col+'"></div></div><span class="pair-status" style="color:'+col+'">'+status+'</span></div>';
+      if(bv2<=3)pairHTML+='<div style="font-size:.68rem;color:var(--dim);padding:2px 0 4px 160px;font-style:italic">'+p.note+'</div>';
+    });
+    pairHTML+='</div>';
+    var cg=el('char-grid');if(cg)cg.innerHTML+=pairHTML;
+  }
 }
 
 // ═══ CALENDAR ═══
@@ -2512,6 +2901,10 @@ function importSave(){
         if(!G.world.windowEngaged)G.world.windowEngaged={};
         if(G.world.lastClubMeeting===undefined)G.world.lastClubMeeting=0;
         if(G.world.clubMissStreak===undefined)G.world.clubMissStreak=0;
+        if(G.world.highStressDays===undefined)G.world.highStressDays=0;
+        if(G.world.clubRank===undefined)G.world.clubRank=0;
+        if(G.world.clubConsecWeeks===undefined)G.world.clubConsecWeeks=0;
+        if(!G.world.lastMemoryFired)G.world.lastMemoryFired={};
         if(!G.identity)G.identity={social:0,drive:0,creative:0,rootedness:0};
         save();updateProg();refreshStats();
         renderScene(G.scene==='__proc__'||!SC[G.scene]?'__proc__':G.scene);
